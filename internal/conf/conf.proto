@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package internal.conf;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
+
+message Bootstrap {
+	Environment environment = 1;
+	Server server = 2;
+}
+
+enum Environment {
+	UNKNOWN = 0;
+	DEV = 1;
+	TEST = 2;
+	PROD = 3;
+}
+
+message Server {
+	message HTTPServer {
+		string address = 1;
+		string network = 2;
+		google.protobuf.Duration timeout = 3;
+	}
+	
+	message GRPCServer {
+		string address = 1;
+		string network = 2;
+		google.protobuf.Duration timeout = 3;
+	}
+	
+	string name = 1;
+	map<string, string> metadata = 2;
+	HTTPServer http = 3;
+	GRPCServer grpc = 4;
+}

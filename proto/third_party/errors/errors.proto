@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package errors;
+
+option go_package = "github.com/go-kratos/kratos/v2/errors;errors";
+option java_multiple_files = true;
+option java_package = "com.github.kratos.errors";
+option objc_class_prefix = "KratosErrors";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.EnumOptions {
+  int32 default_code = 1108;
+}
+
+message Metadata {
+  string key = 1;
+  string value = 2;
+  string defaultValue = 3;
+}
+
+message BizReason {
+  string reason = 1;
+  string message = 2;
+  repeated Metadata metadata = 3;
+}
+
+extend google.protobuf.EnumValueOptions {
+  int32 code = 1109;
+  string message = 1110;
+  string id = 1111;
+  repeated Metadata metadata = 1112;
+  repeated BizReason biz_reason = 1113;
+}
