@@ -1,7 +1,7 @@
-// Package cmd is the root command for the Rabbit service
 //go:build wireinject
 // +build wireinject
 
+// Package cmd is the root command for the Rabbit service
 package cmd
 
 import (

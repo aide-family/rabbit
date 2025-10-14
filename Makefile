@@ -7,12 +7,12 @@ ifeq ($(GOHOSTOS), windows)
 	#to see https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/find.
 	#changed to use git-bash.exe to run find cli or other cli friendly, caused of every developer has a Git.
 	Git_Bash=$(subst \,/,$(subst cmd\,bin\bash.exe,$(dir $(shell where git))))
-	API_PROTO_FILES=$(shell $(Git_Bash) -c "find proto/api -name *.proto")
+	API_PROTO_FILES=$(shell $(Git_Bash) -c "find proto/rabbit/api -name *.proto")
 	# Use mkdir -p equivalent for Windows
 	MKDIR=mkdir
 	RM=del /f /q
 else
-	API_PROTO_FILES=$(shell find proto/api -name *.proto)
+	API_PROTO_FILES=$(shell find proto/rabbit/api -name *.proto)
 	MKDIR=mkdir -p
 	RM=rm -f
 endif
@@ -45,20 +45,43 @@ conf:
 api:
 	@echo "Generating api files"
 	@if [ "$(GOHOSTOS)" = "windows" ]; then \
-		$(Git_Bash) -c "rm -rf ./api"; \
-		if [ ! -d "./api" ]; then $(MKDIR) ./api; fi \
+		$(Git_Bash) -c "rm -rf ./pkg/api"; \
+		if [ ! -d "./pkg/api" ]; then $(MKDIR) ./pkg/api; fi \
 	else \
-		rm -rf ./api; \
-		if [ ! -d "./api" ]; then $(MKDIR) ./api; fi \
+		rm -rf ./pkg/api; \
+		if [ ! -d "./pkg/api" ]; then $(MKDIR) ./pkg/api; fi \
 	fi
-	protoc --proto_path=./proto/api \
+	protoc --proto_path=./proto/rabbit/api \
 	       --proto_path=./proto/third_party \
- 	       --go_out=paths=source_relative:./api \
- 	       --go-http_out=paths=source_relative:./api \
- 	       --go-grpc_out=paths=source_relative:./api \
+ 	       --go_out=paths=source_relative:./pkg/api \
+ 	       --go-http_out=paths=source_relative:./pkg/api \
+ 	       --go-grpc_out=paths=source_relative:./pkg/api \
 	       --openapi_out=fq_schema_naming=true,default_response=false:./internal/server/swagger \
 	       --experimental_allow_proto3_optional \
 	       $(API_PROTO_FILES)
+
+.PHONY: i18n
+# i18n generate the i18n files
+i18n:
+	i18n-gen -O ./i18n/ -P ./proto/rabbit/**.proto -L en,zh -suffix Error
+
+.PHONY: errors
+# generate errors
+errors:
+	@echo "Generating errors"
+	@if [ "$(GOHOSTOS)" = "windows" ]; then \
+		$(Git_Bash) -c "rm -rf ./pkg/merr"; \
+		if [ ! -d "./pkg/merr" ]; then $(MKDIR) ./pkg/merr; fi \
+	else \
+		rm -rf ./pkg/merr; \
+		if [ ! -d "./pkg/merr" ]; then $(MKDIR) ./pkg/merr; fi \
+	fi
+	protoc --proto_path=./proto/rabbit/merr \
+           --proto_path=./proto/third_party \
+           --go_out=paths=source_relative:./pkg/merr \
+           --go-errors_out=paths=source_relative:./pkg/merr \
+           ./proto/rabbit/merr/*.proto
+	make i18n
 
 .PHONY: wire
 # generate the wire files
@@ -76,7 +99,7 @@ build:
 # run the rabbit binary in development mode
 dev:
 	@echo "Running rabbit in development mode"
-	go run . run
+	go run . run --swagger --metrics
 
 .PHONY: test
 # run the tests

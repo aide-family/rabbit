@@ -2,14 +2,17 @@ package server
 
 import (
 	"embed"
+	nethttp "net/http"
 
-	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/magicbox/server/middler"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/http"
+
+	"github.com/aide-family/rabbit/internal/conf"
 )
 
 //go:embed swagger
@@ -21,11 +24,17 @@ func NewHTTPServer(bc *conf.Bootstrap, helper *klog.Helper) *http.Server {
 	httpConf := serverConf.GetHttp()
 
 	opts := []http.ServerOption{
+		http.Filter(middler.Cors(&middler.CorsConfig{
+			AllowOrigins: []string{"*"},
+			AllowMethods: []string{nethttp.MethodGet, nethttp.MethodPost, nethttp.MethodPut, nethttp.MethodDelete, nethttp.MethodOptions},
+			MaxAge:       600,
+		})),
 		http.Middleware(
 			recovery.Recovery(),
 			logging.Server(helper.Logger()),
 			tracing.Server(),
 			metadata.Server(),
+			middler.Validate(),
 		),
 	}
 	if httpConf.GetNetwork() != "" {

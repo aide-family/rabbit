@@ -1,13 +1,15 @@
 package server
 
 import (
-	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/magicbox/server/middler"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/logging"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+
+	"github.com/aide-family/rabbit/internal/conf"
 )
 
 // NewGRPCServer new a gRPC server.
@@ -21,6 +23,7 @@ func NewGRPCServer(bc *conf.Bootstrap, helper *klog.Helper) *grpc.Server {
 			logging.Server(helper.Logger()),
 			tracing.Server(),
 			metadata.Server(),
+			middler.Validate(),
 		),
 	}
 	if grpcConf.GetNetwork() != "" {

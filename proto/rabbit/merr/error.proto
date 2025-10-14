@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package rabbit.merr;
+
+import "errors/errors.proto";
+
+option go_package = "github.com/aide-family/rabbit/pkg/merr;merr";
+option java_multiple_files = true;
+option java_package = "rabbit.merr";
+
+enum ClientError {
+	option (errors.default_code) = 400;
+
+	PARAMS = 0;
+	INTERNAL = 1;
+	NOT_FOUND = 2;
+	UNAUTHORIZED = 3 [(errors.code) = 401];
+	FORBIDDEN = 4 [(errors.code) = 403];
+	TOO_MANY_REQUESTS = 5 [(errors.code) = 429];
+}
+
+enum ServerError {
+	option (errors.default_code) = 500;
+
+	INTERNAL_SERVER = 0;
+ 	INVALID_ARGUMENT = 1;
+}

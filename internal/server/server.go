@@ -13,9 +13,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	apiv1 "github.com/aide-family/rabbit/api/v1"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
+	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
 // init initializes the json.MarshalOptions.

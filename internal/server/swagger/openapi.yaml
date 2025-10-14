@@ -17,10 +17,10 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/proto.api.v1.HealthCheckReply'
+                                $ref: '#/components/schemas/rabbit.api.v1.HealthCheckReply'
 components:
     schemas:
-        proto.api.v1.HealthCheckReply:
+        rabbit.api.v1.HealthCheckReply:
             type: object
             properties:
                 status:
