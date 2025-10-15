@@ -87,7 +87,7 @@ errors:
 # generate the wire files
 wire:
 	@echo "Generating wire files"
-	cd cmd && wire
+	wire ./...
 
 .PHONY: build
 # build the rabbit binary

@@ -1,8 +1,8 @@
 //go:build wireinject
 // +build wireinject
 
-// Package cmd is the root command for the Rabbit service
-package cmd
+// Package run is the run command for the Rabbit service
+package run
 
 import (
 	"github.com/go-kratos/kratos/v2"

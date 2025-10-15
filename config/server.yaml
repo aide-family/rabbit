@@ -1,13 +1,23 @@
-environment: DEV
-server:
-  name: rabbit
-  metadata:
-    version: 1.0.0
-  http:
-    address: 0.0.0.0:8080
-    network: tcp
-    timeout: 10s
-  grpc:
-    address: 0.0.0.0:9090
-    network: tcp
-    timeout: 10s
+# environment: DEV
+# server:
+#   name: rabbit
+#   metadata:
+#     version: 1.0.0
+#   http:
+#     address: 0.0.0.0:8080
+#     network: tcp
+#     timeout: 10s
+#   grpc:
+#     address: 0.0.0.0:9090
+#     network: tcp
+#     timeout: 10s
+
+# clusters:
+#   - name: rabbit01
+#     address: 127.0.0.1:8080
+#     protocol: HTTP
+#     timeout: 10s
+#   - name: rabbit02
+#     address: 127.0.0.1:9090
+#     protocol: GRPC
+#     timeout: 10s

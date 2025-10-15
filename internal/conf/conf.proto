@@ -9,13 +9,15 @@ option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 message Bootstrap {
 	Environment environment = 1;
 	Server server = 2;
+	repeated Cluster clusters = 3;
 }
 
 enum Environment {
 	UNKNOWN = 0;
 	DEV = 1;
 	TEST = 2;
-	PROD = 3;
+	PREVIEW = 3;
+	PROD = 4;
 }
 
 message Server {
@@ -35,4 +37,15 @@ message Server {
 	map<string, string> metadata = 2;
 	HTTPServer http = 3;
 	GRPCServer grpc = 4;
+}
+
+message Cluster {
+	enum Protocol {
+		GRPC = 0;
+		HTTP = 1;
+	}
+	string name = 1;
+	string address = 2;
+	Protocol protocol = 3;
+	google.protobuf.Duration timeout = 4;
 }
