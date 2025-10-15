@@ -12,6 +12,7 @@ import (
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
 	"github.com/aide-family/rabbit/cmd/run"
+	"github.com/aide-family/rabbit/cmd/send"
 	"github.com/aide-family/rabbit/cmd/version"
 )
 
@@ -32,6 +33,7 @@ func main() {
 		delete.NewCmd(),
 		get.NewCmd(),
 		run.NewCmd(),
+		send.NewCmd(),
 		version.NewCmd(),
 	}
 	cmd.Execute(rootCmd, children...)

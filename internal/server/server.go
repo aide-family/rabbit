@@ -75,8 +75,13 @@ func RegisterService(
 	httpSrv *http.Server,
 	grpcSrv *grpc.Server,
 	healthService *service.HealthService,
+	emailService *service.EmailService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
+	apiv1.RegisterEmailServer(grpcSrv, emailService)
+
 	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
+	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
+
 	return Servers{httpSrv, grpcSrv}
 }

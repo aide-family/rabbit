@@ -10,6 +10,7 @@ message Bootstrap {
 	Environment environment = 1;
 	Server server = 2;
 	repeated Cluster clusters = 3;
+	GlobalEmail global_email = 4;
 }
 
 enum Environment {
@@ -45,7 +46,15 @@ message Cluster {
 		HTTP = 1;
 	}
 	string name = 1;
-	string address = 2;
+	string endpoint = 2;
 	Protocol protocol = 3;
 	google.protobuf.Duration timeout = 4;
+	string secret = 5;
+}
+
+message GlobalEmail {
+	string host = 1;
+	int32 port = 2;
+	string username = 3;
+	string password = 4;
 }

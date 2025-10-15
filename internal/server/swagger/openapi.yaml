@@ -3,7 +3,7 @@
 
 openapi: 3.0.3
 info:
-    title: Health API
+    title: ""
     version: 0.0.1
 paths:
     /health:
@@ -18,8 +18,38 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.HealthCheckReply'
+    /v1/email/send:
+        post:
+            tags:
+                - Email
+            operationId: Email_SendEmail
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.SendEmailRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.SendEmailReply'
 components:
     schemas:
+        rabbit.api.v1.EmailConfig:
+            type: object
+            properties:
+                host:
+                    type: string
+                port:
+                    type: integer
+                    format: int32
+                username:
+                    type: string
+                password:
+                    type: string
         rabbit.api.v1.HealthCheckReply:
             type: object
             properties:
@@ -30,5 +60,36 @@ components:
                 timestamp:
                     type: string
                     format: date-time
+        rabbit.api.v1.SendEmailReply:
+            type: object
+            properties:
+                message:
+                    type: string
+        rabbit.api.v1.SendEmailRequest:
+            type: object
+            properties:
+                namespace:
+                    type: string
+                subject:
+                    type: string
+                body:
+                    type: string
+                to:
+                    type: array
+                    items:
+                        type: string
+                cc:
+                    type: array
+                    items:
+                        type: string
+                contentType:
+                    type: string
+                headers:
+                    type: array
+                    items:
+                        type: string
+                emailConfig:
+                    $ref: '#/components/schemas/rabbit.api.v1.EmailConfig'
 tags:
+    - name: Email
     - name: Health

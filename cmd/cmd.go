@@ -33,8 +33,7 @@ including message routing, delivery, and management features.`,
 			cmd.Help()
 		},
 	}
-	addFlags(rootCmd)
-
+	globalFlags.addFlags(rootCmd)
 	// Set custom help template to display commands in groups
 	rootCmd.SetHelpTemplate(customHelpTemplate)
 	rootCmd.SetUsageTemplate(customUsageTemplate)
@@ -45,10 +44,6 @@ including message routing, delivery, and management features.`,
 	})
 
 	return rootCmd
-}
-
-func addFlags(cmd *cobra.Command) {
-	globalFlags.addFlags(cmd)
 }
 
 // customHelpTemplate is the custom help template that groups commands
@@ -147,8 +142,7 @@ func getCommandGroup(cmd *cobra.Command) string {
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute(cmd *cobra.Command, children ...*cobra.Command) {
 	cmd.AddCommand(children...)
-	err := cmd.Execute()
-	if err != nil {
+	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
 	}
 }

@@ -31,7 +31,9 @@ func NewCmd() *cobra.Command {
 
 func runServer(cmd *cobra.Command, args []string) {
 	var bc conf.Bootstrap
-	load.Load(flags.configPath, &bc)
+	if err := load.Load(flags.configPath, &bc); err != nil {
+		panic(err)
+	}
 	flags.applyToBootstrap(&bc)
 
 	logger, err := log.NewLogger(stdio.LoggerDriver())
