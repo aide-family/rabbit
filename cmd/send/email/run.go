@@ -29,29 +29,26 @@ func run(cmd *cobra.Command, args []string) {
 	}
 	helper := klog.NewHelper(logger)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	req := &apiv1.SendEmailRequest{
-		Namespace:   flags.Namespace,
-		Subject:     flags.Subject,
-		Body:        flags.Body,
-		To:          flags.To,
-		Cc:          flags.Cc,
-		ContentType: flags.ContentType,
-		Headers:     flags.Headers,
+	req, err := flags.parseRequestParams()
+	if err != nil {
+		helper.Errorw("msg", "parse request params failed", "error", err)
+		return
 	}
+
 	for _, cluster := range bc.GetClusters() {
-		sender, err := NewSender(cluster)
+		name, protocol := cluster.GetName(), cluster.GetProtocol()
+		sender, err := NewSender(cluster, helper)
 		if err != nil {
-			helper.Warn(err)
+			helper.Warnw("msg", "new sender failed", "cluster", name, "protocol", protocol, "error", err)
 			continue
 		}
-		reply, err := sender.SendEmail(ctx, req)
+		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
-			helper.Warn(err)
+			helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
 			continue
 		}
-		helper.Info(reply)
+
+		helper.Infow("msg", "send email success", "cluster", name, "protocol", protocol, "reply", reply)
 		return
 	}
 	// 没有可用的节点，退出
@@ -63,39 +60,56 @@ type Sender interface {
 }
 
 type sender struct {
-	call func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error)
+	helper   *klog.Helper
+	name     string
+	protocol conf.Cluster_Protocol
+	timeout  time.Duration
+	call     func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error)
+	close    func() error
 }
 
 // SendEmail implements Sender.
 func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
+	defer s.close()
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster *conf.Cluster) (Sender, error) {
-	switch cluster.GetProtocol() {
+func NewSender(cluster *conf.Cluster, helper *klog.Helper) (Sender, error) {
+	name, protocol := cluster.GetName(), cluster.GetProtocol()
+	newSender := &sender{
+		helper:   helper,
+		name:     name,
+		protocol: protocol,
+		timeout:  cluster.GetTimeout().AsDuration(),
+		close:    func() error { return nil },
+		call: func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
+			helper.Errorw("msg", "unknown protocol", "cluster", name, "protocol", protocol)
+			return nil, merr.ErrorInternalServer("cluster %s unknown protocol %s", name, protocol)
+		},
+	}
+	switch newSender.protocol {
 	case conf.Cluster_GRPC:
 		grpcClient, err := connect.InitGRPCClient(cluster)
 		if err != nil {
-			return nil, err
+			helper.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "protocol", protocol, "error", err)
+			return nil, merr.ErrorInternalServer("failed to initialize GRPC client").WithCause(err)
 		}
-		emailService := apiv1.NewEmailClient(grpcClient)
-		return &sender{
-			call: func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
-				return emailService.SendEmail(ctx, in)
-			},
-		}, nil
+		newSender.close = grpcClient.Close
+		newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
+			return apiv1.NewEmailClient(grpcClient).SendEmail(ctx, in)
+		}
 	case conf.Cluster_HTTP:
 		httpClient, err := connect.InitHTTPClient(cluster)
 		if err != nil {
-			return nil, err
+			helper.Errorw("msg", "cluster HTTP client initialization failed", "cluster", name, "protocol", protocol, "error", err)
+			return nil, merr.ErrorInternalServer("failed to initialize HTTP client").WithCause(err)
 		}
-		emailService := apiv1.NewEmailHTTPClient(httpClient)
-		return &sender{
-			call: func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
-				return emailService.SendEmail(ctx, in)
-			},
-		}, nil
-	default:
-		return nil, merr.ErrorInternalServer("unknown protocol")
+		newSender.close = httpClient.Close
+		newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
+			return apiv1.NewEmailHTTPClient(httpClient).SendEmail(ctx, in)
+		}
 	}
+	return newSender, nil
 }
