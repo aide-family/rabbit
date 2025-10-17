@@ -37,16 +37,17 @@ func (s Servers) BindSwagger(enableSwagger bool, helper *klog.Helper) {
 	if !enableSwagger {
 		return
 	}
-	doc := nethttp.FS(docFS)
+
 	httSrv, ok := s[0].(*http.Server)
 	if !ok {
 		return
 	}
-	httSrv.HandlePrefix("/doc/", nethttp.StripPrefix("/doc/", nethttp.FileServer(doc)))
+
 	endpoint, err := httSrv.Endpoint()
 	if err != nil {
 		return
 	}
+	httSrv.HandlePrefix("/doc/", nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS))))
 	helper.Infof("[Swagger] endpoint: %s/doc/swagger", endpoint)
 }
 
@@ -59,11 +60,11 @@ func (s Servers) BindMetrics(enableMetrics bool, helper *klog.Helper) {
 		return
 	}
 
-	httSrv.Handle("/metrics", promhttp.Handler())
 	endpoint, err := httSrv.Endpoint()
 	if err != nil {
 		return
 	}
+	httSrv.Handle("/metrics", promhttp.Handler())
 	helper.Infof("[Metrics] endpoint: %s/metrics", endpoint)
 }
 

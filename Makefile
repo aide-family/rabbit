@@ -32,13 +32,31 @@ init:
 
 .PHONY: conf
 # generate the conf files
-conf:
+conf: config
 	@echo "Generating conf files"
 	protoc --proto_path=./internal/conf \
+           --proto_path=./proto/rabbit \
            --proto_path=./proto/third_party \
            --go_out=paths=source_relative:./internal/conf \
            --experimental_allow_proto3_optional \
            ./internal/conf/*.proto
+
+.PHONY: config
+# generate the config files
+config:
+	@echo "Generating config files"
+	@if [ "$(GOHOSTOS)" = "windows" ]; then \
+		$(Git_Bash) -c "rm -rf ./pkg/config"; \
+		if [ ! -d "./pkg/config" ]; then $(MKDIR) ./pkg/config; fi \
+	else \
+		rm -rf ./pkg/config; \
+		if [ ! -d "./pkg/config" ]; then $(MKDIR) ./pkg/config; fi \
+	fi
+	protoc --proto_path=./proto/rabbit/config \
+	       --proto_path=./proto/third_party \
+	       --go_out=paths=source_relative:./pkg/config \
+	       --experimental_allow_proto3_optional \
+	       ./proto/rabbit/config/*.proto
 
 .PHONY: api
 # generate the api files

@@ -3,8 +3,8 @@ package email
 import (
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/cmd"
-	"github.com/aide-family/rabbit/internal/conf"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
+	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
-	c.Flags().StringVar(&f.configPath, "config", "~/.rabbit/config", "The config of the email")
+	c.Flags().StringVar(&f.configPath, "config", "~/.rabbit", "The config of the email")
 	c.Flags().StringVarP(&f.Subject, "subject", "s", "", "The subject of the email")
 	c.Flags().StringVarP(&f.Body, "body", "b", "", "The body of the email")
 	c.Flags().StringSliceVarP(&f.To, "to", "t", []string{}, "The to of the email, example: --to=user1@example.com --to=user2@example.com")
@@ -47,7 +47,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 }`)
 }
 
-func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
+func (f *Flags) applyToBootstrap(bc *config.ClientConfig) {
 }
 
 func (f *Flags) parseRequestParams() (*apiv1.SendEmailRequest, error) {

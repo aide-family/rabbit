@@ -54,12 +54,16 @@ func runServer(cmd *cobra.Command, args []string) {
 func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *kratos.App {
 	defer hello.Hello()
 	serverConf := bc.GetServer()
+	metadata := serverConf.GetMetadata()
+	metadata["repository"] = "https://github.com/aide-family/rabbit"
+	metadata["author"] = "Aide Family"
+	metadata["email"] = "1058165620@qq.com"
 	envOpts := []hello.Option{
 		hello.WithVersion(flags.Version),
 		hello.WithID(flags.Hostname),
 		hello.WithName(serverConf.GetName()),
 		hello.WithEnv(bc.GetEnvironment().String()),
-		hello.WithMetadata(serverConf.GetMetadata()),
+		hello.WithMetadata(metadata),
 	}
 	hello.SetEnvWithOption(envOpts...)
 

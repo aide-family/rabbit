@@ -10,15 +10,15 @@ import (
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
-	"github.com/aide-family/rabbit/internal/conf"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
+	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func run(cmd *cobra.Command, args []string) {
-	var bc conf.Bootstrap
-	if err := load.Load(flags.configPath, &bc); err != nil {
+	var bc config.ClientConfig
+	if err := load.Load(load.ExpandHomeDir(flags.configPath), &bc); err != nil {
 		panic(err)
 	}
 
@@ -34,15 +34,14 @@ func run(cmd *cobra.Command, args []string) {
 		helper.Errorw("msg", "parse request params failed", "error", err)
 		return
 	}
-
+	ctx := context.Background()
 	for _, cluster := range bc.GetClusters() {
-		name, protocol := cluster.GetName(), cluster.GetProtocol()
-		sender, err := NewSender(cluster, helper)
+		sender, err := NewSender(cluster, bc.GetJwtToken(), helper)
 		if err != nil {
-			helper.Warnw("msg", "new sender failed", "cluster", name, "protocol", protocol, "error", err)
 			continue
 		}
-		reply, err := sender.SendEmail(context.Background(), req)
+		name, protocol := cluster.GetName(), cluster.GetProtocol()
+		reply, err := sender.SendEmail(ctx, req)
 		if err != nil {
 			helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
 			continue
@@ -62,7 +61,7 @@ type Sender interface {
 type sender struct {
 	helper   *klog.Helper
 	name     string
-	protocol conf.Cluster_Protocol
+	protocol config.Cluster_Protocol
 	timeout  time.Duration
 	call     func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error)
 	close    func() error
@@ -76,8 +75,8 @@ func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*ap
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster *conf.Cluster, helper *klog.Helper) (Sender, error) {
-	name, protocol := cluster.GetName(), cluster.GetProtocol()
+func NewSender(cluster *config.Cluster, token string, helper *klog.Helper) (Sender, error) {
+	name, protocol, secret := cluster.GetName(), cluster.GetProtocol(), cluster.GetSecret()
 	newSender := &sender{
 		helper:   helper,
 		name:     name,
@@ -89,9 +88,14 @@ func NewSender(cluster *conf.Cluster, helper *klog.Helper) (Sender, error) {
 			return nil, merr.ErrorInternalServer("cluster %s unknown protocol %s", name, protocol)
 		},
 	}
+	opts := []connect.InitOption{
+		connect.WithProtocol(newSender.protocol.String()),
+		connect.WithSecret(secret),
+		connect.WithToken(token),
+	}
 	switch newSender.protocol {
-	case conf.Cluster_GRPC:
-		grpcClient, err := connect.InitGRPCClient(cluster)
+	case config.Cluster_GRPC:
+		grpcClient, err := connect.InitGRPCClient(cluster, opts...)
 		if err != nil {
 			helper.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "protocol", protocol, "error", err)
 			return nil, merr.ErrorInternalServer("failed to initialize GRPC client").WithCause(err)
@@ -100,8 +104,8 @@ func NewSender(cluster *conf.Cluster, helper *klog.Helper) (Sender, error) {
 		newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
 			return apiv1.NewEmailClient(grpcClient).SendEmail(ctx, in)
 		}
-	case conf.Cluster_HTTP:
-		httpClient, err := connect.InitHTTPClient(cluster)
+	case config.Cluster_HTTP:
+		httpClient, err := connect.InitHTTPClient(cluster, opts...)
 		if err != nil {
 			helper.Errorw("msg", "cluster HTTP client initialization failed", "cluster", name, "protocol", protocol, "error", err)
 			return nil, merr.ErrorInternalServer("failed to initialize HTTP client").WithCause(err)

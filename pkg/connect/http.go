@@ -10,20 +10,21 @@ import (
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/filter"
 	"github.com/go-kratos/kratos/v2/selector/wrr"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
 func InitHTTPClient(c InitConfig, opts ...InitOption) (*http.Client, error) {
-	cfg := NewInitConfig(c, opts...)
-	if strings.EqualFold(strings.ToUpper(cfg.protocol), ProtocolHTTP) {
-		return nil, merr.ErrorInternalServer("network is not http")
+	cfg, err := NewInitConfig(c, opts...)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.EqualFold(strings.ToUpper(cfg.protocol), ProtocolHTTP) {
+		return nil, merr.ErrorInternalServer("protocol is not HTTP, got %s", cfg.protocol)
 	}
 	middlewares := []middleware.Middleware{
 		recovery.Recovery(),
@@ -31,9 +32,7 @@ func InitHTTPClient(c InitConfig, opts ...InitOption) (*http.Client, error) {
 		metadata.Client(),
 	}
 	if strutil.IsNotEmpty(cfg.secret) {
-		middlewares = append(middlewares, jwt.Client(func(token *jwtv5.Token) (interface{}, error) {
-			return []byte(cfg.secret), nil
-		}))
+		middlewares = append(middlewares, getJwtClientMiddleware(cfg.secret, cfg.claim))
 	}
 
 	clientOpts := []http.ClientOption{

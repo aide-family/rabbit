@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package rabbit.config;
+
+import "google/protobuf/duration.proto";
+
+option go_package = "github.com/aide-family/rabbit/pkg/config;config";
+
+message ClientConfig {
+	repeated Cluster clusters = 1;
+	string jwtToken = 2;
+}
+
+message Cluster {
+	enum Protocol {
+		GRPC = 0;
+		HTTP = 1;
+	}
+	string name = 1;
+	string endpoint = 2;
+	Protocol protocol = 3;
+	google.protobuf.Duration timeout = 4;
+	string secret = 5;
+}

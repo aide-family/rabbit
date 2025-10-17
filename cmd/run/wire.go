@@ -9,6 +9,7 @@ import (
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 
+	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/server"
 	"github.com/aide-family/rabbit/internal/service"
@@ -18,6 +19,7 @@ func wireApp(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), erro
 	panic(wire.Build(
 		server.ProviderSetServer,
 		service.ProviderSetService,
+		biz.ProviderSetBiz,
 		newApp,
 	))
 }

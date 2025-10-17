@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package rabbit.api.v1;
+
+import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "rabbit.api.v1";
+
+service Namespace {
+	rpc CreateNamespace (CreateNamespaceRequest) returns (CreateNamespaceReply) {
+		option (google.api.http) = {
+			post: "/v1/namespace"
+			body: "*"
+		};
+	}
+	rpc DeleteNamespace (DeleteNamespaceRequest) returns (DeleteNamespaceReply) {
+		option (google.api.http) = {
+			delete: "/v1/namespace/{name}"
+		};
+	}
+	rpc GetNamespace (GetNamespaceRequest) returns (GetNamespaceReply) {
+		option (google.api.http) = {
+			get: "/v1/namespace/{name}"
+		};
+	}
+	rpc ListNamespace (ListNamespaceRequest) returns (ListNamespaceReply) {
+		option (google.api.http) = {
+			get: "/v1/namespaces"
+		};
+	}
+}
+
+message CreateNamespaceRequest {
+	string name = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "name is empty",
+	},  (buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "name is too long, must be less than 100 characters",
+	}];
+	map<string, string> metadata = 2;
+}
+message CreateNamespaceReply {}
+
+message DeleteNamespaceRequest {
+	string name = 1 [(buf.validate.field).required = true];
+}
+message DeleteNamespaceReply {}
+
+message GetNamespaceRequest {
+	string name = 1 [(buf.validate.field).required = true];
+}
+message GetNamespaceReply {}
+
+message ListNamespaceRequest {
+	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1",
+		message: "page must be greater than or equal to 1",
+	}];
+	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+	}];
+}
+message ListNamespaceReply {
+	repeated NamespaceItem namespaces = 1;
+}
+
+message NamespaceItem {
+	string name = 1;
+	map<string, string> metadata = 2;
+}

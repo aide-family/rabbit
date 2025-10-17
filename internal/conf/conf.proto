@@ -3,14 +3,16 @@ syntax = "proto3";
 package internal.conf;
 
 import "google/protobuf/duration.proto";
+import "config/config.proto";
 
 option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 
 message Bootstrap {
 	Environment environment = 1;
 	Server server = 2;
-	repeated Cluster clusters = 3;
-	GlobalEmail global_email = 4;
+	repeated rabbit.config.Cluster clusters = 3;
+	GlobalEmail globalEmail = 4;
+	JWT jwt = 5;
 }
 
 enum Environment {
@@ -40,21 +42,16 @@ message Server {
 	GRPCServer grpc = 4;
 }
 
-message Cluster {
-	enum Protocol {
-		GRPC = 0;
-		HTTP = 1;
-	}
-	string name = 1;
-	string endpoint = 2;
-	Protocol protocol = 3;
-	google.protobuf.Duration timeout = 4;
-	string secret = 5;
-}
-
 message GlobalEmail {
 	string host = 1;
 	int32 port = 2;
 	string username = 3;
 	string password = 4;
+}
+
+message JWT {
+	string secret = 1;
+	repeated string allowList = 2;
+	google.protobuf.Duration expire = 3;
+	string issuer = 4;
 }

@@ -3,7 +3,11 @@ package connect
 import (
 	"time"
 
+	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
+	"github.com/go-kratos/kratos/v2/middleware"
+	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/registry"
+	jwtv5 "github.com/golang-jwt/jwt/v5"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -26,43 +30,73 @@ type initConfig struct {
 	nodeVersion string
 	secret      string
 	discovery   registry.Discovery
+	claim       *rabbitMiddler.JwtClaims
 }
 
-func NewInitConfig(config InitConfig, opts ...InitOption) *initConfig {
+func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
 	cfg := &initConfig{
 		name:     config.GetName(),
 		endpoint: config.GetEndpoint(),
 		protocol: ProtocolGRPC,
 		timeout:  config.GetTimeout().AsDuration(),
+		claim:    &rabbitMiddler.JwtClaims{},
 	}
 	for _, opt := range opts {
-		opt(cfg)
+		if err := opt(cfg); err != nil {
+			return nil, err
+		}
 	}
-	return cfg
+	return cfg, nil
 }
 
-type InitOption func(*initConfig)
+type InitOption func(*initConfig) error
 
 func WithNodeVersion(version string) InitOption {
-	return func(cfg *initConfig) {
+	return func(cfg *initConfig) error {
 		cfg.nodeVersion = version
+		return nil
 	}
 }
 
 func WithDiscovery(discovery registry.Discovery) InitOption {
-	return func(cfg *initConfig) {
+	return func(cfg *initConfig) error {
 		cfg.discovery = discovery
+		return nil
 	}
 }
 
 func WithSecret(secret string) InitOption {
-	return func(cfg *initConfig) {
+	return func(cfg *initConfig) error {
 		cfg.secret = secret
+		return nil
 	}
 }
 
 func WithProtocol(protocol string) InitOption {
-	return func(cfg *initConfig) {
+	return func(cfg *initConfig) error {
 		cfg.protocol = protocol
+		return nil
 	}
+}
+
+func WithToken(token string) InitOption {
+	return func(cfg *initConfig) error {
+		claims, err := rabbitMiddler.ParseClaimsFromToken(cfg.secret, token)
+		if err != nil {
+			return err
+		}
+		cfg.claim = claims
+		return nil
+	}
+}
+
+func getJwtClientMiddleware(secret string, claims *rabbitMiddler.JwtClaims) middleware.Middleware {
+	return jwt.Client(func(token *jwtv5.Token) (interface{}, error) {
+		return []byte(secret), nil
+	},
+		jwt.WithSigningMethod(jwtv5.SigningMethodHS256),
+		jwt.WithClaims(func() jwtv5.Claims {
+			return claims
+		}),
+	)
 }
