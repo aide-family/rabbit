@@ -64,8 +64,7 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *krato
 	metadata["email"] = "1058165620@qq.com"
 	envOpts := []hello.Option{
 		hello.WithVersion(flags.Version),
-		// hello.WithID(flags.Hostname),
-		hello.WithID(time.Now().Format("20060102150405")),
+		hello.WithID(flags.Hostname),
 		hello.WithName(serverConf.GetName()),
 		hello.WithEnv(bc.GetEnvironment().String()),
 		hello.WithMetadata(metadata),

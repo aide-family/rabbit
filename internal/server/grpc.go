@@ -29,24 +29,25 @@ func NewGRPCServer(bc *conf.Bootstrap, helper *klog.Helper) *grpc.Server {
 	}
 	authMiddleware := selector.Server(selectorMiddlewares...).Match(middler.AllowListMatcher(jwtConf.GetAllowList()...)).Build()
 
+	grpcMiddlewares := []middleware.Middleware{
+		recovery.Recovery(),
+		logging.Server(helper.Logger()),
+		tracing.Server(),
+		metadata.Server(),
+		authMiddleware,
+		middler.Validate(),
+	}
 	opts := []grpc.ServerOption{
-		grpc.Middleware(
-			recovery.Recovery(),
-			logging.Server(helper.Logger()),
-			tracing.Server(),
-			metadata.Server(),
-			authMiddleware,
-			middler.Validate(),
-		),
+		grpc.Middleware(grpcMiddlewares...),
 	}
-	if grpcConf.GetNetwork() != "" {
-		opts = append(opts, grpc.Network(grpcConf.GetNetwork()))
+	if network := grpcConf.GetNetwork(); network != "" {
+		opts = append(opts, grpc.Network(network))
 	}
-	if grpcConf.GetAddress() != "" {
-		opts = append(opts, grpc.Address(grpcConf.GetAddress()))
+	if address := grpcConf.GetAddress(); address != "" {
+		opts = append(opts, grpc.Address(address))
 	}
-	if grpcConf.GetTimeout() != nil {
-		opts = append(opts, grpc.Timeout(grpcConf.GetTimeout().AsDuration()))
+	if timeout := grpcConf.GetTimeout(); timeout != nil {
+		opts = append(opts, grpc.Timeout(timeout.AsDuration()))
 	}
 	srv := grpc.NewServer(opts...)
 

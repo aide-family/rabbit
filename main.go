@@ -11,6 +11,7 @@ import (
 	"github.com/aide-family/rabbit/cmd/apply"
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
+	"github.com/aide-family/rabbit/cmd/gorm"
 	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/cmd/send"
 	"github.com/aide-family/rabbit/cmd/version"
@@ -35,6 +36,7 @@ func main() {
 		run.NewCmd(),
 		send.NewCmd(),
 		version.NewCmd(),
+		gorm.NewCmd(),
 	}
 	cmd.Execute(rootCmd, children...)
 }

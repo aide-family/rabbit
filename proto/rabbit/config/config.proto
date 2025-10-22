@@ -29,3 +29,14 @@ message ETCD {
 	string username = 2;
 	string password = 3;
 }
+
+message MySQL {
+	string username = 1;
+	string password = 2;
+	string host     = 3;
+	int32 port     = 4;
+	string database = 5;
+	string charset  = 6;
+	string parseTime = 7;
+	string loc = 8;
+}

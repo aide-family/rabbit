@@ -18,6 +18,8 @@ import (
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
+var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService)
+
 // init initializes the json.MarshalOptions.
 func init() {
 	json.MarshalOptions = protojson.MarshalOptions{
@@ -67,8 +69,6 @@ func (s Servers) BindMetrics(enableMetrics bool, helper *klog.Helper) {
 	httSrv.Handle("/metrics", promhttp.Handler())
 	helper.Infof("[Metrics] endpoint: %s/metrics", endpoint)
 }
-
-var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService)
 
 // RegisterService registers the service.
 func RegisterService(

@@ -2,7 +2,6 @@ package server
 
 import (
 	"embed"
-	nethttp "net/http"
 
 	"github.com/aide-family/magicbox/server/middler"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -35,29 +34,27 @@ func NewHTTPServer(bc *conf.Bootstrap, helper *klog.Helper) *http.Server {
 	}
 	authMiddleware := selector.Server(selectorMiddlewares...).Match(middler.AllowListMatcher(jwtConf.GetAllowList()...)).Build()
 
+	httpMiddlewares := []middleware.Middleware{
+		recovery.Recovery(),
+		logging.Server(helper.Logger()),
+		tracing.Server(),
+		metadata.Server(),
+		authMiddleware,
+		middler.Validate(),
+	}
+
 	opts := []http.ServerOption{
-		http.Filter(middler.Cors(&middler.CorsConfig{
-			AllowOrigins: []string{"*"},
-			AllowMethods: []string{nethttp.MethodGet, nethttp.MethodPost, nethttp.MethodPut, nethttp.MethodDelete, nethttp.MethodOptions},
-			MaxAge:       600,
-		})),
-		http.Middleware(
-			recovery.Recovery(),
-			logging.Server(helper.Logger()),
-			tracing.Server(),
-			metadata.Server(),
-			authMiddleware,
-			middler.Validate(),
-		),
+		rabbitMiddler.Cors(),
+		http.Middleware(httpMiddlewares...),
 	}
-	if httpConf.GetNetwork() != "" {
-		opts = append(opts, http.Network(httpConf.GetNetwork()))
+	if network := httpConf.GetNetwork(); network != "" {
+		opts = append(opts, http.Network(network))
 	}
-	if httpConf.GetAddress() != "" {
-		opts = append(opts, http.Address(httpConf.GetAddress()))
+	if address := httpConf.GetAddress(); address != "" {
+		opts = append(opts, http.Address(address))
 	}
-	if httpConf.GetTimeout() != nil {
-		opts = append(opts, http.Timeout(httpConf.GetTimeout().AsDuration()))
+	if timeout := httpConf.GetTimeout(); timeout != nil {
+		opts = append(opts, http.Timeout(timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
 
