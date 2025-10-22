@@ -18,21 +18,21 @@ type GlobalFlags struct {
 
 	Namespace string `json:"-" yaml:"-"`
 
-	rabbitConfigPath string `json:"-" yaml:"-"`
+	RabbitConfigPath string `json:"-" yaml:"-"`
 }
 
 func (g *GlobalFlags) addFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&g.Name, "name", "Rabbit", "The name of the service")
-	cmd.PersistentFlags().StringVar(&g.Author, "author", "Aide Family", "The author of the service")
-	cmd.PersistentFlags().StringVar(&g.Github, "github", "https://github.com/aide-family/rabbit", "The github of the service")
-	cmd.PersistentFlags().StringVar(&g.Hostname, "hostname", hostname, "The hostname of the service")
 	cmd.PersistentFlags().StringVarP(&g.Namespace, "namespace", "n", "", "The namespace of the service")
-	cmd.PersistentFlags().StringVar(&g.rabbitConfigPath, "rabbit-config", "~/.rabbit/config", "The config file of the rabbit")
+	cmd.PersistentFlags().StringVar(&g.RabbitConfigPath, "rabbit-config", "~/.rabbit", "The config file of the rabbit")
 }
 
 type GlobalOption func(*GlobalFlags)
 
-var globalFlags GlobalFlags
+var globalFlags GlobalFlags = GlobalFlags{
+	Author:   "Aide Family",
+	Github:   "https://github.com/aide-family/rabbit",
+	Hostname: hostname,
+}
 
 func GetGlobalFlags() GlobalFlags {
 	return globalFlags

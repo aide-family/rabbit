@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aide-family/magicbox/strutil/cnst"
-	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 )
@@ -23,13 +22,11 @@ func BindNamespace() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
 			var namespace string
-			if md, ok := metadata.FromServerContext(ctx); ok {
-				namespace = md.Get(cnst.MetadataGlobalKeyNamespace)
-			} else if tr, ok := transport.FromServerContext(ctx); ok {
+			if tr, ok := transport.FromServerContext(ctx); ok {
 				namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
+				ctx = WithNamespace(ctx, namespace)
 			}
 
-			ctx = WithNamespace(ctx, namespace)
 			return handler(ctx, req)
 		}
 	}

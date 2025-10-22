@@ -35,3 +35,7 @@ go.work.sum
 # generated files
 *.pb.go
 *_gen.go
+
+
+# deploy
+deploy/*/data

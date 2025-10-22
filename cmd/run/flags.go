@@ -51,6 +51,10 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 		}
 	}
 	httpConf := bc.GetServer().GetHttp()
+	if pointer.IsNil(httpConf) {
+		httpConf = &conf.Server_HTTPServer{}
+		bc.Server.Http = httpConf
+	}
 	if strutil.IsEmpty(httpConf.Address) {
 		httpConf.Address = f.httpAddress
 	}
@@ -64,6 +68,10 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 		}
 	}
 	grpcConf := bc.GetServer().GetGrpc()
+	if pointer.IsNil(grpcConf) {
+		grpcConf = &conf.Server_GRPCServer{}
+		bc.Server.Grpc = grpcConf
+	}
 	if strutil.IsEmpty(grpcConf.Address) {
 		grpcConf.Address = f.grpcAddress
 	}
@@ -75,7 +83,6 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 		if pointer.IsNil(err) {
 			grpcConf.Timeout = durationpb.New(timeout)
 		}
-
 	}
 	if bc.Environment == conf.Environment_UNKNOWN {
 		e, ok := conf.Environment_value[f.environment]

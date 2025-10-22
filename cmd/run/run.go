@@ -2,13 +2,17 @@
 package run
 
 import (
+	"time"
+
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/stdio"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
@@ -60,16 +64,33 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *krato
 	metadata["email"] = "1058165620@qq.com"
 	envOpts := []hello.Option{
 		hello.WithVersion(flags.Version),
-		hello.WithID(flags.Hostname),
+		// hello.WithID(flags.Hostname),
+		hello.WithID(time.Now().Format("20060102150405")),
 		hello.WithName(serverConf.GetName()),
 		hello.WithEnv(bc.GetEnvironment().String()),
 		hello.WithMetadata(metadata),
 	}
 	hello.SetEnvWithOption(envOpts...)
 
+	etcdConfig := bc.GetEtcd()
+	client, err := clientv3.New(clientv3.Config{
+		Endpoints:   etcdConfig.GetEndpoints(),
+		Username:    etcdConfig.GetUsername(),
+		Password:    etcdConfig.GetPassword(),
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		panic(err)
+	}
+	registrar := etcd.New(client)
 	opts := []kratos.Option{
 		kratos.Logger(helper.Logger()),
 		kratos.Server(srvs...),
+		kratos.Registrar(registrar),
+		kratos.Version(hello.Version()),
+		kratos.ID(hello.ID()),
+		kratos.Name(hello.Name()),
+		kratos.Metadata(metadata),
 	}
 	srvs.BindSwagger(flags.enableSwagger, helper)
 	srvs.BindMetrics(flags.enableMetrics, helper)

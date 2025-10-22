@@ -12,8 +12,6 @@ import (
 type Flags struct {
 	cmd.GlobalFlags
 
-	configPath string
-
 	Subject     string   `json:"subject" yaml:"subject"`
 	Body        string   `json:"body" yaml:"body"`
 	To          []string `json:"to" yaml:"to"`
@@ -29,7 +27,6 @@ var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
-	c.Flags().StringVar(&f.configPath, "config", "~/.rabbit", "The config of the email")
 	c.Flags().StringVarP(&f.Subject, "subject", "s", "", "The subject of the email")
 	c.Flags().StringVarP(&f.Body, "body", "b", "", "The body of the email")
 	c.Flags().StringSliceVarP(&f.To, "to", "t", []string{}, "The to of the email, example: --to=user1@example.com --to=user2@example.com")
@@ -37,7 +34,6 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	c.Flags().StringVar(&f.ContentType, "content-type", "text/plain", "The content type of the email")
 	c.Flags().StringSliceVarP(&f.Headers, "header", "H", []string{}, "The headers of the email, example: --header=X-Custom-Header:value --header=X-Another-Header:value")
 	c.Flags().StringVarP(&f.JSON, "json", "j", "", `{
-	"namespace": "default",
 	"subject": "Test Email",
 	"body": "This is a test email",
 	"to": ["user1@example.com", "user2@example.com"],
@@ -66,5 +62,6 @@ func (f *Flags) parseRequestParams() (*apiv1.SendEmailRequest, error) {
 	if err := encoding.GetCodec("json").Unmarshal([]byte(f.JSON), &requestParams); err != nil {
 		return nil, err
 	}
+	requestParams.Namespace = f.Namespace
 	return &requestParams, nil
 }

@@ -7,8 +7,12 @@ import (
 	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/stdio"
+	"github.com/aide-family/magicbox/pointer"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/spf13/cobra"
+	clientv3 "go.etcd.io/etcd/client/v3"
 
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/config"
@@ -18,7 +22,7 @@ import (
 
 func run(cmd *cobra.Command, args []string) {
 	var bc config.ClientConfig
-	if err := load.Load(load.ExpandHomeDir(flags.configPath), &bc); err != nil {
+	if err := load.Load(load.ExpandHomeDir(flags.RabbitConfigPath), &bc); err != nil {
 		panic(err)
 	}
 
@@ -34,14 +38,28 @@ func run(cmd *cobra.Command, args []string) {
 		helper.Errorw("msg", "parse request params failed", "error", err)
 		return
 	}
-	ctx := context.Background()
+	var discovery registry.Discovery
+	if pointer.IsNotNil(bc.GetEtcd()) {
+		client, err := clientv3.New(clientv3.Config{
+			Endpoints:   bc.GetEtcd().GetEndpoints(),
+			Username:    bc.GetEtcd().GetUsername(),
+			Password:    bc.GetEtcd().GetPassword(),
+			DialTimeout: 10 * time.Second,
+		})
+		if err != nil {
+			helper.Errorw("msg", "etcd client initialization failed", "error", err)
+			return
+		}
+		discovery = etcd.New(client)
+	}
+
 	for _, cluster := range bc.GetClusters() {
-		sender, err := NewSender(cluster, bc.GetJwtToken(), helper)
+		sender, err := NewSender(cluster, discovery, bc.GetJwtToken(), helper)
 		if err != nil {
 			continue
 		}
 		name, protocol := cluster.GetName(), cluster.GetProtocol()
-		reply, err := sender.SendEmail(ctx, req)
+		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
 			helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
 			continue
@@ -75,7 +93,7 @@ func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*ap
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster *config.Cluster, token string, helper *klog.Helper) (Sender, error) {
+func NewSender(cluster *config.Cluster, discovery registry.Discovery, token string, helper *klog.Helper) (Sender, error) {
 	name, protocol, secret := cluster.GetName(), cluster.GetProtocol(), cluster.GetSecret()
 	newSender := &sender{
 		helper:   helper,
@@ -92,6 +110,7 @@ func NewSender(cluster *config.Cluster, token string, helper *klog.Helper) (Send
 		connect.WithProtocol(newSender.protocol.String()),
 		connect.WithSecret(secret),
 		connect.WithToken(token),
+		connect.WithDiscovery(discovery),
 	}
 	switch newSender.protocol {
 	case config.Cluster_GRPC:

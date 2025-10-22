@@ -3,13 +3,20 @@ package connect
 import (
 	"time"
 
-	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/registry"
+	"github.com/go-kratos/kratos/v2/selector"
+	"github.com/go-kratos/kratos/v2/selector/p2c"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
+
+func init() {
+	selector.SetGlobalSelector(p2c.NewBuilder())
+}
 
 const (
 	ProtocolHTTP = "HTTP"

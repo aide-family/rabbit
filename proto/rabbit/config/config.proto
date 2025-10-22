@@ -9,6 +9,7 @@ option go_package = "github.com/aide-family/rabbit/pkg/config;config";
 message ClientConfig {
 	repeated Cluster clusters = 1;
 	string jwtToken = 2;
+	ETCD etcd = 3;
 }
 
 message Cluster {
@@ -21,4 +22,10 @@ message Cluster {
 	Protocol protocol = 3;
 	google.protobuf.Duration timeout = 4;
 	string secret = 5;
+}
+
+message ETCD {
+	repeated string endpoints = 1;
+	string username = 2;
+	string password = 3;
 }

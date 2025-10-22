@@ -7,13 +7,14 @@ import (
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/server/middler"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
 	"github.com/go-kratos/kratos/v2/selector/filter"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	ggrpc "google.golang.org/grpc"
+
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func InitGRPCClient(c InitConfig, opts ...InitOption) (*ggrpc.ClientConn, error) {

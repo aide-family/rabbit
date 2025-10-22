@@ -8,14 +8,13 @@ import (
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/server/middler"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
-	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/filter"
-	"github.com/go-kratos/kratos/v2/selector/wrr"
 	"github.com/go-kratos/kratos/v2/transport/http"
+
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func InitHTTPClient(c InitConfig, opts ...InitOption) (*http.Client, error) {
@@ -41,11 +40,10 @@ func InitHTTPClient(c InitConfig, opts ...InitOption) (*http.Client, error) {
 	}
 
 	if pointer.IsNotNil(cfg.discovery) {
-		clientOpts = append(clientOpts, http.WithDiscovery(cfg.discovery))
+		clientOpts = append(clientOpts, http.WithDiscovery(cfg.discovery), http.WithBlock())
 		nodeVersion := strings.TrimSpace(cfg.nodeVersion)
 		if strutil.IsNotEmpty(nodeVersion) {
 			nodeFilter := filter.Version(nodeVersion)
-			selector.SetGlobalSelector(wrr.NewBuilder())
 			clientOpts = append(clientOpts, http.WithNodeFilter(nodeFilter))
 		}
 	}

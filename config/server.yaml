@@ -3,24 +3,24 @@ server:
   name: moon.rabbit
   metadata:
     tag: rabbit
-  http:
-    address: 0.0.0.0:8080
-    network: tcp
-    timeout: 10s
-  grpc:
-    address: 0.0.0.0:9090
-    network: tcp
-    timeout: 10s
+  # http:
+  #   address: 0.0.0.0:8080
+  #   network: tcp
+  #   timeout: 10s
+  # grpc:
+  #   address: 0.0.0.0:9090
+  #   network: tcp
+  #   timeout: 10s
 
-clusters:
-  - name: rabbit01
-    endpoint: 127.0.0.1:8080
-    protocol: HTTP
-    timeout: 10s
-  - name: rabbit02
-    endpoint: 127.0.0.1:9090
-    protocol: GRPC
-    timeout: 10s
+# clusters:
+#   - name: rabbit01
+#     endpoint: 127.0.0.1:8080
+#     protocol: HTTP
+#     timeout: 10s
+#   - name: rabbit02
+#     endpoint: 127.0.0.1:9090
+#     protocol: GRPC
+#     timeout: 10s
 
 jwt:
   secret: xxx
@@ -28,3 +28,9 @@ jwt:
   issuer: rabbit
   allowList:
     - /rabbit.api.v1.Health/HealthCheck
+
+etcd:
+  endpoints:
+    - http://127.0.0.1:2379
+  username:
+  password:
