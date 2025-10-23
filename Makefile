@@ -58,9 +58,26 @@ config:
 	       --experimental_allow_proto3_optional \
 	       ./proto/rabbit/config/*.proto
 
+.PHONY: enum
+# generate the enum files
+enum:
+	@echo "Generating enum files"
+	@if [ "$(GOHOSTOS)" = "windows" ]; then \
+		$(Git_Bash) -c "rm -rf ./pkg/enum"; \
+		if [ ! -d "./pkg/enum" ]; then $(MKDIR) ./pkg/enum; fi \
+	else \
+		rm -rf ./pkg/enum; \
+		if [ ! -d "./pkg/enum" ]; then $(MKDIR) ./pkg/enum; fi \
+	fi
+	protoc --proto_path=./proto/rabbit/enum \
+	       --proto_path=./proto/third_party \
+	       --go_out=paths=source_relative:./pkg/enum \
+	       --experimental_allow_proto3_optional \
+	       ./proto/rabbit/enum/*.proto
+
 .PHONY: api
 # generate the api files
-api:
+api: enum
 	@echo "Generating api files"
 	@if [ "$(GOHOSTOS)" = "windows" ]; then \
 		$(Git_Bash) -c "rm -rf ./pkg/api"; \
@@ -70,6 +87,7 @@ api:
 		if [ ! -d "./pkg/api" ]; then $(MKDIR) ./pkg/api; fi \
 	fi
 	protoc --proto_path=./proto/rabbit/api \
+	       --proto_path=./proto/rabbit \
 	       --proto_path=./proto/third_party \
  	       --go_out=paths=source_relative:./pkg/api \
  	       --go-http_out=paths=source_relative:./pkg/api \

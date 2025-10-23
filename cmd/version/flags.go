@@ -14,6 +14,5 @@ type Flags struct {
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
-	f.GlobalFlags = cmd.GetGlobalFlags()
 	c.PersistentFlags().StringVarP(&f.format, "format", "f", "txt", "The format of the version output, supported: txt, json, yaml")
 }

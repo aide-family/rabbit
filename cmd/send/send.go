@@ -2,8 +2,6 @@
 package send
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -21,7 +19,9 @@ and usage of using your command.`,
 		Annotations: map[string]string{
 			"group": cmd.MessageCommands,
 		},
-		Run: run,
+		Run: func(cmd *cobra.Command, args []string) {
+			cmd.Help()
+		},
 	}
 	commands := []*cobra.Command{
 		sms.NewCmd(),
@@ -33,8 +33,4 @@ and usage of using your command.`,
 	flags.addFlags(sendCmd)
 
 	return sendCmd
-}
-
-func run(cmd *cobra.Command, args []string) {
-	fmt.Println("send called")
 }

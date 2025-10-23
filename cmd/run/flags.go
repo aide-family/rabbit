@@ -30,7 +30,6 @@ type Flags struct {
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
-	f.GlobalFlags = cmd.GetGlobalFlags()
 	c.Flags().StringVarP(&f.configPath, "config", "c", "./config", "config file (default is $HOME/config)")
 	c.Flags().BoolVarP(&f.enableSwagger, "swagger", "s", false, "enable swagger")
 	c.Flags().BoolVarP(&f.enableMetrics, "metrics", "m", false, "enable metrics")

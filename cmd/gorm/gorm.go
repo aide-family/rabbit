@@ -39,6 +39,7 @@ func NewCmd() *cobra.Command {
 }
 
 func initDB() (*gorm.DB, error) {
+	flags.GlobalFlags = cmd.GetGlobalFlags()
 	flags.Helper = klog.NewHelper(klog.With(flags.Helper.Logger(), "cmd", "gorm"))
 
 	var bc conf.Bootstrap

@@ -15,6 +15,7 @@ import (
 type Flags struct {
 	cmd.GlobalFlags
 	configPath string
+	forceGen   bool
 
 	username  string
 	password  string
@@ -31,6 +32,7 @@ var flags Flags
 func (f *Flags) addFlags(c *cobra.Command) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
 	c.PersistentFlags().StringVarP(&f.configPath, "config", "c", "", "config file")
+	c.PersistentFlags().BoolVarP(&f.forceGen, "force-gen", "f", false, "force generate code, if the code already exists, it will be overwitten")
 	c.PersistentFlags().StringVar(&f.username, "username", "", "mysql username")
 	c.PersistentFlags().StringVar(&f.password, "password", "", "mysql password")
 	c.PersistentFlags().StringVar(&f.host, "host", "localhost", "mysql host")

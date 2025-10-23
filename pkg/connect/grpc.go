@@ -40,7 +40,7 @@ func InitGRPCClient(c InitConfig, opts ...InitOption) (*ggrpc.ClientConn, error)
 	}
 
 	if pointer.IsNotNil(cfg.discovery) {
-		clientOpts = append(clientOpts, grpc.WithDiscovery(cfg.discovery))
+		clientOpts = append(clientOpts, grpc.WithDiscovery(cfg.discovery), grpc.WithPrintDiscoveryDebugLog(false))
 		nodeVersion := strings.TrimSpace(cfg.nodeVersion)
 		if nodeVersion != "" {
 			nodeFilter := filter.Version(nodeVersion)

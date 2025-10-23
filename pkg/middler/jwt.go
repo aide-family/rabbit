@@ -32,7 +32,8 @@ func JwtServe(signKey string) middleware.Middleware {
 
 type (
 	BaseInfo struct {
-		UserID string `json:"userId"`
+		UserID   string `json:"userId"`
+		Username string `json:"username"`
 	}
 
 	JwtClaims struct {

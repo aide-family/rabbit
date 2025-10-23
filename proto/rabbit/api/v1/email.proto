@@ -3,38 +3,213 @@ syntax = "proto3";
 package rabbit.api.v1;
 
 import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+import "enum/enum.proto";
 
 option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
 option java_multiple_files = true;
 option java_package = "rabbit.api.v1";
 
 service Email {
-	rpc SendEmail (SendEmailRequest) returns (SendEmailReply) {
+	rpc CreateEmailConfig (CreateEmailConfigRequest) returns (CreateEmailConfigReply) {
 		option (google.api.http) = {
-			post: "/v1/email/send"
+			post: "/v1/email/config"
 			body: "*"
+		};
+	}
+	rpc UpdateEmailConfig (UpdateEmailConfigRequest) returns (UpdateEmailConfigReply) {
+		option (google.api.http) = {
+			put: "/v1/email/config/{uid}"
+			body: "*"
+		};
+	}
+	rpc DeleteEmailConfig (DeleteEmailConfigRequest) returns (DeleteEmailConfigReply) {
+		option (google.api.http) = {
+			delete: "/v1/email/config/{uid}"
+		};
+	}
+	rpc GetEmailConfig (GetEmailConfigRequest) returns (EmailConfigItem) {
+		option (google.api.http) = {
+			get: "/v1/email/config/{uid}"
+		};
+	}
+	rpc ListEmailConfig (ListEmailConfigRequest) returns (ListEmailConfigReply) {
+		option (google.api.http) = {
+			get: "/v1/email/configs"
+		};
+	}
+	rpc CreateEmailTemplate (CreateEmailTemplateRequest) returns (CreateEmailTemplateReply) {
+		option (google.api.http) = {
+			post: "/v1/email/template"
+			body: "*"
+		};
+	}
+	rpc UpdateEmailTemplate (UpdateEmailTemplateRequest) returns (UpdateEmailTemplateReply) {
+		option (google.api.http) = {
+			put: "/v1/email/template/{uid}"
+			body: "*"
+		};
+	}
+	rpc UpdateEmailTemplateStatus (UpdateEmailTemplateStatusRequest) returns (UpdateEmailTemplateStatusReply) {
+		option (google.api.http) = {
+			put: "/v1/email/template/{uid}/status"
+			body: "*"
+		};
+	}
+	rpc DeleteEmailTemplate (DeleteEmailTemplateRequest) returns (DeleteEmailTemplateReply) {
+		option (google.api.http) = {
+			delete: "/v1/email/template/{uid}"
+		};
+	}
+	rpc GetEmailTemplate (GetEmailTemplateRequest) returns (EmailTemplateItem) {
+		option (google.api.http) = {
+			get: "/v1/email/template/{uid}"
+		};
+	}
+	rpc ListEmailTemplate (ListEmailTemplateRequest) returns (ListEmailTemplateReply) {
+		option (google.api.http) = {
+			get: "/v1/email/templates"
 		};
 	}
 }
 
-message EmailConfig {
-	string host = 1;
-	int32 port = 2;
-	string username = 3;
-	string password = 4;
+message EmailConfigItem {
+	string uid = 1;
+	string name = 2;
+	string host = 3;
+	int32 port = 4;
+	string username = 5;
+	string password = 6;
+	string createdAt = 7;
+	string updatedAt = 8;
+	rabbit.enum.GlobalStatus status = 9;
 }
 
-message SendEmailRequest {
-	string namespace = 1;
+message EmailTemplateItem {
+	string uid = 1;
 	string subject = 2;
 	string body = 3;
-	repeated string to = 4;
-	repeated string cc = 5;
-	string contentType = 6;
-	repeated string headers = 7;
-	EmailConfig emailConfig = 8;
+	string contentType = 4;
+	map<string, string> headers = 5;
+	string createdAt = 6;
+	string updatedAt = 7;
+	rabbit.enum.GlobalStatus status = 8;
 }
 
-message SendEmailReply {
-	string message = 1;
+message CreateEmailConfigRequest {
+	string name = 1 [(buf.validate.field).required = true];
+	string host = 2 [(buf.validate.field).required = true];
+	int32 port = 3 [(buf.validate.field).required = true];
+	string username = 4 [(buf.validate.field).required = true];
+	string password = 5 [(buf.validate.field).required = true];
+}
+message CreateEmailConfigReply {}
+
+message UpdateEmailConfigRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	string name = 2 [(buf.validate.field).required = true];
+	string host = 3 [(buf.validate.field).required = true];
+	int32 port = 4 [(buf.validate.field).required = true];
+	string username = 5 [(buf.validate.field).required = true];
+	string password = 6 [(buf.validate.field).required = true];
+}
+message UpdateEmailConfigReply {}
+
+message UpdateEmailConfigStatusRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [ENABLED, DISABLED]",
+		message: "status must be in [ENABLED, DISABLED]",
+	}];
+}
+message UpdateEmailConfigStatusReply {}
+
+message DeleteEmailConfigRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+message DeleteEmailConfigReply {}
+
+message GetEmailConfigRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+
+message ListEmailConfigRequest {
+	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1",
+		message: "page must be greater than or equal to 1",
+	}];
+	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+	}];
+	string keyword = 3 [(buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "keyword must be less than or equal to 100",
+	}];
+	rabbit.enum.GlobalStatus status = 4;
+}
+message ListEmailConfigReply {
+	repeated EmailConfigItem items = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 pageSize = 4;
+}
+
+message CreateEmailTemplateRequest {
+	string name = 1 [(buf.validate.field).required = true];
+	string subject = 2 [(buf.validate.field).required = true];
+	string body = 3 [(buf.validate.field).required = true];
+	string contentType = 4 [(buf.validate.field).required = true];
+	map<string, string> headers = 5;
+}
+message CreateEmailTemplateReply {}
+
+message UpdateEmailTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	string name = 2 [(buf.validate.field).required = true];
+	string subject = 3 [(buf.validate.field).required = true];
+	string body = 4 [(buf.validate.field).required = true];
+	string contentType = 5 [(buf.validate.field).required = true];
+	map<string, string> headers = 6;
+}
+message UpdateEmailTemplateReply {}
+
+message UpdateEmailTemplateStatusRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [ENABLED, DISABLED]",
+		message: "status must be in [ENABLED, DISABLED]",
+	}];
+}
+message UpdateEmailTemplateStatusReply {}
+
+message DeleteEmailTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+message DeleteEmailTemplateReply {}
+
+message GetEmailTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+
+message ListEmailTemplateRequest {
+	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1",
+		message: "page must be greater than or equal to 1",
+	}];
+	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+	}];
+	string keyword = 3 [(buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "keyword must be less than or equal to 100",
+	}];
+	rabbit.enum.GlobalStatus status = 4;
+}
+message ListEmailTemplateReply {
+	repeated EmailTemplateItem items = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 pageSize = 4;
 }

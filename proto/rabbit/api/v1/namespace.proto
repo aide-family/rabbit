@@ -4,6 +4,7 @@ package rabbit.api.v1;
 
 import "google/api/annotations.proto";
 import "buf/validate/validate.proto";
+import "enum/enum.proto";
 
 option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
 option java_multiple_files = true;
@@ -13,6 +14,18 @@ service Namespace {
 	rpc CreateNamespace (CreateNamespaceRequest) returns (CreateNamespaceReply) {
 		option (google.api.http) = {
 			post: "/v1/namespace"
+			body: "*"
+		};
+	}
+	rpc UpdateNamespace (UpdateNamespaceRequest) returns (UpdateNamespaceReply) {
+		option (google.api.http) = {
+			put: "/v1/namespace/{name}"
+			body: "*"
+		};
+	}
+	rpc UpdateNamespaceStatus (UpdateNamespaceStatusRequest) returns (UpdateNamespaceStatusReply) {
+		option (google.api.http) = {
+			put: "/v1/namespace/{name}/status"
 			body: "*"
 		};
 	}
@@ -45,6 +58,21 @@ message CreateNamespaceRequest {
 }
 message CreateNamespaceReply {}
 
+message UpdateNamespaceRequest {
+	string name = 1 [(buf.validate.field).required = true];
+	map<string, string> metadata = 2;
+}
+message UpdateNamespaceReply {}
+
+message UpdateNamespaceStatusRequest {
+	string name = 1 [(buf.validate.field).required = true];
+	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [ENABLED, DISABLED]",
+		message: "status must be in [ENABLED, DISABLED]",
+	}];
+}
+message UpdateNamespaceStatusReply {}
+
 message DeleteNamespaceRequest {
 	string name = 1 [(buf.validate.field).required = true];
 }
@@ -72,4 +100,7 @@ message ListNamespaceReply {
 message NamespaceItem {
 	string name = 1;
 	map<string, string> metadata = 2;
+	string createdAt = 3;
+	string updatedAt = 4;
+	rabbit.enum.GlobalStatus status = 5;
 }

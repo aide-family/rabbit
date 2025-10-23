@@ -1,0 +1,234 @@
+syntax = "proto3";
+
+package rabbit.api.v1;
+
+import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+import "enum/enum.proto";
+
+option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "rabbit.api.v1";
+
+service Webhook {
+	rpc CreateWebhook (CreateWebhookRequest) returns (CreateWebhookReply) {
+		option (google.api.http) = {
+			post: "/v1/webhook/config"
+			body: "*"
+		};
+	}
+	rpc UpdateWebhook (UpdateWebhookRequest) returns (UpdateWebhookReply) {
+		option (google.api.http) = {
+			put: "/v1/webhook/config/{uid}"
+			body: "*"
+		};
+	}
+	rpc UpdateWebhookStatus (UpdateWebhookStatusRequest) returns (UpdateWebhookStatusReply) {
+		option (google.api.http) = {
+			put: "/v1/webhook/config/{uid}/status"
+			body: "*"
+		};
+	}
+	rpc DeleteWebhook (DeleteWebhookRequest) returns (DeleteWebhookReply) {
+		option (google.api.http) = {
+			delete: "/v1/webhook/config/{uid}"
+		};
+	}
+	rpc GetWebhook (GetWebhookRequest) returns (WebhookItem) {
+		option (google.api.http) = {
+			get: "/v1/webhook/config/{uid}"
+		};
+	}
+	rpc ListWebhook (ListWebhookRequest) returns (ListWebhookReply) {
+		option (google.api.http) = {
+			get: "/v1/webhook/configs"
+		};
+	}
+	rpc CreateWebhookTemplate (CreateWebhookTemplateRequest) returns (CreateWebhookTemplateReply) {
+		option (google.api.http) = {
+			post: "/v1/webhook/template"
+			body: "*"
+		};
+	}
+	rpc UpdateWebhookTemplate (UpdateWebhookTemplateRequest) returns (UpdateWebhookTemplateReply) {
+		option (google.api.http) = {
+			put: "/v1/webhook/template/{uid}"
+			body: "*"
+		};
+	}
+	rpc UpdateWebhookTemplateStatus (UpdateWebhookTemplateStatusRequest) returns (UpdateWebhookTemplateStatusReply) {
+		option (google.api.http) = {
+			put: "/v1/webhook/template/{uid}/status"
+			body: "*"
+		};
+	}
+	rpc DeleteWebhookTemplate (DeleteWebhookTemplateRequest) returns (DeleteWebhookTemplateReply) {
+		option (google.api.http) = {
+			delete: "/v1/webhook/template/{uid}"
+		};
+	}
+	rpc GetWebhookTemplate (GetWebhookTemplateRequest) returns (WebhookTemplateItem) {
+		option (google.api.http) = {
+			get: "/v1/webhook/template/{uid}"
+		};
+	}
+	rpc ListWebhookTemplate (ListWebhookTemplateRequest) returns (ListWebhookTemplateReply) {
+		option (google.api.http) = {
+			get: "/v1/webhook/templates"
+		};
+	}
+}
+
+message WebhookItem {
+	string uid = 1;
+	rabbit.enum.WebhookAPP app = 2;
+	string name = 3;
+	string url = 4;
+	rabbit.enum.HTTPMethod method = 5;
+	map<string, string> headers = 6;
+	string secret = 7;
+	string createdAt = 8;
+	string updatedAt = 9;
+	rabbit.enum.GlobalStatus status = 10;
+}
+
+message WebhookTemplateItem {
+	string uid = 1;
+	string name = 2;
+	string body = 3;
+	string createdAt = 4;
+	string updatedAt = 5;
+	rabbit.enum.GlobalStatus status = 6;
+}
+
+message CreateWebhookRequest {
+	rabbit.enum.WebhookAPP app = 1 [(buf.validate.field).required = true];
+	string name = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "name must be greater than 0",
+	}];
+	string url = 3 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "url must be greater than 0",
+	}];
+	rabbit.enum.HTTPMethod method = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
+		message: "method must be in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
+	}];
+	map<string, string> headers = 5;
+	string secret = 6 [(buf.validate.field).required = true];
+}
+message CreateWebhookReply {}
+
+message UpdateWebhookRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	rabbit.enum.WebhookAPP app = 2;
+	string name = 3 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "name must be greater than 0",
+	}];
+	string url = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "url must be greater than 0",
+	}];
+	rabbit.enum.HTTPMethod method = 5 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
+		message: "method must be in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
+	}];
+	map<string, string> headers = 6;
+	string secret = 7 [(buf.validate.field).required = true];
+}
+message UpdateWebhookReply {}
+
+message UpdateWebhookStatusRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [ENABLED, DISABLED]",
+		message: "status must be in [ENABLED, DISABLED]",
+	}];
+}
+message UpdateWebhookStatusReply {}
+
+message DeleteWebhookRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+message DeleteWebhookReply {}
+
+message GetWebhookRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+
+message ListWebhookRequest {
+	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1",
+		message: "page must be greater than or equal to 1",
+	}];
+	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+	}];
+	rabbit.enum.WebhookAPP app = 3;
+	string keyword = 4 [(buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "keyword must be less than or equal to 100",
+	}];
+}
+message ListWebhookReply {
+	repeated WebhookItem items = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 pageSize = 4;
+}
+
+message CreateWebhookTemplateRequest {
+	string name = 1 [(buf.validate.field).required = true];
+	string body = 2 [(buf.validate.field).required = true];
+}
+message CreateWebhookTemplateReply {}
+
+message UpdateWebhookTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	string name = 2 [(buf.validate.field).required = true];
+	string body = 3 [(buf.validate.field).required = true];
+}
+message UpdateWebhookTemplateReply {}
+
+message UpdateWebhookTemplateStatusRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [ENABLED, DISABLED]",
+		message: "status must be in [ENABLED, DISABLED]",
+	}];
+}
+message UpdateWebhookTemplateStatusReply {}
+
+message DeleteWebhookTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+message DeleteWebhookTemplateReply {}
+
+message GetWebhookTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+}
+
+message ListWebhookTemplateRequest {
+	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1",
+		message: "page must be greater than or equal to 1",
+	}];
+	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+	}];
+	string keyword = 3 [(buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "keyword must be less than or equal to 100",
+	}];
+	rabbit.enum.GlobalStatus status = 4;
+}
+message ListWebhookTemplateReply {
+	repeated WebhookTemplateItem items = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 pageSize = 4;
+}

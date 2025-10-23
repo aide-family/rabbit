@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package rabbit.api.v1;
+
+import "google/api/annotations.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "rabbit.api.v1";
+
+service Sender {
+	rpc SendEmail (SendEmailRequest) returns (SendReply) {
+		option (google.api.http) = {
+			post: "/v1/sender/email/{uid}"
+			body: "*"
+		};
+	}
+	rpc SendEmailWithTemplate (SendEmailWithTemplateRequest) returns (SendReply) {
+		option (google.api.http) = {
+			post: "/v1/sender/email/{uid}/template"
+			body: "*"
+		};
+	}
+
+	rpc SendWebhook (SendWebhookRequest) returns (SendReply) {
+		option (google.api.http) = {
+			post: "/v1/sender/webhook/{uid}"
+			body: "*"
+		};
+	}
+	rpc SendWebhookWithTemplate (SendWebhookWithTemplateRequest) returns (SendReply) {
+		option (google.api.http) = {
+			post: "/v1/sender/webhook/{uid}/template"
+			body: "*"
+		};
+	}
+}
+
+message SendReply {
+	int32 code = 1;
+	string message = 2;
+}
+
+message SendEmailRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	string subject = 2;
+	string body = 3 [(buf.validate.field).required = true];
+	repeated string to = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "to must be greater than 0",
+	}];
+	repeated string cc = 5;
+	string contentType = 6 ;
+	map<string, string> headers = 7;
+}
+
+message SendEmailWithTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	string templateUID = 2 [(buf.validate.field).required = true];
+	bytes jsonData = 3 [(buf.validate.field).required = true];
+}
+
+message SendWebhookRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	bytes data = 5 [(buf.validate.field).required = true];
+}
+message SendWebhookWithTemplateRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	string templateUID = 2 [(buf.validate.field).required = true];
+	bytes jsonData = 3 [(buf.validate.field).required = true];
+}

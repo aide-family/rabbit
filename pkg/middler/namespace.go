@@ -3,7 +3,9 @@ package middler
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
+	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 )
@@ -24,6 +26,14 @@ func BindNamespace() middleware.Middleware {
 			var namespace string
 			if tr, ok := transport.FromServerContext(ctx); ok {
 				namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
+				ctx = WithNamespace(ctx, namespace)
+			}
+			if strutil.IsNotEmpty(namespace) {
+				return handler(ctx, req)
+			}
+
+			if metadata, ok := metadata.FromServerContext(ctx); ok {
+				namespace = metadata.Get(cnst.MetadataGlobalKeyNamespace)
 				ctx = WithNamespace(ctx, namespace)
 			}
 

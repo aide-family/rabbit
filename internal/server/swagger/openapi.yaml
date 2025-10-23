@@ -18,16 +18,16 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.HealthCheckReply'
-    /v1/email/send:
+    /v1/email/config:
         post:
             tags:
                 - Email
-            operationId: Email_SendEmail
+            operationId: Email_CreateEmailConfig
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/rabbit.api.v1.SendEmailRequest'
+                            $ref: '#/components/schemas/rabbit.api.v1.CreateEmailConfigRequest'
                 required: true
             responses:
                 "200":
@@ -35,7 +35,229 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/rabbit.api.v1.SendEmailReply'
+                                $ref: '#/components/schemas/rabbit.api.v1.CreateEmailConfigReply'
+    /v1/email/config/{uid}:
+        get:
+            tags:
+                - Email
+            operationId: Email_GetEmailConfig
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.EmailConfigItem'
+        put:
+            tags:
+                - Email
+            operationId: Email_UpdateEmailConfig
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailConfigRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailConfigReply'
+        delete:
+            tags:
+                - Email
+            operationId: Email_DeleteEmailConfig
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.DeleteEmailConfigReply'
+    /v1/email/configs:
+        get:
+            tags:
+                - Email
+            operationId: Email_ListEmailConfig
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: keyword
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.ListEmailConfigReply'
+    /v1/email/template:
+        post:
+            tags:
+                - Email
+            operationId: Email_CreateEmailTemplate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.CreateEmailTemplateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.CreateEmailTemplateReply'
+    /v1/email/template/{uid}:
+        get:
+            tags:
+                - Email
+            operationId: Email_GetEmailTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.EmailTemplateItem'
+        put:
+            tags:
+                - Email
+            operationId: Email_UpdateEmailTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailTemplateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailTemplateReply'
+        delete:
+            tags:
+                - Email
+            operationId: Email_DeleteEmailTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.DeleteEmailTemplateReply'
+    /v1/email/template/{uid}/status:
+        put:
+            tags:
+                - Email
+            operationId: Email_UpdateEmailTemplateStatus
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailTemplateStatusRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailTemplateStatusReply'
+    /v1/email/templates:
+        get:
+            tags:
+                - Email
+            operationId: Email_ListEmailTemplate
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: keyword
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.ListEmailTemplateReply'
     /v1/namespace:
         post:
             tags:
@@ -72,6 +294,29 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.GetNamespaceReply'
+        put:
+            tags:
+                - Namespace
+            operationId: Namespace_UpdateNamespace
+            parameters:
+                - name: name
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceReply'
         delete:
             tags:
                 - Namespace
@@ -89,6 +334,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.DeleteNamespaceReply'
+    /v1/namespace/{name}/status:
+        put:
+            tags:
+                - Namespace
+            operationId: Namespace_UpdateNamespaceStatus
+            parameters:
+                - name: name
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceStatusRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceStatusReply'
     /v1/namespaces:
         get:
             tags:
@@ -112,8 +381,403 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.ListNamespaceReply'
+    /v1/sender/email/{uid}:
+        post:
+            tags:
+                - Sender
+            operationId: Sender_SendEmail
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.SendEmailRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.SendReply'
+    /v1/sender/email/{uid}/template:
+        post:
+            tags:
+                - Sender
+            operationId: Sender_SendEmailWithTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.SendEmailWithTemplateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.SendReply'
+    /v1/sender/webhook/{uid}:
+        post:
+            tags:
+                - Sender
+            operationId: Sender_SendWebhook
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.SendWebhookRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.SendReply'
+    /v1/sender/webhook/{uid}/template:
+        post:
+            tags:
+                - Sender
+            operationId: Sender_SendWebhookWithTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.SendWebhookWithTemplateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.SendReply'
+    /v1/webhook/config:
+        post:
+            tags:
+                - Webhook
+            operationId: Webhook_CreateWebhook
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.CreateWebhookRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.CreateWebhookReply'
+    /v1/webhook/config/{uid}:
+        get:
+            tags:
+                - Webhook
+            operationId: Webhook_GetWebhook
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.WebhookItem'
+        put:
+            tags:
+                - Webhook
+            operationId: Webhook_UpdateWebhook
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookReply'
+        delete:
+            tags:
+                - Webhook
+            operationId: Webhook_DeleteWebhook
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.DeleteWebhookReply'
+    /v1/webhook/config/{uid}/status:
+        put:
+            tags:
+                - Webhook
+            operationId: Webhook_UpdateWebhookStatus
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookStatusRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookStatusReply'
+    /v1/webhook/configs:
+        get:
+            tags:
+                - Webhook
+            operationId: Webhook_ListWebhook
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: app
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+                - name: keyword
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.ListWebhookReply'
+    /v1/webhook/template:
+        post:
+            tags:
+                - Webhook
+            operationId: Webhook_CreateWebhookTemplate
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.CreateWebhookTemplateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.CreateWebhookTemplateReply'
+    /v1/webhook/template/{uid}:
+        get:
+            tags:
+                - Webhook
+            operationId: Webhook_GetWebhookTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.WebhookTemplateItem'
+        put:
+            tags:
+                - Webhook
+            operationId: Webhook_UpdateWebhookTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookTemplateRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookTemplateReply'
+        delete:
+            tags:
+                - Webhook
+            operationId: Webhook_DeleteWebhookTemplate
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.DeleteWebhookTemplateReply'
+    /v1/webhook/template/{uid}/status:
+        put:
+            tags:
+                - Webhook
+            operationId: Webhook_UpdateWebhookTemplateStatus
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookTemplateStatusRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateWebhookTemplateStatusReply'
+    /v1/webhook/templates:
+        get:
+            tags:
+                - Webhook
+            operationId: Webhook_ListWebhookTemplate
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: keyword
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.ListWebhookTemplateReply'
 components:
     schemas:
+        rabbit.api.v1.CreateEmailConfigReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.CreateEmailConfigRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                host:
+                    type: string
+                port:
+                    type: integer
+                    format: int32
+                username:
+                    type: string
+                password:
+                    type: string
+        rabbit.api.v1.CreateEmailTemplateReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.CreateEmailTemplateRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                subject:
+                    type: string
+                body:
+                    type: string
+                contentType:
+                    type: string
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
         rabbit.api.v1.CreateNamespaceReply:
             type: object
             properties: {}
@@ -126,12 +790,60 @@ components:
                     type: object
                     additionalProperties:
                         type: string
+        rabbit.api.v1.CreateWebhookReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.CreateWebhookRequest:
+            type: object
+            properties:
+                app:
+                    type: integer
+                    format: enum
+                name:
+                    type: string
+                url:
+                    type: string
+                method:
+                    type: integer
+                    format: enum
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+                secret:
+                    type: string
+        rabbit.api.v1.CreateWebhookTemplateReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.CreateWebhookTemplateRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                body:
+                    type: string
+        rabbit.api.v1.DeleteEmailConfigReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.DeleteEmailTemplateReply:
+            type: object
+            properties: {}
         rabbit.api.v1.DeleteNamespaceReply:
             type: object
             properties: {}
-        rabbit.api.v1.EmailConfig:
+        rabbit.api.v1.DeleteWebhookReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.DeleteWebhookTemplateReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.EmailConfigItem:
             type: object
             properties:
+                uid:
+                    type: string
+                name:
+                    type: string
                 host:
                     type: string
                 port:
@@ -141,6 +853,35 @@ components:
                     type: string
                 password:
                     type: string
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        rabbit.api.v1.EmailTemplateItem:
+            type: object
+            properties:
+                uid:
+                    type: string
+                subject:
+                    type: string
+                body:
+                    type: string
+                contentType:
+                    type: string
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
         rabbit.api.v1.GetNamespaceReply:
             type: object
             properties: {}
@@ -154,6 +895,38 @@ components:
                 timestamp:
                     type: string
                     format: date-time
+        rabbit.api.v1.ListEmailConfigReply:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/rabbit.api.v1.EmailConfigItem'
+                total:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
+        rabbit.api.v1.ListEmailTemplateReply:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/rabbit.api.v1.EmailTemplateItem'
+                total:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
         rabbit.api.v1.ListNamespaceReply:
             type: object
             properties:
@@ -161,6 +934,38 @@ components:
                     type: array
                     items:
                         $ref: '#/components/schemas/rabbit.api.v1.NamespaceItem'
+        rabbit.api.v1.ListWebhookReply:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/rabbit.api.v1.WebhookItem'
+                total:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
+        rabbit.api.v1.ListWebhookTemplateReply:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/rabbit.api.v1.WebhookTemplateItem'
+                total:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
         rabbit.api.v1.NamespaceItem:
             type: object
             properties:
@@ -170,15 +975,17 @@ components:
                     type: object
                     additionalProperties:
                         type: string
-        rabbit.api.v1.SendEmailReply:
-            type: object
-            properties:
-                message:
+                createdAt:
                     type: string
+                updatedAt:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
         rabbit.api.v1.SendEmailRequest:
             type: object
             properties:
-                namespace:
+                uid:
                     type: string
                 subject:
                     type: string
@@ -195,12 +1002,223 @@ components:
                 contentType:
                     type: string
                 headers:
-                    type: array
-                    items:
+                    type: object
+                    additionalProperties:
                         type: string
-                emailConfig:
-                    $ref: '#/components/schemas/rabbit.api.v1.EmailConfig'
+        rabbit.api.v1.SendEmailWithTemplateRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                templateUID:
+                    type: string
+                jsonData:
+                    type: string
+                    format: bytes
+        rabbit.api.v1.SendReply:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    format: int32
+                message:
+                    type: string
+        rabbit.api.v1.SendWebhookRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                data:
+                    type: string
+                    format: bytes
+        rabbit.api.v1.SendWebhookWithTemplateRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                templateUID:
+                    type: string
+                jsonData:
+                    type: string
+                    format: bytes
+        rabbit.api.v1.UpdateEmailConfigReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateEmailConfigRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                name:
+                    type: string
+                host:
+                    type: string
+                port:
+                    type: integer
+                    format: int32
+                username:
+                    type: string
+                password:
+                    type: string
+        rabbit.api.v1.UpdateEmailTemplateReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateEmailTemplateRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                name:
+                    type: string
+                subject:
+                    type: string
+                body:
+                    type: string
+                contentType:
+                    type: string
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+        rabbit.api.v1.UpdateEmailTemplateStatusReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateEmailTemplateStatusRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        rabbit.api.v1.UpdateNamespaceReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateNamespaceRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                metadata:
+                    type: object
+                    additionalProperties:
+                        type: string
+        rabbit.api.v1.UpdateNamespaceStatusReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateNamespaceStatusRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        rabbit.api.v1.UpdateWebhookReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateWebhookRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                app:
+                    type: integer
+                    format: enum
+                name:
+                    type: string
+                url:
+                    type: string
+                method:
+                    type: integer
+                    format: enum
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+                secret:
+                    type: string
+        rabbit.api.v1.UpdateWebhookStatusReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateWebhookStatusRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        rabbit.api.v1.UpdateWebhookTemplateReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateWebhookTemplateRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                name:
+                    type: string
+                body:
+                    type: string
+        rabbit.api.v1.UpdateWebhookTemplateStatusReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateWebhookTemplateStatusRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        rabbit.api.v1.WebhookItem:
+            type: object
+            properties:
+                uid:
+                    type: string
+                app:
+                    type: integer
+                    format: enum
+                name:
+                    type: string
+                url:
+                    type: string
+                method:
+                    type: integer
+                    format: enum
+                headers:
+                    type: object
+                    additionalProperties:
+                        type: string
+                secret:
+                    type: string
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
+        rabbit.api.v1.WebhookTemplateItem:
+            type: object
+            properties:
+                uid:
+                    type: string
+                name:
+                    type: string
+                body:
+                    type: string
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
 tags:
     - name: Email
     - name: Health
     - name: Namespace
+    - name: Sender
+    - name: Webhook

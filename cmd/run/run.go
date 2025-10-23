@@ -8,11 +8,10 @@ import (
 	"github.com/aide-family/magicbox/load"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
-
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
-	clientv3 "go.etcd.io/etcd/client/v3"
+	clientV3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
@@ -33,7 +32,8 @@ func NewCmd() *cobra.Command {
 	return runCmd
 }
 
-func runServer(cmd *cobra.Command, args []string) {
+func runServer(_ *cobra.Command, _ []string) {
+	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc conf.Bootstrap
 	if err := load.Load(flags.configPath, &bc); err != nil {
 		flags.Helper.Errorw("msg", "load config failed", "error", err)
@@ -79,7 +79,7 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) (*krat
 	defer hello.Hello()
 
 	etcdConfig := bc.GetEtcd()
-	client, err := clientv3.New(clientv3.Config{
+	client, err := clientV3.New(clientV3.Config{
 		Endpoints:   etcdConfig.GetEndpoints(),
 		Username:    etcdConfig.GetUsername(),
 		Password:    etcdConfig.GetPassword(),

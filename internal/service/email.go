@@ -3,38 +3,47 @@ package service
 import (
 	"context"
 
-	"github.com/aide-family/rabbit/internal/biz"
-	"github.com/aide-family/rabbit/internal/biz/bo"
-	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
+	pb "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
 type EmailService struct {
-	apiv1.UnimplementedEmailServer
-
-	emailBiz *biz.Email
+	pb.UnimplementedEmailServer
 }
 
-func NewEmailService(emailBiz *biz.Email) *EmailService {
-	return &EmailService{
-		emailBiz: emailBiz,
-	}
+func NewEmailService() *EmailService {
+	return &EmailService{}
 }
 
-func (s *EmailService) SendEmail(ctx context.Context, req *apiv1.SendEmailRequest) (*apiv1.SendEmailReply, error) {
-	params := &bo.SendEmailBo{
-		Namespace:   req.Namespace,
-		Subject:     req.Subject,
-		Body:        req.Body,
-		To:          req.To,
-		Cc:          req.Cc,
-		ContentType: req.ContentType,
-		Headers:     req.Headers,
-	}
-
-	if err := s.emailBiz.SendEmail(ctx, params); err != nil {
-		return nil, err
-	}
-	return &apiv1.SendEmailReply{
-		Message: "Email sent successfully",
-	}, nil
+func (s *EmailService) CreateEmailConfig(ctx context.Context, req *pb.CreateEmailConfigRequest) (*pb.CreateEmailConfigReply, error) {
+	return &pb.CreateEmailConfigReply{}, nil
+}
+func (s *EmailService) UpdateEmailConfig(ctx context.Context, req *pb.UpdateEmailConfigRequest) (*pb.UpdateEmailConfigReply, error) {
+	return &pb.UpdateEmailConfigReply{}, nil
+}
+func (s *EmailService) DeleteEmailConfig(ctx context.Context, req *pb.DeleteEmailConfigRequest) (*pb.DeleteEmailConfigReply, error) {
+	return &pb.DeleteEmailConfigReply{}, nil
+}
+func (s *EmailService) GetEmailConfig(ctx context.Context, req *pb.GetEmailConfigRequest) (*pb.EmailConfigItem, error) {
+	return &pb.EmailConfigItem{}, nil
+}
+func (s *EmailService) ListEmailConfig(ctx context.Context, req *pb.ListEmailConfigRequest) (*pb.ListEmailConfigReply, error) {
+	return &pb.ListEmailConfigReply{}, nil
+}
+func (s *EmailService) CreateEmailTemplate(ctx context.Context, req *pb.CreateEmailTemplateRequest) (*pb.CreateEmailTemplateReply, error) {
+	return &pb.CreateEmailTemplateReply{}, nil
+}
+func (s *EmailService) UpdateEmailTemplate(ctx context.Context, req *pb.UpdateEmailTemplateRequest) (*pb.UpdateEmailTemplateReply, error) {
+	return &pb.UpdateEmailTemplateReply{}, nil
+}
+func (s *EmailService) UpdateEmailTemplateStatus(ctx context.Context, req *pb.UpdateEmailTemplateStatusRequest) (*pb.UpdateEmailTemplateStatusReply, error) {
+	return &pb.UpdateEmailTemplateStatusReply{}, nil
+}
+func (s *EmailService) DeleteEmailTemplate(ctx context.Context, req *pb.DeleteEmailTemplateRequest) (*pb.DeleteEmailTemplateReply, error) {
+	return &pb.DeleteEmailTemplateReply{}, nil
+}
+func (s *EmailService) GetEmailTemplate(ctx context.Context, req *pb.GetEmailTemplateRequest) (*pb.EmailTemplateItem, error) {
+	return &pb.EmailTemplateItem{}, nil
+}
+func (s *EmailService) ListEmailTemplate(ctx context.Context, req *pb.ListEmailTemplateRequest) (*pb.ListEmailTemplateReply, error) {
+	return &pb.ListEmailTemplateReply{}, nil
 }

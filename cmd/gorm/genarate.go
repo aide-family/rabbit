@@ -1,9 +1,11 @@
 package gorm
 
 import (
+	"os"
+
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 	"gorm.io/gen"
-	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 )
@@ -31,22 +33,31 @@ func newGenCmd() *cobra.Command {
 		Short: "gorm gen",
 		Long:  "gorm generate",
 		Run: func(cmd *cobra.Command, args []string) {
-			db, err := initDB()
-			if err != nil {
-				flags.Helper.Errorw("msg", "init db failed", "error", err)
-				return
-			}
-			generate(db)
+			generate()
 		},
 	}
 	genCmd.Flags().StringVarP(&config.OutPath, "out", "o", "./internal/biz/do/query", "output directory")
 	return genCmd
 }
 
-func generate(db *gorm.DB) {
+func generate() {
+	if flags.forceGen {
+		flags.Helper.Infow("msg", "remove all files")
+		os.RemoveAll(config.OutPath)
+		flags.Helper.Infow("msg", "remove all files success", "path", config.OutPath)
+	}
 	g := gen.NewGenerator(config)
+	g.SetLogger(&genLogger{helper: flags.Helper})
 	flags.Helper.Infow("msg", "generate code start")
 	g.ApplyBasic(do.Models()...)
 	g.Execute()
 	flags.Helper.Infow("msg", "generate code success")
+}
+
+type genLogger struct {
+	helper *klog.Helper
+}
+
+func (g *genLogger) Println(v ...any) {
+	g.helper.Info(v...)
 }

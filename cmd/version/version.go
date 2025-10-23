@@ -28,14 +28,14 @@ func NewCmd() *cobra.Command {
 			"group": cmd.BasicCommands,
 		},
 		Run: func(c *cobra.Command, args []string) {
-			globalFlags := cmd.GetGlobalFlags()
+			flags.GlobalFlags = cmd.GetGlobalFlags()
 			switch flags.format {
 			case "json", "yaml":
-				bytes, _ := encoding.GetCodec(flags.format).Marshal(globalFlags)
+				bytes, _ := encoding.GetCodec(flags.format).Marshal(flags.GlobalFlags)
 				fmt.Println(string(bytes))
 			default:
 				t := template.Must(template.New("txt").Parse(txtTemplate))
-				t.Execute(os.Stdout, globalFlags)
+				t.Execute(os.Stdout, flags.GlobalFlags)
 			}
 		},
 	}

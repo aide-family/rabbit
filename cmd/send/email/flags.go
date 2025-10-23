@@ -1,6 +1,8 @@
 package email
 
 import (
+	"strings"
+
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/cmd"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -12,6 +14,7 @@ import (
 type Flags struct {
 	cmd.GlobalFlags
 
+	UID         string   `json:"uid" yaml:"uid"`
 	Subject     string   `json:"subject" yaml:"subject"`
 	Body        string   `json:"body" yaml:"body"`
 	To          []string `json:"to" yaml:"to"`
@@ -26,7 +29,7 @@ type Flags struct {
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
-	f.GlobalFlags = cmd.GetGlobalFlags()
+	c.Flags().StringVarP(&f.UID, "uid", "u", "", "The uid of the email")
 	c.Flags().StringVarP(&f.Subject, "subject", "s", "", "The subject of the email")
 	c.Flags().StringVarP(&f.Body, "body", "b", "", "The body of the email")
 	c.Flags().StringSliceVarP(&f.To, "to", "t", []string{}, "The to of the email, example: --to=user1@example.com --to=user2@example.com")
@@ -48,20 +51,26 @@ func (f *Flags) applyToBootstrap(bc *config.ClientConfig) {
 
 func (f *Flags) parseRequestParams() (*apiv1.SendEmailRequest, error) {
 	if strutil.IsEmpty(f.JSON) {
+		headers := make(map[string]string)
+		for _, header := range f.Headers {
+			parts := strings.SplitN(header, "=", 2)
+			if len(parts) == 2 {
+				headers[parts[0]] = parts[1]
+			}
+		}
 		return &apiv1.SendEmailRequest{
-			Namespace:   f.Namespace,
+			Uid:         f.UID,
 			Subject:     f.Subject,
 			Body:        f.Body,
 			To:          f.To,
 			Cc:          f.Cc,
 			ContentType: f.ContentType,
-			Headers:     f.Headers,
+			Headers:     headers,
 		}, nil
 	}
 	var requestParams apiv1.SendEmailRequest
 	if err := encoding.GetCodec("json").Unmarshal([]byte(f.JSON), &requestParams); err != nil {
 		return nil, err
 	}
-	requestParams.Namespace = f.Namespace
 	return &requestParams, nil
 }
