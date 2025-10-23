@@ -11,10 +11,10 @@ import (
 type EmailService struct {
 	apiv1.UnimplementedEmailServer
 
-	emailBiz *biz.EmailBiz
+	emailBiz *biz.Email
 }
 
-func NewEmailService(emailBiz *biz.EmailBiz) *EmailService {
+func NewEmailService(emailBiz *biz.Email) *EmailService {
 	return &EmailService{
 		emailBiz: emailBiz,
 	}

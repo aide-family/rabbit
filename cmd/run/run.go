@@ -6,11 +6,11 @@ import (
 
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/log"
-	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
+
 	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
 	clientv3 "go.etcd.io/etcd/client/v3"
 
@@ -36,27 +36,10 @@ func NewCmd() *cobra.Command {
 func runServer(cmd *cobra.Command, args []string) {
 	var bc conf.Bootstrap
 	if err := load.Load(flags.configPath, &bc); err != nil {
-		panic(err)
+		flags.Helper.Errorw("msg", "load config failed", "error", err)
+		return
 	}
 	flags.applyToBootstrap(&bc)
-
-	logger, err := log.NewLogger(stdio.LoggerDriver())
-	if err != nil {
-		panic(err)
-	}
-	helper := klog.NewHelper(logger)
-	app, cleanup, err := wireApp(&bc, helper)
-	if err != nil {
-		panic(err)
-	}
-	defer cleanup()
-	if err := app.Run(); err != nil {
-		panic(err)
-	}
-}
-
-func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *kratos.App {
-	defer hello.Hello()
 	serverConf := bc.GetServer()
 	metadata := serverConf.GetMetadata()
 	metadata["repository"] = "https://github.com/aide-family/rabbit"
@@ -71,6 +54,30 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *krato
 	}
 	hello.SetEnvWithOption(envOpts...)
 
+	helper := klog.NewHelper(klog.With(flags.Helper.Logger(),
+		"cmd", "run",
+		"service.name", hello.Name(),
+		"service.id", hello.ID(),
+		"caller", klog.DefaultCaller,
+		"trace.id", tracing.TraceID(),
+		"span.id", tracing.SpanID()),
+	)
+
+	app, cleanup, err := wireApp(&bc, helper)
+	if err != nil {
+		flags.Helper.Errorw("msg", "wireApp failed", "error", err)
+		return
+	}
+	defer cleanup()
+	if err := app.Run(); err != nil {
+		flags.Helper.Errorw("msg", "app run failed", "error", err)
+		return
+	}
+}
+
+func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) (*kratos.App, error) {
+	defer hello.Hello()
+
 	etcdConfig := bc.GetEtcd()
 	client, err := clientv3.New(clientv3.Config{
 		Endpoints:   etcdConfig.GetEndpoints(),
@@ -79,7 +86,8 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *krato
 		DialTimeout: 5 * time.Second,
 	})
 	if err != nil {
-		panic(err)
+		helper.Errorw("msg", "etcd client initialization failed", "error", err)
+		return nil, err
 	}
 	registrar := etcd.New(client)
 	opts := []kratos.Option{
@@ -89,9 +97,9 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) *krato
 		kratos.Version(hello.Version()),
 		kratos.ID(hello.ID()),
 		kratos.Name(hello.Name()),
-		kratos.Metadata(metadata),
+		kratos.Metadata(hello.Metadata()),
 	}
 	srvs.BindSwagger(flags.enableSwagger, helper)
 	srvs.BindMetrics(flags.enableMetrics, helper)
-	return kratos.New(opts...)
+	return kratos.New(opts...), nil
 }

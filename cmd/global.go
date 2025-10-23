@@ -3,18 +3,20 @@ package cmd
 import (
 	"os"
 
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 )
 
 var hostname, _ = os.Hostname()
 
 type GlobalFlags struct {
-	Name     string `json:"name" yaml:"name"`
-	Author   string `json:"author" yaml:"author"`
-	Github   string `json:"github" yaml:"github"`
-	Version  string `json:"version" yaml:"version"`
-	Built    string `json:"built" yaml:"built"`
-	Hostname string `json:"-" yaml:"-"`
+	Helper   *klog.Helper `json:"-" yaml:"-"`
+	Name     string       `json:"name" yaml:"name"`
+	Author   string       `json:"author" yaml:"author"`
+	Github   string       `json:"github" yaml:"github"`
+	Version  string       `json:"version" yaml:"version"`
+	Built    string       `json:"built" yaml:"built"`
+	Hostname string       `json:"-" yaml:"-"`
 
 	Namespace string `json:"-" yaml:"-"`
 
@@ -32,6 +34,7 @@ var globalFlags GlobalFlags = GlobalFlags{
 	Author:   "Aide Family",
 	Github:   "https://github.com/aide-family/rabbit",
 	Hostname: hostname,
+	Helper:   klog.NewHelper(klog.DefaultLogger),
 }
 
 func GetGlobalFlags() GlobalFlags {
@@ -53,5 +56,11 @@ func WithGlobalFlagsVersion(version string) GlobalOption {
 func WithGlobalFlagsBuildTime(buildTime string) GlobalOption {
 	return func(g *GlobalFlags) {
 		g.Built = buildTime
+	}
+}
+
+func WithGlobalFlagsHelper(helper *klog.Helper) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Helper = helper
 	}
 }

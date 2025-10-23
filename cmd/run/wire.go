@@ -12,6 +12,7 @@ import (
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
+	"github.com/aide-family/rabbit/internal/data/impl"
 	"github.com/aide-family/rabbit/internal/server"
 	"github.com/aide-family/rabbit/internal/service"
 )
@@ -21,6 +22,7 @@ func wireApp(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), erro
 		server.ProviderSetServer,
 		service.ProviderSetService,
 		biz.ProviderSetBiz,
+		impl.ProviderSetImpl,
 		data.ProviderSetData,
 		newApp,
 	))

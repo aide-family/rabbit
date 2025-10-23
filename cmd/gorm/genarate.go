@@ -1,7 +1,6 @@
 package gorm
 
 import (
-	"github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 	"gorm.io/gen"
 	"gorm.io/gorm"
@@ -34,7 +33,7 @@ func newGenCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			db, err := initDB()
 			if err != nil {
-				log.Errorw("msg", "init db failed")
+				flags.Helper.Errorw("msg", "init db failed", "error", err)
 				return
 			}
 			generate(db)
@@ -46,8 +45,8 @@ func newGenCmd() *cobra.Command {
 
 func generate(db *gorm.DB) {
 	g := gen.NewGenerator(config)
-	log.Infow("msg", "generate code start")
+	flags.Helper.Infow("msg", "generate code start")
 	g.ApplyBasic(do.Models()...)
 	g.Execute()
-	log.Infow("msg", "generate code success")
+	flags.Helper.Infow("msg", "generate code success")
 }

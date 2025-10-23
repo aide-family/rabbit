@@ -6,9 +6,10 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/spf13/cobra"
+
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/spf13/cobra"
 )
 
 type Flags struct {

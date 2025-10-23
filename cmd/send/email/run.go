@@ -5,8 +5,6 @@ import (
 	"time"
 
 	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/log"
-	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -27,15 +25,10 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	flags.applyToBootstrap(&bc)
-	logger, err := log.NewLogger(stdio.LoggerDriver())
-	if err != nil {
-		panic(err)
-	}
-	helper := klog.NewHelper(logger)
 
 	req, err := flags.parseRequestParams()
 	if err != nil {
-		helper.Errorw("msg", "parse request params failed", "error", err)
+		flags.Helper.Errorw("msg", "parse request params failed", "error", err)
 		return
 	}
 	var discovery registry.Discovery
@@ -47,29 +40,29 @@ func run(cmd *cobra.Command, args []string) {
 			DialTimeout: 10 * time.Second,
 		})
 		if err != nil {
-			helper.Errorw("msg", "etcd client initialization failed", "error", err)
+			flags.Helper.Errorw("msg", "etcd client initialization failed", "error", err)
 			return
 		}
 		discovery = etcd.New(client)
 	}
 
 	for _, cluster := range bc.GetClusters() {
-		sender, err := NewSender(cluster, discovery, bc.GetJwtToken(), helper)
+		sender, err := NewSender(cluster, discovery, bc.GetJwtToken(), flags.Helper)
 		if err != nil {
 			continue
 		}
 		name, protocol := cluster.GetName(), cluster.GetProtocol()
 		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
-			helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
+			flags.Helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
 			continue
 		}
 
-		helper.Infow("msg", "send email success", "cluster", name, "protocol", protocol, "reply", reply)
+		flags.Helper.Infow("msg", "send email success", "cluster", name, "protocol", protocol, "reply", reply)
 		return
 	}
 	// 没有可用的节点，退出
-	helper.Error("no available nodes")
+	flags.Helper.Error("no available nodes")
 }
 
 type Sender interface {

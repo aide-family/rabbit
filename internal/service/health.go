@@ -3,16 +3,22 @@ package service
 import (
 	"context"
 
-	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/aide-family/rabbit/internal/biz"
+	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
+
+func NewHealthService(healthBiz *biz.Health) *HealthService {
+	return &HealthService{
+		healthBiz: healthBiz,
+	}
+}
 
 type HealthService struct {
 	apiv1.UnimplementedHealthServer
-}
 
-func NewHealthService() *HealthService {
-	return &HealthService{}
+	healthBiz *biz.Health
 }
 
 func (s *HealthService) HealthCheck(ctx context.Context, req *apiv1.HealthCheckRequest) (*apiv1.HealthCheckReply, error) {

@@ -6,12 +6,12 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/bo"
 )
 
-type EmailBiz struct{}
-
-func NewEmailBiz() *EmailBiz {
-	return &EmailBiz{}
+func NewEmail() *Email {
+	return &Email{}
 }
 
-func (b *EmailBiz) SendEmail(ctx context.Context, req *bo.SendEmailBo) error {
+type Email struct{}
+
+func (e *Email) SendEmail(ctx context.Context, req *bo.SendEmailBo) error {
 	return nil
 }

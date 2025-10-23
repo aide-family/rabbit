@@ -7,8 +7,9 @@ import (
 	"slices"
 
 	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/log/gormlog"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/go-kratos/kratos/v2/log"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -38,11 +39,13 @@ func NewCmd() *cobra.Command {
 }
 
 func initDB() (*gorm.DB, error) {
+	flags.Helper = klog.NewHelper(klog.With(flags.Helper.Logger(), "cmd", "gorm"))
+
 	var bc conf.Bootstrap
 	if strutil.IsNotEmpty(flags.configPath) {
-		log.Infow("msg", "load config file", "file", flags.configPath)
+		flags.Helper.Infow("msg", "load config file", "file", flags.configPath)
 		if err := load.Load(flags.configPath, &bc); err != nil {
-			log.Errorw("msg", "load config file failed", "error", err)
+			flags.Helper.Errorw("msg", "load config file failed", "error", err)
 			return nil, err
 		}
 	}
@@ -50,25 +53,25 @@ func initDB() (*gorm.DB, error) {
 
 	// check mysql database is exists
 	connectDSN := flags.connectDSN()
-	log.Infow("msg", "check mysql database is exists", "dsn", connectDSN)
+	flags.Helper.Infow("msg", "check mysql database is exists", "dsn", connectDSN)
 	sqlDB, err := sql.Open("mysql", connectDSN)
 	if err != nil {
-		log.Errorw("msg", "open mysql connection failed", "error", err)
+		flags.Helper.Errorw("msg", "open mysql connection failed", "error", err)
 		return nil, err
 	}
 	defer sqlDB.Close()
 
-	log.Infow("msg", "ping mysql")
+	flags.Helper.Infow("msg", "ping mysql")
 	if err := sqlDB.Ping(); err != nil {
-		log.Errorw("msg", "ping mysql failed", "error", err)
+		flags.Helper.Errorw("msg", "ping mysql failed", "error", err)
 		return nil, err
 	}
-	log.Infow("msg", "ping mysql success")
+	flags.Helper.Infow("msg", "ping mysql success")
 	// show databases
-	log.Infow("msg", "show databases")
+	flags.Helper.Infow("msg", "show databases")
 	rows, err := sqlDB.Query("SHOW DATABASES")
 	if err != nil {
-		log.Errorw("msg", "query databases failed", "error", err)
+		flags.Helper.Errorw("msg", "query databases failed", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -76,30 +79,32 @@ func initDB() (*gorm.DB, error) {
 	for rows.Next() {
 		var database string
 		if err := rows.Scan(&database); err != nil {
-			log.Errorw("msg", "scan database failed", "error", err)
+			flags.Helper.Errorw("msg", "scan database failed", "error", err)
 			return nil, err
 		}
 		databases = append(databases, database)
 	}
-	log.Infow("msg", "show databases success", "databases", databases)
+	flags.Helper.Infow("msg", "show databases success", "databases", databases)
 	if !slices.Contains(databases, flags.database) {
 		// create database
-		log.Warnw("msg", "database not exists", "database", flags.database)
-		log.Infow("msg", "create database", "database", flags.database)
+		flags.Helper.Warnw("msg", "database not exists", "database", flags.database)
+		flags.Helper.Infow("msg", "create database", "database", flags.database)
 		_, err := sqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", flags.database))
 		if err != nil {
-			log.Errorw("msg", "create database failed", "error", err, "database", flags.database)
+			flags.Helper.Errorw("msg", "create database failed", "error", err, "database", flags.database)
 			return nil, err
 		}
-		log.Infow("msg", "create database success", "database", flags.database)
+		flags.Helper.Infow("msg", "create database success", "database", flags.database)
 	}
 
-	log.Infow("msg", "open mysql connection", "dsn", flags.databaseDSN())
-	db, err := gorm.Open(mysql.Open(flags.databaseDSN()), &gorm.Config{})
+	flags.Helper.Infow("msg", "open mysql connection", "dsn", flags.databaseDSN())
+	db, err := gorm.Open(mysql.Open(flags.databaseDSN()), &gorm.Config{
+		Logger: gormlog.New(flags.Helper.Logger()),
+	})
 	if err != nil {
-		log.Errorw("msg", "open mysql connection failed", "error", err)
+		flags.Helper.Errorw("msg", "open mysql connection failed", "error", err)
 		return nil, err
 	}
-	log.Infow("msg", "open mysql connection success")
-	return db, nil
+	flags.Helper.Infow("msg", "open mysql connection success")
+	return db.Debug(), nil
 }

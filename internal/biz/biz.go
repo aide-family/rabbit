@@ -3,4 +3,4 @@ package biz
 
 import "github.com/google/wire"
 
-var ProviderSetBiz = wire.NewSet(NewEmailBiz)
+var ProviderSetBiz = wire.NewSet(NewEmail, NewHealth)

@@ -15,5 +15,9 @@ type Data struct{}
 
 // New a data and returns.
 func New(c *conf.Bootstrap, logger *klog.Helper) (*Data, func(), error) {
-	return nil, nil, nil
+	d := &Data{}
+	return d, d.close, nil
+}
+
+func (d *Data) close() {
 }

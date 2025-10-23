@@ -107,6 +107,12 @@ wire:
 	@echo "Generating wire files"
 	wire ./...
 
+.PHONY: vobj
+# generate the vobj files
+vobj:
+	@echo "Generating vobj files"
+	cd internal/biz/vobj && go generate .
+
 .PHONY: build
 # build the rabbit binary
 build:

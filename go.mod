@@ -17,7 +17,7 @@ require (
 	google.golang.org/protobuf v1.36.10
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gen v0.3.27
-	gorm.io/gorm v1.30.5
+	gorm.io/gorm v1.31.0
 	gorm.io/plugin/dbresolver v1.6.2
 )
 
