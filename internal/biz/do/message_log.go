@@ -1,0 +1,61 @@
+package do
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/aide-family/rabbit/internal/biz/vobj"
+	"gorm.io/gorm"
+)
+
+const (
+	tableNameMessageLog = "message_logs"
+)
+
+type MessageLog struct {
+	NamespaceModel
+
+	UID     string             `gorm:"column:uid;type:varchar(36);not null;uniqueIndex"`
+	SendAt  time.Time          `gorm:"column:send_at;type:datetime;not null"`
+	Message string             `gorm:"column:message;type:text;not null"`
+	Type    vobj.MessageType   `gorm:"column:type;type:tinyint(2);not null;default:0"`
+	Status  vobj.MessageStatus `gorm:"column:status;type:tinyint(2);not null;default:0"`
+}
+
+func (m *MessageLog) TableName() string {
+	return GenMessageLogTableName(m.Namespace, m.SendAt)
+}
+
+func GenMessageLogTableName(namespace string, sendAt time.Time) string {
+	weekStart := getFirstMonday(sendAt)
+	return fmt.Sprintf("%s_%s_%s", tableNameMessageLog, namespace, weekStart.Format("20060102"))
+}
+
+func GenMessageLogTableNames(tx *gorm.DB, namespace string, startAt time.Time, endAt time.Time) []string {
+	if startAt.After(endAt) {
+		return nil
+	}
+	tableNames := make([]string, 0)
+	firstMonday := getFirstMonday(startAt)
+	for current := firstMonday; current.Before(endAt); current = current.AddDate(0, 0, 7) {
+		if current.AddDate(0, 0, 6).Before(endAt) {
+			break
+		}
+		if tableName := GenMessageLogTableName(namespace, current); hasTable(tx, tableName) {
+			tableNames = append(tableNames, tableName)
+		}
+	}
+	return tableNames
+}
+
+func getFirstMonday(date time.Time) time.Time {
+	offset := int(time.Monday - date.Weekday())
+	if offset > 0 {
+		offset -= 7
+	}
+	return date.AddDate(0, 0, offset)
+}
+
+func hasTable(tx *gorm.DB, tableName string) bool {
+	return tx.Migrator().HasTable(tableName)
+}

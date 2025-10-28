@@ -28,7 +28,7 @@ type emailTemplateRepositoryImpl struct {
 // DeleteEmailTemplate implements repository.EmailTemplate.
 func (e *emailTemplateRepositoryImpl) DeleteEmailTemplate(ctx context.Context, uid string) error {
 	namespace := middler.GetNamespace(ctx)
-	emailTemplate := e.d.BizDB(namespace).EmailTemplate
+	emailTemplate := e.d.BizQuery(namespace).EmailTemplate
 	_, err := emailTemplate.WithContext(ctx).Where(emailTemplate.Namespace.Eq(namespace), emailTemplate.UID.Eq(uid)).Delete()
 	return err
 }
@@ -36,7 +36,7 @@ func (e *emailTemplateRepositoryImpl) DeleteEmailTemplate(ctx context.Context, u
 // GetEmailTemplate implements repository.EmailTemplate.
 func (e *emailTemplateRepositoryImpl) GetEmailTemplate(ctx context.Context, uid string) (*do.EmailTemplate, error) {
 	namespace := middler.GetNamespace(ctx)
-	emailTemplate := e.d.BizDB(namespace).EmailTemplate
+	emailTemplate := e.d.BizQuery(namespace).EmailTemplate
 	emailTemplateDO, err := emailTemplate.WithContext(ctx).Where(emailTemplate.Namespace.Eq(namespace), emailTemplate.UID.Eq(uid)).First()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (e *emailTemplateRepositoryImpl) GetEmailTemplate(ctx context.Context, uid 
 // ListEmailTemplate implements repository.EmailTemplate.
 func (e *emailTemplateRepositoryImpl) ListEmailTemplate(ctx context.Context, req *bo.ListEmailTemplateBo) (*bo.PageResponseBo[*do.EmailTemplate], error) {
 	namespace := middler.GetNamespace(ctx)
-	emailTemplate := e.d.BizDB(namespace).EmailTemplate
+	emailTemplate := e.d.BizQuery(namespace).EmailTemplate
 	wrappers := emailTemplate.WithContext(ctx).Where(emailTemplate.Namespace.Eq(namespace))
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(emailTemplate.Name.Like("%" + req.Keyword + "%"))
@@ -73,7 +73,7 @@ func (e *emailTemplateRepositoryImpl) ListEmailTemplate(ctx context.Context, req
 // SaveEmailTemplate implements repository.EmailTemplate.
 func (e *emailTemplateRepositoryImpl) SaveEmailTemplate(ctx context.Context, req *do.EmailTemplate) error {
 	namespace := middler.GetNamespace(ctx)
-	emailTemplate := e.d.BizDB(namespace).EmailTemplate
+	emailTemplate := e.d.BizQuery(namespace).EmailTemplate
 	req.WithNamespace(namespace)
 	wrappers := emailTemplate.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID) {
@@ -88,7 +88,7 @@ func (e *emailTemplateRepositoryImpl) SaveEmailTemplate(ctx context.Context, req
 // UpdateEmailTemplateStatus implements repository.EmailTemplate.
 func (e *emailTemplateRepositoryImpl) UpdateEmailTemplateStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
-	emailTemplate := e.d.BizDB(namespace).EmailTemplate
+	emailTemplate := e.d.BizQuery(namespace).EmailTemplate
 	_, err := emailTemplate.WithContext(ctx).Where(emailTemplate.Namespace.Eq(namespace), emailTemplate.UID.Eq(uid)).Update(emailTemplate.Status, status)
 	return err
 }

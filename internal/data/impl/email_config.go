@@ -28,7 +28,7 @@ type emailConfigRepositoryImpl struct {
 // DeleteEmailConfig implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) DeleteEmailConfig(ctx context.Context, uid string) error {
 	namespace := middler.GetNamespace(ctx)
-	emailConfig := e.d.BizDB(namespace).EmailConfig
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
 	_, err := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid)).Delete()
 	return err
 }
@@ -36,7 +36,7 @@ func (e *emailConfigRepositoryImpl) DeleteEmailConfig(ctx context.Context, uid s
 // GetEmailConfig implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) GetEmailConfig(ctx context.Context, uid string) (*do.EmailConfig, error) {
 	namespace := middler.GetNamespace(ctx)
-	emailConfig := e.d.BizDB(namespace).EmailConfig
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
 	emailConfigDO, err := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid)).First()
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (e *emailConfigRepositoryImpl) GetEmailConfig(ctx context.Context, uid stri
 // ListEmailConfig implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) ListEmailConfig(ctx context.Context, req *bo.ListEmailConfigBo) (*bo.PageResponseBo[*do.EmailConfig], error) {
 	namespace := middler.GetNamespace(ctx)
-	emailConfig := e.d.BizDB(namespace).EmailConfig
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
 	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace))
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(emailConfig.Name.Like("%" + req.Keyword + "%"))
@@ -73,7 +73,7 @@ func (e *emailConfigRepositoryImpl) ListEmailConfig(ctx context.Context, req *bo
 // SaveEmailConfig implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) SaveEmailConfig(ctx context.Context, req *do.EmailConfig) error {
 	namespace := middler.GetNamespace(ctx)
-	emailConfig := e.d.BizDB(namespace).EmailConfig
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
 	req.WithNamespace(namespace)
 	wrappers := emailConfig.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID) {
@@ -88,7 +88,7 @@ func (e *emailConfigRepositoryImpl) SaveEmailConfig(ctx context.Context, req *do
 // UpdateEmailConfigStatus implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) UpdateEmailConfigStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
-	emailConfig := e.d.BizDB(namespace).EmailConfig
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
 	_, err := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid)).Update(emailConfig.Status, status)
 	return err
 }

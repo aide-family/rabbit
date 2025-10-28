@@ -67,14 +67,22 @@ func (d *Data) close() {
 	}
 }
 
-func (d *Data) MainDB() *query.Query {
-	return query.Use(d.mainDB)
+func (d *Data) MainDB() *gorm.DB {
+	return d.mainDB
 }
 
-func (d *Data) BizDB(namespace string) *query.Query {
+func (d *Data) MainQuery() *query.Query {
+	return query.Use(d.MainDB())
+}
+
+func (d *Data) BizQuery(namespace string) *query.Query {
+	return query.Use(d.BizDB(namespace))
+}
+
+func (d *Data) BizDB(namespace string) *gorm.DB {
 	db, ok := d.dbs.Get(namespace)
 	if ok {
-		return query.Use(db)
+		return db
 	}
-	return d.MainDB()
+	return d.mainDB
 }
