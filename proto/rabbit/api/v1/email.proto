@@ -23,6 +23,12 @@ service Email {
 			body: "*"
 		};
 	}
+	rpc UpdateEmailConfigStatus (UpdateEmailConfigStatusRequest) returns (UpdateEmailConfigStatusReply) {
+		option (google.api.http) = {
+			put: "/v1/email/config/{uid}/status"
+			body: "*"
+		};
+	}
 	rpc DeleteEmailConfig (DeleteEmailConfigRequest) returns (DeleteEmailConfigReply) {
 		option (google.api.http) = {
 			delete: "/v1/email/config/{uid}"
@@ -150,7 +156,7 @@ message ListEmailConfigRequest {
 }
 message ListEmailConfigReply {
 	repeated EmailConfigItem items = 1;
-	int32 total = 2;
+	int64 total = 2;
 	int32 page = 3;
 	int32 pageSize = 4;
 }
@@ -209,7 +215,7 @@ message ListEmailTemplateRequest {
 }
 message ListEmailTemplateReply {
 	repeated EmailTemplateItem items = 1;
-	int32 total = 2;
+	int64 total = 2;
 	int32 page = 3;
 	int32 pageSize = 4;
 }

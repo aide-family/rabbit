@@ -94,6 +94,30 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.DeleteEmailConfigReply'
+    /v1/email/config/{uid}/status:
+        put:
+            tags:
+                - Email
+            operationId: Email_UpdateEmailConfigStatus
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailConfigStatusRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateEmailConfigStatusReply'
     /v1/email/configs:
         get:
             tags:
@@ -903,8 +927,7 @@ components:
                     items:
                         $ref: '#/components/schemas/rabbit.api.v1.EmailConfigItem'
                 total:
-                    type: integer
-                    format: int32
+                    type: string
                 page:
                     type: integer
                     format: int32
@@ -919,8 +942,7 @@ components:
                     items:
                         $ref: '#/components/schemas/rabbit.api.v1.EmailTemplateItem'
                 total:
-                    type: integer
-                    format: int32
+                    type: string
                 page:
                     type: integer
                     format: int32
@@ -1060,6 +1082,17 @@ components:
                     type: string
                 password:
                     type: string
+        rabbit.api.v1.UpdateEmailConfigStatusReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateEmailConfigStatusRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                status:
+                    type: integer
+                    format: enum
         rabbit.api.v1.UpdateEmailTemplateReply:
             type: object
             properties: {}
