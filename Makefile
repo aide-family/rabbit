@@ -30,6 +30,7 @@ init:
 	go install github.com/moon-monitor/stringer@latest
 	go install github.com/protoc-gen/i18n-gen@latest
 	go install golang.org/x/tools/gopls@latest
+	go install github.com/go-kratos/kratos/cmd/kratos/v2@latest
 
 .PHONY: conf
 # generate the conf files

@@ -28,3 +28,19 @@ enum GlobalStatus {
 	ENABLED = 1;
 	DISABLED = 2;
 }
+
+enum MessageStatus {
+	MessageStatus_UNKNOWN = 0;
+	Pending = 1;
+	Sending = 2;
+	Sent = 3;
+	Failed = 4;
+	Cancelled = 5;
+}
+
+enum MessageType {
+	MessageType_UNKNOWN = 0;
+	Email = 1;
+	Webhook = 2;
+	SMS = 3;
+}

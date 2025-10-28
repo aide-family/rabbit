@@ -7,4 +7,5 @@ const (
 	MessageTypeUnknown MessageType = iota // 未知
 	MessageTypeEmail                      // 邮件
 	MessageTypeWebhook                    // webhook
+	MessageTypeSMS                        // SMS
 )

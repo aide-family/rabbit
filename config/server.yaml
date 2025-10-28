@@ -29,11 +29,11 @@ jwt:
   allowList:
     - /rabbit.api.v1.Health/HealthCheck
 
-etcd:
-  endpoints:
-    - http://127.0.0.1:2379
-  username:
-  password:
+# etcd:
+#   endpoints:
+#     - http://127.0.0.1:2379
+#   username:
+#   password:
 
 main:
   username: root
@@ -44,3 +44,5 @@ main:
   charset: utf8mb4
   parseTime: true
   loc: Asia/Shanghai
+  debug: true
+  useSystemLogger: false

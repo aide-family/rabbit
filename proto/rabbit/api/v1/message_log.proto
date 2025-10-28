@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package rabbit.api.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "buf/validate/validate.proto";
+import "enum/enum.proto";
+
+option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
+option java_multiple_files = true;
+option java_package = "rabbit.api.v1";
+
+service MessageLog {
+	rpc RetryMessage (RetryMessageLogRequest) returns (RetryMessageLogReply) {
+		option (google.api.http) = {
+			post: "/v1/message-log/{uid}/retry"
+			body: "*"
+		};
+	}
+	rpc CancelMessage (CancelMessageLogRequest) returns (CancelMessageLogReply) {
+		option (google.api.http) = {
+			post: "/v1/message-log/{uid}/cancel"
+			body: "*"
+		};
+	}
+	rpc GetMessageLog (GetMessageLogRequest) returns (MessageLogItem) {
+		option (google.api.http) = {
+			get: "/v1/message-log/{uid}"
+		};
+	}
+	rpc ListMessageLog (ListMessageLogRequest) returns (ListMessageLogReply) {
+		option (google.api.http) = {
+			get: "/v1/message-logs"
+		};
+	}
+}
+
+message MessageLogItem {
+	string uid = 1;
+	rabbit.enum.MessageType type = 2;
+	rabbit.enum.MessageStatus status = 3;
+	string sendAt = 4;
+	string message = 5;
+	string createdAt = 6;
+	string updatedAt = 7;
+}
+
+message RetryMessageLogRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	google.protobuf.Timestamp sendAt = 2 [(buf.validate.field).required = true];
+}
+message RetryMessageLogReply {}
+
+message CancelMessageLogRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	google.protobuf.Timestamp sendAt = 2 [(buf.validate.field).required = true];
+}
+message CancelMessageLogReply {}
+
+message GetMessageLogRequest {
+	string uid = 1 [(buf.validate.field).required = true];
+	google.protobuf.Timestamp sendAt = 2 [(buf.validate.field).required = true];
+}
+
+message ListMessageLogRequest {
+	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1",
+		message: "page must be greater than or equal to 1",
+	}];
+	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+	}];
+	string keyword = 3 [(buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "keyword must be less than or equal to 100",
+	}];
+	rabbit.enum.GlobalStatus status = 4;
+	rabbit.enum.MessageType type = 5;
+	google.protobuf.Timestamp startAt = 6 [(buf.validate.field).required = true];
+	google.protobuf.Timestamp endAt = 7 [(buf.validate.field).required = true];
+}
+message ListMessageLogReply {
+	repeated MessageLogItem items = 1;
+	int32 total = 2;
+	int32 page = 3;
+	int32 pageSize = 4;
+}

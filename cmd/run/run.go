@@ -77,28 +77,29 @@ func runServer(_ *cobra.Command, _ []string) {
 
 func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) (*kratos.App, error) {
 	defer hello.Hello()
-
-	etcdConfig := bc.GetEtcd()
-	client, err := clientV3.New(clientV3.Config{
-		Endpoints:   etcdConfig.GetEndpoints(),
-		Username:    etcdConfig.GetUsername(),
-		Password:    etcdConfig.GetPassword(),
-		DialTimeout: 5 * time.Second,
-	})
-	if err != nil {
-		helper.Errorw("msg", "etcd client initialization failed", "error", err)
-		return nil, err
-	}
-	registrar := etcd.New(client)
 	opts := []kratos.Option{
 		kratos.Logger(helper.Logger()),
 		kratos.Server(srvs...),
-		kratos.Registrar(registrar),
 		kratos.Version(hello.Version()),
 		kratos.ID(hello.ID()),
 		kratos.Name(hello.Name()),
 		kratos.Metadata(hello.Metadata()),
 	}
+	if etcdConfig := bc.GetEtcd(); etcdConfig != nil {
+		client, err := clientV3.New(clientV3.Config{
+			Endpoints:   etcdConfig.GetEndpoints(),
+			Username:    etcdConfig.GetUsername(),
+			Password:    etcdConfig.GetPassword(),
+			DialTimeout: 5 * time.Second,
+		})
+		if err != nil {
+			helper.Errorw("msg", "etcd client initialization failed", "error", err)
+			return nil, err
+		}
+		registrar := etcd.New(client)
+		opts = append(opts, kratos.Registrar(registrar))
+	}
+
 	srvs.BindSwagger(flags.enableSwagger, helper)
 	srvs.BindMetrics(flags.enableMetrics, helper)
 	return kratos.New(opts...), nil

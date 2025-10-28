@@ -282,6 +282,124 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.ListEmailTemplateReply'
+    /v1/message-log/{uid}:
+        get:
+            tags:
+                - MessageLog
+            operationId: MessageLog_GetMessageLog
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+                - name: sendAt
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.MessageLogItem'
+    /v1/message-log/{uid}/cancel:
+        post:
+            tags:
+                - MessageLog
+            operationId: MessageLog_CancelMessage
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.CancelMessageLogRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.CancelMessageLogReply'
+    /v1/message-log/{uid}/retry:
+        post:
+            tags:
+                - MessageLog
+            operationId: MessageLog_RetryMessage
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.RetryMessageLogRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.RetryMessageLogReply'
+    /v1/message-logs:
+        get:
+            tags:
+                - MessageLog
+            operationId: MessageLog_ListMessageLog
+            parameters:
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: keyword
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+                - name: type
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+                - name: startAt
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: endAt
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.ListMessageLogReply'
     /v1/namespace:
         post:
             tags:
@@ -767,6 +885,17 @@ paths:
                                 $ref: '#/components/schemas/rabbit.api.v1.ListWebhookTemplateReply'
 components:
     schemas:
+        rabbit.api.v1.CancelMessageLogReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.CancelMessageLogRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                sendAt:
+                    type: string
+                    format: date-time
         rabbit.api.v1.CreateEmailConfigReply:
             type: object
             properties: {}
@@ -949,6 +1078,22 @@ components:
                 pageSize:
                     type: integer
                     format: int32
+        rabbit.api.v1.ListMessageLogReply:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/rabbit.api.v1.MessageLogItem'
+                total:
+                    type: integer
+                    format: int32
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
         rabbit.api.v1.ListNamespaceReply:
             type: object
             properties:
@@ -988,6 +1133,25 @@ components:
                 pageSize:
                     type: integer
                     format: int32
+        rabbit.api.v1.MessageLogItem:
+            type: object
+            properties:
+                uid:
+                    type: string
+                type:
+                    type: integer
+                    format: enum
+                status:
+                    type: integer
+                    format: enum
+                sendAt:
+                    type: string
+                message:
+                    type: string
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
         rabbit.api.v1.NamespaceItem:
             type: object
             properties:
@@ -1004,6 +1168,17 @@ components:
                 status:
                     type: integer
                     format: enum
+        rabbit.api.v1.RetryMessageLogReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.RetryMessageLogRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                sendAt:
+                    type: string
+                    format: date-time
         rabbit.api.v1.SendEmailRequest:
             type: object
             properties:
@@ -1252,6 +1427,7 @@ components:
 tags:
     - name: Email
     - name: Health
+    - name: MessageLog
     - name: Namespace
     - name: Sender
     - name: Webhook
