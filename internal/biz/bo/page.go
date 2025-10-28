@@ -1,29 +1,43 @@
 package bo
 
-func NewPageRequestBo[T any](page int32, pageSize int32) *PageRequestBo[T] {
-	return &PageRequestBo[T]{
+func NewPageRequestBo(page int32, pageSize int32) *PageRequestBo {
+	return &PageRequestBo{
 		Page:     page,
 		PageSize: pageSize,
 	}
 }
 
-type PageRequestBo[T any] struct {
+type PageRequestBo struct {
 	Page     int32
 	PageSize int32
+	total    int64
 }
 
-func (p *PageRequestBo[T]) NewPageResponseBo(data []T, total int64) *PageResponseBo[T] {
+func (p *PageRequestBo) Offset() int {
+	return int((p.Page - 1) * p.PageSize)
+}
+
+func (p *PageRequestBo) Limit() int {
+	return int(p.PageSize)
+}
+
+func (p *PageRequestBo) WithTotal(total int64) *PageRequestBo {
+	p.total = total
+	return p
+}
+
+func NewPageResponseBo[T any](pageRequestBo *PageRequestBo, data []T) *PageResponseBo[T] {
 	return &PageResponseBo[T]{
 		items:         data,
-		total:         total,
-		PageRequestBo: p,
+		total:         pageRequestBo.total,
+		PageRequestBo: pageRequestBo,
 	}
 }
 
 type PageResponseBo[T any] struct {
 	items []T
 	total int64
-	*PageRequestBo[T]
+	*PageRequestBo
 }
 
 func (p *PageResponseBo[T]) GetItems() []T {

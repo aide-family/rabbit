@@ -119,7 +119,11 @@ func WithBaseInfo(ctx context.Context, baseInfo BaseInfo) context.Context {
 }
 
 func GetBaseInfo(ctx context.Context) BaseInfo {
-	return ctx.Value(baseInfoKey{}).(BaseInfo)
+	baseInfo, ok := ctx.Value(baseInfoKey{}).(BaseInfo)
+	if !ok {
+		return BaseInfo{}
+	}
+	return baseInfo
 }
 
 func WithJwtToken(ctx context.Context, jwtToken string) context.Context {

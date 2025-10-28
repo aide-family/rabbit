@@ -39,4 +39,6 @@ message MySQL {
 	string charset  = 6;
 	string parseTime = 7;
 	string loc = 8;
+	bool debug = 9;
+	bool useSystemLogger = 10;
 }

@@ -29,6 +29,7 @@ init:
 	go install github.com/google/wire/cmd/wire@latest
 	go install github.com/moon-monitor/stringer@latest
 	go install github.com/protoc-gen/i18n-gen@latest
+	go install golang.org/x/tools/gopls@latest
 
 .PHONY: conf
 # generate the conf files
@@ -131,9 +132,21 @@ vobj:
 	@echo "Generating vobj files"
 	cd internal/biz/vobj && go generate .
 
+.PHONY: gorm-gen
+# generate the gorm files
+gorm-gen:
+	@echo "Generating gorm files"
+	go run . gorm gen
+
+.PHONY: gorm-migrate
+# migrate the gorm files
+gorm-migrate:
+	@echo "Migrating gorm files"
+	go run . gorm migrate
+
 .PHONY: build
 # build the rabbit binary
-build:
+build: errors api conf vobj gorm-gen wire 
 	@echo "Building rabbit"
 	go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME)" -o bin/rabbit main.go
 
@@ -154,12 +167,13 @@ test:
 clean:
 	@echo "Cleaning up"
 	rm -rf bin
-
-.PHONY: completion
-# generate the completion
-completion:
-	@echo "Generating completion"
-	go run . completion bash > completion.bash
+	rm -rf internal/biz/do/query
+	rm -rf internal/biz/vobj/*__string.go
+	rm -rf internal/conf/*.pb.go
+	rm -rf pkg/api/*.pb.go
+	rm -rf pkg/enum/*.pb.go
+	rm -rf pkg/merr/*.pb.go
+	rm -rf pkg/config/*.pb.go
 
 # show help
 help:

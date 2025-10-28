@@ -69,25 +69,49 @@ func (s *EmailService) ListEmailConfig(ctx context.Context, req *pb.ListEmailCon
 }
 
 func (s *EmailService) CreateEmailTemplate(ctx context.Context, req *pb.CreateEmailTemplateRequest) (*pb.CreateEmailTemplateReply, error) {
+	createEmailTemplateBo := bo.NewCreateEmailTemplateBo(req)
+	if err := s.emailConfigBiz.CreateEmailTemplate(ctx, createEmailTemplateBo); err != nil {
+		return nil, err
+	}
 	return &pb.CreateEmailTemplateReply{}, nil
 }
 
 func (s *EmailService) UpdateEmailTemplate(ctx context.Context, req *pb.UpdateEmailTemplateRequest) (*pb.UpdateEmailTemplateReply, error) {
+	updateEmailTemplateBo := bo.NewUpdateEmailTemplateBo(req)
+	if err := s.emailConfigBiz.UpdateEmailTemplate(ctx, updateEmailTemplateBo); err != nil {
+		return nil, err
+	}
 	return &pb.UpdateEmailTemplateReply{}, nil
 }
 
 func (s *EmailService) UpdateEmailTemplateStatus(ctx context.Context, req *pb.UpdateEmailTemplateStatusRequest) (*pb.UpdateEmailTemplateStatusReply, error) {
+	updateEmailTemplateStatusBo := bo.NewUpdateEmailTemplateStatusBo(req)
+	if err := s.emailConfigBiz.UpdateEmailTemplateStatus(ctx, updateEmailTemplateStatusBo); err != nil {
+		return nil, err
+	}
 	return &pb.UpdateEmailTemplateStatusReply{}, nil
 }
 
 func (s *EmailService) DeleteEmailTemplate(ctx context.Context, req *pb.DeleteEmailTemplateRequest) (*pb.DeleteEmailTemplateReply, error) {
+	if err := s.emailConfigBiz.DeleteEmailTemplate(ctx, req.Uid); err != nil {
+		return nil, err
+	}
 	return &pb.DeleteEmailTemplateReply{}, nil
 }
 
 func (s *EmailService) GetEmailTemplate(ctx context.Context, req *pb.GetEmailTemplateRequest) (*pb.EmailTemplateItem, error) {
-	return &pb.EmailTemplateItem{}, nil
+	getEmailTemplateBo, err := s.emailConfigBiz.GetEmailTemplate(ctx, req.Uid)
+	if err != nil {
+		return nil, err
+	}
+	return getEmailTemplateBo.ToAPIV1EmailTemplateItem(), nil
 }
 
 func (s *EmailService) ListEmailTemplate(ctx context.Context, req *pb.ListEmailTemplateRequest) (*pb.ListEmailTemplateReply, error) {
-	return &pb.ListEmailTemplateReply{}, nil
+	emailTemplateListPageRequestBo := bo.NewListEmailTemplateBo(req)
+	emailTemplateListPageResponseBo, err := s.emailConfigBiz.ListEmailTemplate(ctx, emailTemplateListPageRequestBo)
+	if err != nil {
+		return nil, err
+	}
+	return bo.ToAPIV1ListEmailTemplateReply(emailTemplateListPageResponseBo), nil
 }

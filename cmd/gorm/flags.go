@@ -33,8 +33,8 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
 	c.PersistentFlags().StringVarP(&f.configPath, "config", "c", "", "config file")
 	c.PersistentFlags().BoolVarP(&f.forceGen, "force-gen", "f", false, "force generate code, if the code already exists, it will be overwitten")
-	c.PersistentFlags().StringVar(&f.username, "username", "", "mysql username")
-	c.PersistentFlags().StringVar(&f.password, "password", "", "mysql password")
+	c.PersistentFlags().StringVar(&f.username, "username", "root", "mysql username")
+	c.PersistentFlags().StringVar(&f.password, "password", "123456", "mysql password")
 	c.PersistentFlags().StringVar(&f.host, "host", "localhost", "mysql host")
 	c.PersistentFlags().Int32Var(&f.port, "port", 3306, "mysql port")
 	c.PersistentFlags().StringVar(&f.database, "database", "rabbit", "mysql database")
@@ -44,10 +44,10 @@ func (f *Flags) addFlags(c *cobra.Command) {
 }
 
 func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
-	if pointer.IsNil(bc) || pointer.IsNil(bc.GetMysql()) {
+	if pointer.IsNil(bc) || pointer.IsNil(bc.GetMain()) {
 		return
 	}
-	mysqlConf := bc.GetMysql()
+	mysqlConf := bc.GetMain()
 	if username := mysqlConf.GetUsername(); strutil.IsNotEmpty(username) {
 		f.username = username
 	}

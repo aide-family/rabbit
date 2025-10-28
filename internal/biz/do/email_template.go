@@ -1,15 +1,13 @@
 package do
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 )
 
 type EmailTemplate struct {
-	BaseModel
+	NamespaceModel
 
-	UID         uuid.UUID         `gorm:"column:uid;type:varchar(36);not null;uniqueIndex"`
+	UID         string            `gorm:"column:uid;type:varchar(36);not null;uniqueIndex"`
 	Name        string            `gorm:"column:name;type:varchar(100);not null;uniqueIndex"`
 	Subject     string            `gorm:"column:subject;type:varchar(255);not null"`
 	Body        string            `gorm:"column:body;type:text;not null"`

@@ -14,7 +14,8 @@ message Bootstrap {
 	GlobalEmail globalEmail = 4;
 	JWT jwt = 5;
 	rabbit.config.ETCD etcd = 6;
-	rabbit.config.MySQL mysql = 7;
+	map<string, rabbit.config.MySQL> biz = 7;
+	rabbit.config.MySQL main = 8;
 }
 
 enum Environment {
