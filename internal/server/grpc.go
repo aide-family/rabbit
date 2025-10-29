@@ -21,16 +21,14 @@ func NewGRPCServer(bc *conf.Bootstrap, helper *klog.Helper) *grpc.Server {
 	grpcConf := serverConf.GetGrpc()
 	jwtConf := bc.GetJwt()
 
+	namespaceMiddleware := selector.Server(rabbitMiddler.MustNamespace()).Match(middler.AllowListMatcher(bc.GetNamespaceAllowList()...)).Build()
 	selectorMustAuthMiddlewares := []middleware.Middleware{
 		rabbitMiddler.JwtServe(jwtConf.GetSecret()),
 		rabbitMiddler.MustLogin(),
 		rabbitMiddler.BindJwtToken(),
+		namespaceMiddleware,
 	}
 	authMiddleware := selector.Server(selectorMustAuthMiddlewares...).Match(middler.AllowListMatcher(jwtConf.GetAllowList()...)).Build()
-	selectorMustNamespaceMiddlewares := []middleware.Middleware{
-		rabbitMiddler.MustNamespace(),
-	}
-	namespaceMiddleware := selector.Server(selectorMustNamespaceMiddlewares...).Match(middler.AllowListMatcher(bc.GetNamespaceAllowList()...)).Build()
 
 	grpcMiddlewares := []middleware.Middleware{
 		recovery.Recovery(),
@@ -38,7 +36,6 @@ func NewGRPCServer(bc *conf.Bootstrap, helper *klog.Helper) *grpc.Server {
 		tracing.Server(),
 		metadata.Server(),
 		authMiddleware,
-		namespaceMiddleware,
 		middler.Validate(),
 	}
 	opts := []grpc.ServerOption{
