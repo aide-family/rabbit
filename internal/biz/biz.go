@@ -8,4 +8,5 @@ var ProviderSetBiz = wire.NewSet(
 	NewHealth,
 	NewEmailConfig,
 	NewNamespace,
+	NewMessageLog,
 )

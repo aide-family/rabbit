@@ -147,7 +147,7 @@ gorm-migrate:
 
 .PHONY: all
 # generate all files
-all: errors api conf vobj gorm-gen wire
+all: clean errors api conf vobj gorm-gen wire
 
 .PHONY: build
 # build the rabbit binary

@@ -28,7 +28,12 @@ jwt:
   issuer: rabbit
   allowList:
     - /rabbit.api.v1.Health/HealthCheck
-
+namespaceAllowList:
+  - /rabbit.api.v1.Namespace/SaveNamespace
+  - /rabbit.api.v1.Namespace/UpdateNamespaceStatus
+  - /rabbit.api.v1.Namespace/DeleteNamespace
+  - /rabbit.api.v1.Namespace/GetNamespace
+  - /rabbit.api.v1.Namespace/ListNamespace
 # etcd:
 #   endpoints:
 #     - http://127.0.0.1:2379

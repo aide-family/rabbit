@@ -16,6 +16,7 @@ message Bootstrap {
 	rabbit.config.ETCD etcd = 6;
 	map<string, rabbit.config.MySQL> biz = 7;
 	rabbit.config.MySQL main = 8;
+	repeated string namespaceAllowList = 9;
 }
 
 enum Environment {

@@ -80,17 +80,20 @@ func RegisterService(
 	webhookService *service.WebhookService,
 	senderService *service.SenderService,
 	namespaceService *service.NamespaceService,
+	messageLogService *service.MessageLogService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
 	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
 	apiv1.RegisterSenderServer(grpcSrv, senderService)
 	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
+	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
 
 	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
 	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
 	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
 	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
 	return Servers{httpSrv, grpcSrv}
 }

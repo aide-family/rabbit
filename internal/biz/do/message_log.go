@@ -38,24 +38,9 @@ func GenMessageLogTableNames(tx *gorm.DB, namespace string, startAt time.Time, e
 	tableNames := make([]string, 0)
 	firstMonday := getFirstMonday(startAt)
 	for current := firstMonday; current.Before(endAt); current = current.AddDate(0, 0, 7) {
-		if current.AddDate(0, 0, 6).Before(endAt) {
-			break
-		}
-		if tableName := GenMessageLogTableName(namespace, current); hasTable(tx, tableName) {
+		if tableName := GenMessageLogTableName(namespace, current); HasTable(tx, tableName) {
 			tableNames = append(tableNames, tableName)
 		}
 	}
 	return tableNames
-}
-
-func getFirstMonday(date time.Time) time.Time {
-	offset := int(time.Monday - date.Weekday())
-	if offset > 0 {
-		offset -= 7
-	}
-	return date.AddDate(0, 0, offset)
-}
-
-func hasTable(tx *gorm.DB, tableName string) bool {
-	return tx.Migrator().HasTable(tableName)
 }

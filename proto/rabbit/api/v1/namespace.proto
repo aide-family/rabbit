@@ -55,8 +55,8 @@ message SaveNamespaceReply {}
 message UpdateNamespaceStatusRequest {
 	string name = 1 [(buf.validate.field).required = true];
 	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this in [ENABLED, DISABLED]",
-		message: "status must be in [ENABLED, DISABLED]",
+		expression: "this in [rabbit.enum.GlobalStatus.ENABLED, rabbit.enum.GlobalStatus.DISABLED]",
+		message: "status must be in ['ENABLED', 'DISABLED']",
 	}];
 }
 message UpdateNamespaceStatusReply {}

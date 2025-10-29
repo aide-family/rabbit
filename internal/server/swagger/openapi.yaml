@@ -293,11 +293,10 @@ paths:
                   required: true
                   schema:
                     type: string
-                - name: sendAt
+                - name: sendAtUnix
                   in: query
                   schema:
                     type: string
-                    format: date-time
             responses:
                 "200":
                     description: OK
@@ -383,16 +382,14 @@ paths:
                   schema:
                     type: integer
                     format: enum
-                - name: startAt
+                - name: startAtUnix
                   in: query
                   schema:
                     type: string
-                    format: date-time
-                - name: endAt
+                - name: endAtUnix
                   in: query
                   schema:
                     type: string
-                    format: date-time
             responses:
                 "200":
                     description: OK
@@ -879,9 +876,8 @@ components:
             properties:
                 uid:
                     type: string
-                sendAt:
+                sendAtUnix:
                     type: string
-                    format: date-time
         rabbit.api.v1.CreateEmailConfigReply:
             type: object
             properties: {}
@@ -1057,8 +1053,7 @@ components:
                     items:
                         $ref: '#/components/schemas/rabbit.api.v1.MessageLogItem'
                 total:
-                    type: integer
-                    format: int32
+                    type: string
                 page:
                     type: integer
                     format: int32
@@ -1155,9 +1150,8 @@ components:
             properties:
                 uid:
                     type: string
-                sendAt:
+                sendAtUnix:
                     type: string
-                    format: date-time
         rabbit.api.v1.SaveNamespaceReply:
             type: object
             properties: {}

@@ -3,7 +3,6 @@ syntax = "proto3";
 package rabbit.api.v1;
 
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 import "buf/validate/validate.proto";
 import "enum/enum.proto";
 
@@ -47,20 +46,35 @@ message MessageLogItem {
 }
 
 message RetryMessageLogRequest {
-	string uid = 1 [(buf.validate.field).required = true];
-	google.protobuf.Timestamp sendAt = 2 [(buf.validate.field).required = true];
+	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
+		uuid: true,
+	}];
+	int64 sendAtUnix = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 0",
+		message: "sendAtUnix must be greater than or equal to 0",
+	}];
 }
 message RetryMessageLogReply {}
 
 message CancelMessageLogRequest {
-	string uid = 1 [(buf.validate.field).required = true];
-	google.protobuf.Timestamp sendAt = 2 [(buf.validate.field).required = true];
+	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
+		uuid: true,
+	}];
+	int64 sendAtUnix = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 0",
+		message: "sendAtUnix must be greater than or equal to 0",
+	}];
 }
 message CancelMessageLogReply {}
 
 message GetMessageLogRequest {
-	string uid = 1 [(buf.validate.field).required = true];
-	google.protobuf.Timestamp sendAt = 2 [(buf.validate.field).required = true];
+	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
+		uuid: true,
+	}];
+	int64 sendAtUnix = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 0",
+		message: "sendAtUnix must be greater than or equal to 0",
+	}];
 }
 
 message ListMessageLogRequest {
@@ -78,12 +92,29 @@ message ListMessageLogRequest {
 	}];
 	rabbit.enum.GlobalStatus status = 4;
 	rabbit.enum.MessageType type = 5;
-	google.protobuf.Timestamp startAt = 6 [(buf.validate.field).required = true];
-	google.protobuf.Timestamp endAt = 7 [(buf.validate.field).required = true];
+	int64 startAtUnix = 6 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 0",
+		message: "startAtUnix must be greater than or equal to 0",
+	}];
+	int64 endAtUnix = 7 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 0",
+		message: "endAtUnix must be greater than or equal to 0",
+	}];
+	// startAtUnix < endAtUnix
+	option (buf.validate.message).cel = {
+		expression: "this.startAtUnix < this.endAtUnix",
+		message: "startAtUnix must be less than endAtUnix",
+	};
+
+	//  endAtUnix - startAtUnix <= 31 days
+	option (buf.validate.message).cel = {
+		expression: "this.endAtUnix - this.startAtUnix <= 31 * 24 * 60 * 60",
+		message: "endAtUnix - startAtUnix must be less than or equal to 31 days",
+	};
 }
 message ListMessageLogReply {
 	repeated MessageLogItem items = 1;
-	int32 total = 2;
+	int64 total = 2;
 	int32 page = 3;
 	int32 pageSize = 4;
 }

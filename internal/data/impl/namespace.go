@@ -27,12 +27,15 @@ type namespaceRepositoryImpl struct {
 func (n *namespaceRepositoryImpl) SaveNamespace(ctx context.Context, req *do.Namespace) error {
 	namespaceDO := n.d.MainQuery().Namespace
 	wrappers := namespaceDO.WithContext(ctx)
-	return wrappers.Clauses(clause.OnConflict{
-		DoUpdates: clause.Assignments(map[string]any{
-			namespaceDO.Metadata.ColumnName().String(): req.Metadata,
-			namespaceDO.Status.ColumnName().String():   req.Status,
-		}),
-	}).Save(req)
+	assignmentColumns := []string{
+		namespaceDO.Metadata.ColumnName().String(),
+		namespaceDO.Status.ColumnName().String(),
+		namespaceDO.UpdatedAt.ColumnName().String(),
+	}
+	onConflict := clause.OnConflict{
+		DoUpdates: clause.AssignmentColumns(assignmentColumns),
+	}
+	return wrappers.Clauses(onConflict).Create(req)
 }
 
 // UpdateNamespaceStatus implements repository.Namespace.

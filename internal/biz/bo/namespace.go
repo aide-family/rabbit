@@ -3,6 +3,7 @@ package bo
 import (
 	"time"
 
+	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -17,7 +18,7 @@ type SaveNamespaceBo struct {
 func (b *SaveNamespaceBo) ToDoNamespace() *do.Namespace {
 	return &do.Namespace{
 		Name:     b.Name,
-		Metadata: b.Metadata,
+		Metadata: safety.NewMap(b.Metadata),
 	}
 }
 
@@ -43,7 +44,7 @@ type NamespaceItemBo struct {
 func NewNamespaceItemBo(doNamespace *do.Namespace) *NamespaceItemBo {
 	return &NamespaceItemBo{
 		Name:      doNamespace.Name,
-		Metadata:  doNamespace.Metadata,
+		Metadata:  doNamespace.Metadata.Map(),
 		Status:    doNamespace.Status,
 		CreatedAt: doNamespace.CreatedAt,
 		UpdatedAt: doNamespace.UpdatedAt,

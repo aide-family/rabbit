@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/pkg/middler"
 	"gorm.io/gorm"
 )
@@ -28,6 +29,13 @@ type BaseModel struct {
 	Creator   string         `gorm:"column:creator;type:varchar(36);not null;index"`
 }
 
+func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
+	if strutil.IsEmpty(b.Creator) {
+		b.WithCreator(tx.Statement.Context)
+	}
+	return
+}
+
 func (b *BaseModel) WithCreator(ctx context.Context) *BaseModel {
 	b.Creator = middler.GetBaseInfo(ctx).UserID
 	return b
@@ -39,7 +47,29 @@ type NamespaceModel struct {
 	Namespace string `gorm:"column:namespace;type:varchar(100);not null;index"`
 }
 
+func (n *NamespaceModel) BeforeCreate(tx *gorm.DB) (err error) {
+	if n.BaseModel.BeforeCreate(tx) != nil {
+		return
+	}
+	if strutil.IsEmpty(n.Namespace) {
+		n.WithNamespace(middler.GetNamespace(tx.Statement.Context))
+	}
+	return
+}
+
 func (n *NamespaceModel) WithNamespace(namespace string) *NamespaceModel {
 	n.Namespace = namespace
 	return n
+}
+
+func HasTable(tx *gorm.DB, tableName string) bool {
+	return tx.Migrator().HasTable(tableName)
+}
+
+func getFirstMonday(date time.Time) time.Time {
+	offset := int(time.Monday - date.Weekday())
+	if offset > 0 {
+		offset -= 7
+	}
+	return date.AddDate(0, 0, offset)
 }

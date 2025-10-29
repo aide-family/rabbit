@@ -17,7 +17,8 @@ func TestGetJwtToken(t *testing.T) {
 		Expire: durationpb.New(24 * 365 * time.Hour),
 		Issuer: "rabbit-test",
 	}, middler.BaseInfo{
-		UserID: "test01",
+		UserID:   "no01",
+		Username: "test01",
 	})
 	token, err := claims.GenerateToken()
 	if err != nil {
