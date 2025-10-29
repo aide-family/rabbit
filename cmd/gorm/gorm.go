@@ -1,5 +1,5 @@
 // Package gorm is the gorm package for the Rabbit service
-package gorm
+package main
 
 import (
 	"database/sql"
@@ -7,7 +7,9 @@ import (
 	"slices"
 
 	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/gormlog"
+	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/aide-family/magicbox/strutil"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
@@ -108,4 +110,17 @@ func initDB() (*gorm.DB, error) {
 	}
 	flags.Helper.Infow("msg", "open mysql connection success")
 	return db.Debug(), nil
+}
+
+func main() {
+	logger, err := log.NewLogger(stdio.LoggerDriver())
+	if err != nil {
+		panic(err)
+	}
+	helper := klog.NewHelper(logger)
+	cmd.SetGlobalFlags(
+		cmd.WithGlobalFlagsHelper(helper),
+	)
+	rootCmd := cmd.NewCmd()
+	cmd.Execute(rootCmd, NewCmd())
 }

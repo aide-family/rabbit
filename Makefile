@@ -137,17 +137,21 @@ vobj:
 # generate the gorm files
 gorm-gen:
 	@echo "Generating gorm files"
-	go run . gorm gen
+	go run ./cmd/gorm gorm gen
 
 .PHONY: gorm-migrate
 # migrate the gorm files
 gorm-migrate:
 	@echo "Migrating gorm files"
-	go run . gorm migrate
+	go run ./cmd/gorm gorm migrate
+
+.PHONY: all
+# generate all files
+all: errors api conf vobj gorm-gen wire
 
 .PHONY: build
 # build the rabbit binary
-build: errors api conf vobj gorm-gen wire 
+build: all
 	@echo "Building rabbit"
 	go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME)" -o bin/rabbit main.go
 
