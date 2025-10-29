@@ -15,7 +15,6 @@ import (
 func NewWebhookConfig(
 	webhookConfigRepo repository.WebhookConfig,
 	webhookTemplateRepo repository.WebhookTemplate,
-	namespace string,
 	helper *klog.Helper,
 ) *WebhookConfig {
 	return &WebhookConfig{

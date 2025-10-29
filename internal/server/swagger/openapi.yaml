@@ -859,6 +859,11 @@ paths:
                   schema:
                     type: integer
                     format: enum
+                - name: app
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
             responses:
                 "200":
                     description: OK
@@ -945,6 +950,9 @@ components:
                     type: string
                 body:
                     type: string
+                app:
+                    type: integer
+                    format: enum
         rabbit.api.v1.DeleteEmailConfigReply:
             type: object
             properties: {}
@@ -1342,6 +1350,9 @@ components:
                     type: string
                 body:
                     type: string
+                app:
+                    type: integer
+                    format: enum
         rabbit.api.v1.UpdateWebhookTemplateStatusReply:
             type: object
             properties: {}
@@ -1395,6 +1406,9 @@ components:
                 updatedAt:
                     type: string
                 status:
+                    type: integer
+                    format: enum
+                app:
                     type: integer
                     format: enum
 tags:

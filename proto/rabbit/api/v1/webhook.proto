@@ -99,10 +99,14 @@ message WebhookTemplateItem {
 	string createdAt = 4;
 	string updatedAt = 5;
 	rabbit.enum.GlobalStatus status = 6;
+	rabbit.enum.WebhookAPP app = 7;
 }
 
 message CreateWebhookRequest {
-	rabbit.enum.WebhookAPP app = 1 [(buf.validate.field).required = true];
+	rabbit.enum.WebhookAPP app = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
+		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
+	}];
 	string name = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this.size() > 0",
 		message: "name must be greater than 0",
@@ -112,7 +116,7 @@ message CreateWebhookRequest {
 		message: "url must be greater than 0",
 	}];
 	rabbit.enum.HTTPMethod method = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
+		expression: "this in [rabbit.enum.HTTPMethod.GET, rabbit.enum.HTTPMethod.POST, rabbit.enum.HTTPMethod.PUT, rabbit.enum.HTTPMethod.DELETE, rabbit.enum.HTTPMethod.PATCH]",
 		message: "method must be in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
 	}];
 	map<string, string> headers = 5;
@@ -124,7 +128,10 @@ message UpdateWebhookRequest {
 	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
 		uuid: true,
 	}];
-	rabbit.enum.WebhookAPP app = 2;
+	rabbit.enum.WebhookAPP app = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
+		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
+	}];
 	string name = 3 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this.size() > 0",
 		message: "name must be greater than 0",
@@ -134,7 +141,7 @@ message UpdateWebhookRequest {
 		message: "url must be greater than 0",
 	}];
 	rabbit.enum.HTTPMethod method = 5 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
+		expression: "this in [rabbit.enum.HTTPMethod.GET, rabbit.enum.HTTPMethod.POST, rabbit.enum.HTTPMethod.PUT, rabbit.enum.HTTPMethod.DELETE, rabbit.enum.HTTPMethod.PATCH]",
 		message: "method must be in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
 	}];
 	map<string, string> headers = 6;
@@ -172,8 +179,8 @@ message ListWebhookRequest {
 		message: "page must be greater than or equal to 1",
 	}];
 	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1 && this <= 100",
-		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+		expression: "this >= 1 && this <= 200",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
 	}];
 	rabbit.enum.WebhookAPP app = 3;
 	string keyword = 4 [(buf.validate.field).cel = {
@@ -191,6 +198,10 @@ message ListWebhookReply {
 message CreateWebhookTemplateRequest {
 	string name = 1 [(buf.validate.field).required = true];
 	string body = 2 [(buf.validate.field).required = true];
+	rabbit.enum.WebhookAPP app = 3 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
+		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
+	}];
 }
 message CreateWebhookTemplateReply {}
 
@@ -200,6 +211,10 @@ message UpdateWebhookTemplateRequest {
 	}];
 	string name = 2 [(buf.validate.field).required = true];
 	string body = 3 [(buf.validate.field).required = true];
+	rabbit.enum.WebhookAPP app = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
+		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
+	}];
 }
 message UpdateWebhookTemplateReply {}
 
@@ -233,14 +248,15 @@ message ListWebhookTemplateRequest {
 		message: "page must be greater than or equal to 1",
 	}];
 	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1 && this <= 100",
-		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+		expression: "this >= 1 && this <= 200",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
 	}];
 	string keyword = 3 [(buf.validate.field).cel = {
 		expression: "this.size() <= 100",
 		message: "keyword must be less than or equal to 100",
 	}];
 	rabbit.enum.GlobalStatus status = 4;
+	rabbit.enum.WebhookAPP app = 5;
 }
 message ListWebhookTemplateReply {
 	repeated WebhookTemplateItem items = 1;

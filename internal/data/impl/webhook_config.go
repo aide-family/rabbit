@@ -5,7 +5,6 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/google/uuid"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -29,22 +28,21 @@ type webhookConfigRepositoryImpl struct {
 func (w *webhookConfigRepositoryImpl) SaveWebhookConfig(ctx context.Context, req *do.WebhookConfig) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	req.WithNamespace(namespace)
 	wrappers := webhookConfig.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID) {
 		wrappers = wrappers.Where(webhookConfig.UID.Eq(req.UID), webhookConfig.Namespace.Eq(namespace))
-	} else {
-		req.UID = uuid.New().String()
-		req.WithCreator(ctx)
+		_, err := wrappers.Updates(req)
+		return err
 	}
-	return wrappers.Save(req)
+	return wrappers.Create(req)
 }
 
 // UpdateWebhookStatus implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) UpdateWebhookStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	_, err := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid)).Update(webhookConfig.Status, status)
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid))
+	_, err := wrappers.Update(webhookConfig.Status, status)
 	return err
 }
 
@@ -52,7 +50,8 @@ func (w *webhookConfigRepositoryImpl) UpdateWebhookStatus(ctx context.Context, u
 func (w *webhookConfigRepositoryImpl) DeleteWebhookConfig(ctx context.Context, uid string) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	_, err := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid)).Delete()
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid))
+	_, err := wrappers.Delete()
 	return err
 }
 
@@ -60,11 +59,8 @@ func (w *webhookConfigRepositoryImpl) DeleteWebhookConfig(ctx context.Context, u
 func (w *webhookConfigRepositoryImpl) GetWebhookConfig(ctx context.Context, uid string) (*do.WebhookConfig, error) {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	webhookConfigDO, err := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid)).First()
-	if err != nil {
-		return nil, err
-	}
-	return webhookConfigDO, nil
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid))
+	return wrappers.First()
 }
 
 // ListWebhookConfig implements repository.Webhook.

@@ -15,7 +15,6 @@ const (
 type MessageLog struct {
 	NamespaceModel
 
-	UID     string             `gorm:"column:uid;type:varchar(36);not null;uniqueIndex"`
 	SendAt  time.Time          `gorm:"column:send_at;type:datetime;not null"`
 	Message string             `gorm:"column:message;type:text;not null"`
 	Type    vobj.MessageType   `gorm:"column:type;type:tinyint(2);not null;default:0"`

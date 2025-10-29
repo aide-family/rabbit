@@ -10,12 +10,14 @@ import (
 )
 
 type CreateWebhookTemplateBo struct {
+	App  vobj.WebhookApp
 	Name string
 	Body string
 }
 
 func (b *CreateWebhookTemplateBo) ToDoWebhookTemplate() *do.WebhookTemplate {
 	return &do.WebhookTemplate{
+		App:  b.App,
 		Name: b.Name,
 		Body: b.Body,
 	}
@@ -23,6 +25,7 @@ func (b *CreateWebhookTemplateBo) ToDoWebhookTemplate() *do.WebhookTemplate {
 
 func NewCreateWebhookTemplateBo(req *apiv1.CreateWebhookTemplateRequest) *CreateWebhookTemplateBo {
 	return &CreateWebhookTemplateBo{
+		App:  vobj.WebhookApp(req.App),
 		Name: req.Name,
 		Body: req.Body,
 	}
@@ -32,13 +35,17 @@ type UpdateWebhookTemplateBo struct {
 	UID  string
 	Name string
 	Body string
+	App  vobj.WebhookApp
 }
 
 func (b *UpdateWebhookTemplateBo) ToDoWebhookTemplate() *do.WebhookTemplate {
 	return &do.WebhookTemplate{
-		UID:  b.UID,
+		NamespaceModel: do.NamespaceModel{
+			UID: b.UID,
+		},
 		Name: b.Name,
 		Body: b.Body,
+		App:  b.App,
 	}
 }
 
@@ -47,6 +54,7 @@ func NewUpdateWebhookTemplateBo(req *apiv1.UpdateWebhookTemplateRequest) *Update
 		UID:  req.Uid,
 		Name: req.Name,
 		Body: req.Body,
+		App:  vobj.WebhookApp(req.App),
 	}
 }
 
@@ -64,6 +72,7 @@ func NewUpdateWebhookTemplateStatusBo(req *apiv1.UpdateWebhookTemplateStatusRequ
 
 type WebhookTemplateItemBo struct {
 	UID       string
+	App       vobj.WebhookApp
 	Name      string
 	Body      string
 	Status    vobj.GlobalStatus
@@ -74,6 +83,7 @@ type WebhookTemplateItemBo struct {
 func NewWebhookTemplateItemBo(doTemplate *do.WebhookTemplate) *WebhookTemplateItemBo {
 	return &WebhookTemplateItemBo{
 		UID:       doTemplate.UID,
+		App:       doTemplate.App,
 		Name:      doTemplate.Name,
 		Body:      doTemplate.Body,
 		Status:    doTemplate.Status,
@@ -85,6 +95,7 @@ func NewWebhookTemplateItemBo(doTemplate *do.WebhookTemplate) *WebhookTemplateIt
 func (b *WebhookTemplateItemBo) ToAPIV1WebhookTemplateItem() *apiv1.WebhookTemplateItem {
 	return &apiv1.WebhookTemplateItem{
 		Uid:       b.UID,
+		App:       enum.WebhookAPP(b.App),
 		Name:      b.Name,
 		Body:      b.Body,
 		Status:    enum.GlobalStatus(b.Status),
@@ -97,6 +108,7 @@ type ListWebhookTemplateBo struct {
 	*PageRequestBo
 	Keyword string
 	Status  vobj.GlobalStatus
+	App     vobj.WebhookApp
 }
 
 func NewListWebhookTemplateBo(req *apiv1.ListWebhookTemplateRequest) *ListWebhookTemplateBo {
@@ -104,6 +116,7 @@ func NewListWebhookTemplateBo(req *apiv1.ListWebhookTemplateRequest) *ListWebhoo
 		PageRequestBo: NewPageRequestBo(req.Page, req.PageSize),
 		Keyword:       req.Keyword,
 		Status:        vobj.GlobalStatus(req.Status),
+		App:           vobj.WebhookApp(req.App),
 	}
 }
 

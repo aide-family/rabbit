@@ -3,6 +3,7 @@ package bo
 import (
 	"time"
 
+	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -26,7 +27,7 @@ func (b *CreateWebhookBo) ToDoWebhookConfig() *do.WebhookConfig {
 		Name:    b.Name,
 		URL:     b.URL,
 		Method:  b.Method,
-		Headers: b.Headers,
+		Headers: safety.NewMap(b.Headers),
 		Secret:  strutil.EncryptString(b.Secret),
 	}
 }
@@ -54,12 +55,14 @@ type UpdateWebhookBo struct {
 
 func (b *UpdateWebhookBo) ToDoWebhookConfig() *do.WebhookConfig {
 	return &do.WebhookConfig{
-		UID:     b.UID,
+		NamespaceModel: do.NamespaceModel{
+			UID: b.UID,
+		},
 		App:     b.App,
 		Name:    b.Name,
 		URL:     b.URL,
 		Method:  b.Method,
-		Headers: b.Headers,
+		Headers: safety.NewMap(b.Headers),
 		Secret:  strutil.EncryptString(b.Secret),
 	}
 }
@@ -108,7 +111,7 @@ func NewWebhookItemBo(doWebhook *do.WebhookConfig) *WebhookItemBo {
 		Name:      doWebhook.Name,
 		URL:       doWebhook.URL,
 		Method:    doWebhook.Method,
-		Headers:   doWebhook.Headers,
+		Headers:   doWebhook.Headers.Map(),
 		Secret:    string(doWebhook.Secret),
 		Status:    doWebhook.Status,
 		CreatedAt: doWebhook.CreatedAt,

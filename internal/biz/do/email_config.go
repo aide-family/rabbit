@@ -9,7 +9,6 @@ import (
 type EmailConfig struct {
 	NamespaceModel
 
-	UID      string                `gorm:"column:uid;type:varchar(36);not null;uniqueIndex"`
 	Name     string                `gorm:"column:name;type:varchar(100);not null;uniqueIndex"`
 	Host     string                `gorm:"column:host;type:varchar(255);not null"`
 	Port     int32                 `gorm:"column:port;type:int(11);not null"`

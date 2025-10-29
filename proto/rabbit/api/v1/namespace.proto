@@ -41,12 +41,12 @@ service Namespace {
 }
 
 message SaveNamespaceRequest {
-	string name = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this.size() > 0",
-		message: "name is empty",
-	},  (buf.validate.field).cel = {
-		expression: "this.size() <= 100",
-		message: "name is too long, must be less than 100 characters",
+	string name = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
+		min_len: 3,
+		max_len: 100,
+	}, (buf.validate.field).cel = {
+		expression: "this.matches('^[a-zA-Z0-9_-]+$')",
+		message: "name must be a valid name, only letters, numbers, underscores, and hyphens are allowed",
 	}];
 	map<string, string> metadata = 2;
 }
@@ -76,12 +76,12 @@ message ListNamespaceRequest {
 		message: "page must be greater than or equal to 1",
 	}];
 	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1 && this <= 100",
-		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+		expression: "this >= 1 && this <= 200",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
 	}];
 	string keyword = 3 [(buf.validate.field).cel = {
-		expression: "this.size() <= 100",
-		message: "keyword must be less than or equal to 100",
+		expression: "this.size() <= 200",
+		message: "keyword must be less than or equal to 200",
 	}];
 	rabbit.enum.GlobalStatus status = 4;
 }

@@ -15,7 +15,6 @@ import (
 func NewEmailConfig(
 	emailConfigRepo repository.EmailConfig,
 	emailTemplateRepo repository.EmailTemplate,
-	namespace string,
 	helper *klog.Helper,
 ) *EmailConfig {
 	return &EmailConfig{

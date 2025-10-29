@@ -5,7 +5,6 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/google/uuid"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -33,18 +32,18 @@ func (w *webhookTemplateRepositoryImpl) SaveWebhookTemplate(ctx context.Context,
 	wrappers := webhookTemplate.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID) {
 		wrappers = wrappers.Where(webhookTemplate.UID.Eq(req.UID), webhookTemplate.Namespace.Eq(namespace))
-	} else {
-		req.UID = uuid.New().String()
-		req.WithCreator(ctx)
+		_, err := wrappers.Updates(req)
+		return err
 	}
-	return wrappers.Save(req)
+	return wrappers.Create(req)
 }
 
 // UpdateWebhookTemplateStatus implements repository.WebhookTemplate.
 func (w *webhookTemplateRepositoryImpl) UpdateWebhookTemplateStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookTemplate := w.d.BizQuery(namespace).WebhookTemplate
-	_, err := webhookTemplate.WithContext(ctx).Where(webhookTemplate.Namespace.Eq(namespace), webhookTemplate.UID.Eq(uid)).Update(webhookTemplate.Status, status)
+	wrappers := webhookTemplate.WithContext(ctx).Where(webhookTemplate.Namespace.Eq(namespace), webhookTemplate.UID.Eq(uid))
+	_, err := wrappers.Update(webhookTemplate.Status, status)
 	return err
 }
 
@@ -52,7 +51,8 @@ func (w *webhookTemplateRepositoryImpl) UpdateWebhookTemplateStatus(ctx context.
 func (w *webhookTemplateRepositoryImpl) DeleteWebhookTemplate(ctx context.Context, uid string) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookTemplate := w.d.BizQuery(namespace).WebhookTemplate
-	_, err := webhookTemplate.WithContext(ctx).Where(webhookTemplate.Namespace.Eq(namespace), webhookTemplate.UID.Eq(uid)).Delete()
+	wrappers := webhookTemplate.WithContext(ctx).Where(webhookTemplate.Namespace.Eq(namespace), webhookTemplate.UID.Eq(uid))
+	_, err := wrappers.Delete()
 	return err
 }
 
@@ -60,11 +60,8 @@ func (w *webhookTemplateRepositoryImpl) DeleteWebhookTemplate(ctx context.Contex
 func (w *webhookTemplateRepositoryImpl) GetWebhookTemplate(ctx context.Context, uid string) (*do.WebhookTemplate, error) {
 	namespace := middler.GetNamespace(ctx)
 	webhookTemplate := w.d.BizQuery(namespace).WebhookTemplate
-	webhookTemplateDO, err := webhookTemplate.WithContext(ctx).Where(webhookTemplate.Namespace.Eq(namespace), webhookTemplate.UID.Eq(uid)).First()
-	if err != nil {
-		return nil, err
-	}
-	return webhookTemplateDO, nil
+	wrappers := webhookTemplate.WithContext(ctx).Where(webhookTemplate.Namespace.Eq(namespace), webhookTemplate.UID.Eq(uid))
+	return wrappers.First()
 }
 
 // ListWebhookTemplate implements repository.WebhookTemplate.
@@ -77,6 +74,9 @@ func (w *webhookTemplateRepositoryImpl) ListWebhookTemplate(ctx context.Context,
 	}
 	if req.Status.Exist() && !req.Status.IsUnknown() {
 		wrappers = wrappers.Where(webhookTemplate.Status.Eq(req.Status.GetValue()))
+	}
+	if req.App.Exist() && !req.App.IsUnknown() {
+		wrappers = wrappers.Where(webhookTemplate.App.Eq(req.App.GetValue()))
 	}
 	if pointer.IsNotNil(req.PageRequestBo) {
 		total, err := wrappers.Count()

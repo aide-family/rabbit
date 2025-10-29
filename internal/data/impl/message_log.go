@@ -8,7 +8,6 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
@@ -33,8 +32,6 @@ func (m *messageLogRepositoryImpl) CreateMessageLog(ctx context.Context, req *do
 	namespace := middler.GetNamespace(ctx)
 	messageLog := m.d.BizQuery(namespace).MessageLog
 	wrappers := messageLog.WithContext(ctx)
-	req.UID = uuid.New().String()
-	req.WithNamespace(namespace).WithCreator(ctx)
 	return wrappers.Create(req)
 }
 

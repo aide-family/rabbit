@@ -153,8 +153,8 @@ message ListEmailConfigRequest {
 		message: "page must be greater than or equal to 1",
 	}];
 	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1 && this <= 100",
-		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+		expression: "this >= 1 && this <= 200",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
 	}];
 	string keyword = 3 [(buf.validate.field).cel = {
 		expression: "this.size() <= 100",
@@ -220,8 +220,8 @@ message ListEmailTemplateRequest {
 		message: "page must be greater than or equal to 1",
 	}];
 	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1 && this <= 100",
-		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
+		expression: "this >= 1 && this <= 200",
+		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
 	}];
 	string keyword = 3 [(buf.validate.field).cel = {
 		expression: "this.size() <= 100",

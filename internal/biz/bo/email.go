@@ -4,6 +4,7 @@ package bo
 import (
 	"time"
 
+	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -57,7 +58,9 @@ type UpdateEmailConfigBo struct {
 
 func (c *UpdateEmailConfigBo) ToDoEmailConfig() *do.EmailConfig {
 	return &do.EmailConfig{
-		UID:      c.UID,
+		NamespaceModel: do.NamespaceModel{
+			UID: c.UID,
+		},
 		Name:     c.Name,
 		Host:     c.Host,
 		Port:     c.Port,
@@ -172,7 +175,7 @@ func (c *CreateEmailTemplateBo) ToDoEmailTemplate() *do.EmailTemplate {
 		Subject:     c.Subject,
 		Body:        c.Body,
 		ContentType: c.ContentType,
-		Headers:     c.Headers,
+		Headers:     safety.NewMap(c.Headers),
 	}
 }
 
@@ -193,12 +196,14 @@ type UpdateEmailTemplateBo struct {
 
 func (c *UpdateEmailTemplateBo) ToDoEmailTemplate() *do.EmailTemplate {
 	return &do.EmailTemplate{
-		UID:         c.UID,
+		NamespaceModel: do.NamespaceModel{
+			UID: c.UID,
+		},
 		Name:        c.Name,
 		Subject:     c.Subject,
 		Body:        c.Body,
 		ContentType: c.ContentType,
-		Headers:     c.Headers,
+		Headers:     safety.NewMap(c.Headers),
 	}
 }
 
@@ -244,7 +249,7 @@ func NewEmailTemplateItemBo(doEmailTemplate *do.EmailTemplate) *EmailTemplateIte
 		Subject:     doEmailTemplate.Subject,
 		Body:        doEmailTemplate.Body,
 		ContentType: doEmailTemplate.ContentType,
-		Headers:     doEmailTemplate.Headers,
+		Headers:     doEmailTemplate.Headers.Map(),
 		Status:      doEmailTemplate.Status,
 		CreatedAt:   doEmailTemplate.CreatedAt,
 		UpdatedAt:   doEmailTemplate.UpdatedAt,

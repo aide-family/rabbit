@@ -7,6 +7,7 @@ import (
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/pkg/middler"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -45,6 +46,7 @@ type NamespaceModel struct {
 	BaseModel
 
 	Namespace string `gorm:"column:namespace;type:varchar(100);not null;index"`
+	UID       string `gorm:"column:uid;type:varchar(36);not null;uniqueIndex"`
 }
 
 func (n *NamespaceModel) BeforeCreate(tx *gorm.DB) (err error) {
@@ -53,6 +55,9 @@ func (n *NamespaceModel) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	if strutil.IsEmpty(n.Namespace) {
 		n.WithNamespace(middler.GetNamespace(tx.Statement.Context))
+	}
+	if strutil.IsEmpty(n.UID) {
+		n.UID = uuid.New().String()
 	}
 	return
 }

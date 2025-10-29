@@ -9,7 +9,7 @@ option java_package = "rabbit.enum";
 enum WebhookAPP {
 	WebhookAPP_UNKNOWN = 0;
 	OTHER = 1;
-	DING_TALK = 2;
+	DINGTALK = 2;
 	WECHAT = 3;
 	FEISHU = 4;
 }

@@ -5,7 +5,6 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/google/uuid"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -29,7 +28,8 @@ type emailConfigRepositoryImpl struct {
 func (e *emailConfigRepositoryImpl) DeleteEmailConfig(ctx context.Context, uid string) error {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	_, err := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid)).Delete()
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid))
+	_, err := wrappers.Delete()
 	return err
 }
 
@@ -37,11 +37,8 @@ func (e *emailConfigRepositoryImpl) DeleteEmailConfig(ctx context.Context, uid s
 func (e *emailConfigRepositoryImpl) GetEmailConfig(ctx context.Context, uid string) (*do.EmailConfig, error) {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	emailConfigDO, err := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid)).First()
-	if err != nil {
-		return nil, err
-	}
-	return emailConfigDO, nil
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid))
+	return wrappers.First()
 }
 
 // ListEmailConfig implements repository.EmailConfig.
@@ -52,7 +49,7 @@ func (e *emailConfigRepositoryImpl) ListEmailConfig(ctx context.Context, req *bo
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(emailConfig.Name.Like("%" + req.Keyword + "%"))
 	}
-	if req.Status.Exist() {
+	if req.Status.Exist() && !req.Status.IsUnknown() {
 		wrappers = wrappers.Where(emailConfig.Status.Eq(req.Status.GetValue()))
 	}
 	if pointer.IsNotNil(req.PageRequestBo) {
@@ -78,17 +75,17 @@ func (e *emailConfigRepositoryImpl) SaveEmailConfig(ctx context.Context, req *do
 	wrappers := emailConfig.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID) {
 		wrappers = wrappers.Where(emailConfig.UID.Eq(req.UID), emailConfig.Namespace.Eq(namespace))
-	} else {
-		req.UID = uuid.New().String()
-		req.WithCreator(ctx)
+		_, err := wrappers.Updates(req)
+		return err
 	}
-	return wrappers.Save(req)
+	return wrappers.Create(req)
 }
 
 // UpdateEmailConfigStatus implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) UpdateEmailConfigStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	_, err := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid)).Update(emailConfig.Status, status)
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid))
+	_, err := wrappers.Update(emailConfig.Status, status)
 	return err
 }
