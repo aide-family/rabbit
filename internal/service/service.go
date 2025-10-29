@@ -10,4 +10,5 @@ var ProviderSetService = wire.NewSet(
 	NewWebhookService,
 	NewSenderService,
 	NewNamespaceService,
+	NewMessageLogService,
 )

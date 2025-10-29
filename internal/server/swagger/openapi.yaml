@@ -404,12 +404,12 @@ paths:
         post:
             tags:
                 - Namespace
-            operationId: Namespace_CreateNamespace
+            operationId: Namespace_SaveNamespace
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/rabbit.api.v1.CreateNamespaceRequest'
+                            $ref: '#/components/schemas/rabbit.api.v1.SaveNamespaceRequest'
                 required: true
             responses:
                 "200":
@@ -417,7 +417,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/rabbit.api.v1.CreateNamespaceReply'
+                                $ref: '#/components/schemas/rabbit.api.v1.SaveNamespaceReply'
     /v1/namespace/{name}:
         get:
             tags:
@@ -435,30 +435,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/rabbit.api.v1.GetNamespaceReply'
-        put:
-            tags:
-                - Namespace
-            operationId: Namespace_UpdateNamespace
-            parameters:
-                - name: name
-                  in: path
-                  required: true
-                  schema:
-                    type: string
-            requestBody:
-                content:
-                    application/json:
-                        schema:
-                            $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceRequest'
-                required: true
-            responses:
-                "200":
-                    description: OK
-                    content:
-                        application/json:
-                            schema:
-                                $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceReply'
+                                $ref: '#/components/schemas/rabbit.api.v1.NamespaceItem'
         delete:
             tags:
                 - Namespace
@@ -516,6 +493,15 @@ paths:
                   schema:
                     type: integer
                     format: int32
+                - name: keyword
+                  in: query
+                  schema:
+                    type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
             responses:
                 "200":
                     description: OK
@@ -931,18 +917,6 @@ components:
                     type: object
                     additionalProperties:
                         type: string
-        rabbit.api.v1.CreateNamespaceReply:
-            type: object
-            properties: {}
-        rabbit.api.v1.CreateNamespaceRequest:
-            type: object
-            properties:
-                name:
-                    type: string
-                metadata:
-                    type: object
-                    additionalProperties:
-                        type: string
         rabbit.api.v1.CreateWebhookReply:
             type: object
             properties: {}
@@ -1035,9 +1009,6 @@ components:
                 status:
                     type: integer
                     format: enum
-        rabbit.api.v1.GetNamespaceReply:
-            type: object
-            properties: {}
         rabbit.api.v1.HealthCheckReply:
             type: object
             properties:
@@ -1097,7 +1068,15 @@ components:
         rabbit.api.v1.ListNamespaceReply:
             type: object
             properties:
-                namespaces:
+                total:
+                    type: string
+                page:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
+                items:
                     type: array
                     items:
                         $ref: '#/components/schemas/rabbit.api.v1.NamespaceItem'
@@ -1179,6 +1158,18 @@ components:
                 sendAt:
                     type: string
                     format: date-time
+        rabbit.api.v1.SaveNamespaceReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.SaveNamespaceRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                metadata:
+                    type: object
+                    additionalProperties:
+                        type: string
         rabbit.api.v1.SendEmailRequest:
             type: object
             properties:
@@ -1299,18 +1290,6 @@ components:
                 status:
                     type: integer
                     format: enum
-        rabbit.api.v1.UpdateNamespaceReply:
-            type: object
-            properties: {}
-        rabbit.api.v1.UpdateNamespaceRequest:
-            type: object
-            properties:
-                name:
-                    type: string
-                metadata:
-                    type: object
-                    additionalProperties:
-                        type: string
         rabbit.api.v1.UpdateNamespaceStatusReply:
             type: object
             properties: {}

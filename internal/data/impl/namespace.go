@@ -1,0 +1,85 @@
+package impl
+
+import (
+	"context"
+
+	"github.com/aide-family/magicbox/pointer"
+	"github.com/aide-family/magicbox/strutil"
+	"gorm.io/gorm/clause"
+
+	"github.com/aide-family/rabbit/internal/biz/bo"
+	"github.com/aide-family/rabbit/internal/biz/do"
+	"github.com/aide-family/rabbit/internal/biz/repository"
+	"github.com/aide-family/rabbit/internal/data"
+)
+
+func NewNamespaceRepository(d *data.Data) repository.Namespace {
+	return &namespaceRepositoryImpl{
+		d: d,
+	}
+}
+
+type namespaceRepositoryImpl struct {
+	d *data.Data
+}
+
+// SaveNamespace implements repository.Namespace.
+func (n *namespaceRepositoryImpl) SaveNamespace(ctx context.Context, req *do.Namespace) error {
+	namespaceDO := n.d.MainQuery().Namespace
+	wrappers := namespaceDO.WithContext(ctx)
+	return wrappers.Clauses(clause.OnConflict{
+		DoUpdates: clause.Assignments(map[string]any{
+			namespaceDO.Metadata.ColumnName().String(): req.Metadata,
+			namespaceDO.Status.ColumnName().String():   req.Status,
+		}),
+	}).Save(req)
+}
+
+// UpdateNamespaceStatus implements repository.Namespace.
+func (n *namespaceRepositoryImpl) UpdateNamespaceStatus(ctx context.Context, req *bo.UpdateNamespaceStatusBo) error {
+	namespaceDO := n.d.MainQuery().Namespace
+	_, err := namespaceDO.WithContext(ctx).Where(namespaceDO.Name.Eq(req.Name)).Update(namespaceDO.Status, req.Status)
+	return err
+}
+
+// DeleteNamespace implements repository.Namespace.
+func (n *namespaceRepositoryImpl) DeleteNamespace(ctx context.Context, name string) error {
+	namespaceDO := n.d.MainQuery().Namespace
+	_, err := namespaceDO.WithContext(ctx).Where(namespaceDO.Name.Eq(name)).Delete()
+	return err
+}
+
+// GetNamespace implements repository.Namespace.
+func (n *namespaceRepositoryImpl) GetNamespace(ctx context.Context, name string) (*do.Namespace, error) {
+	namespaceDO := n.d.MainQuery().Namespace
+	namespace, err := namespaceDO.WithContext(ctx).Where(namespaceDO.Name.Eq(name)).First()
+	if err != nil {
+		return nil, err
+	}
+	return namespace, nil
+}
+
+// ListNamespace implements repository.Namespace.
+func (n *namespaceRepositoryImpl) ListNamespace(ctx context.Context, req *bo.ListNamespaceBo) (*bo.PageResponseBo[*do.Namespace], error) {
+	namespaceDO := n.d.MainQuery().Namespace
+	wrappers := namespaceDO.WithContext(ctx)
+	if strutil.IsNotEmpty(req.Keyword) {
+		wrappers = wrappers.Where(namespaceDO.Name.Like("%" + req.Keyword + "%"))
+	}
+	if req.Status.Exist() {
+		wrappers = wrappers.Where(namespaceDO.Status.Eq(req.Status.GetValue()))
+	}
+	if pointer.IsNotNil(req.PageRequestBo) {
+		total, err := wrappers.Count()
+		if err != nil {
+			return nil, err
+		}
+		req.WithTotal(total)
+		wrappers = wrappers.Limit(req.Limit()).Offset(req.Offset())
+	}
+	namespaces, err := wrappers.Order(namespaceDO.CreatedAt.Desc()).Find()
+	if err != nil {
+		return nil, err
+	}
+	return bo.NewPageResponseBo(req.PageRequestBo, namespaces), nil
+}

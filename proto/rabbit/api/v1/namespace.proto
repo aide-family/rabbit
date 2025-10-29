@@ -11,15 +11,9 @@ option java_multiple_files = true;
 option java_package = "rabbit.api.v1";
 
 service Namespace {
-	rpc CreateNamespace (CreateNamespaceRequest) returns (CreateNamespaceReply) {
+	rpc SaveNamespace (SaveNamespaceRequest) returns (SaveNamespaceReply) {
 		option (google.api.http) = {
 			post: "/v1/namespace"
-			body: "*"
-		};
-	}
-	rpc UpdateNamespace (UpdateNamespaceRequest) returns (UpdateNamespaceReply) {
-		option (google.api.http) = {
-			put: "/v1/namespace/{name}"
 			body: "*"
 		};
 	}
@@ -34,7 +28,7 @@ service Namespace {
 			delete: "/v1/namespace/{name}"
 		};
 	}
-	rpc GetNamespace (GetNamespaceRequest) returns (GetNamespaceReply) {
+	rpc GetNamespace (GetNamespaceRequest) returns (NamespaceItem) {
 		option (google.api.http) = {
 			get: "/v1/namespace/{name}"
 		};
@@ -46,7 +40,7 @@ service Namespace {
 	}
 }
 
-message CreateNamespaceRequest {
+message SaveNamespaceRequest {
 	string name = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this.size() > 0",
 		message: "name is empty",
@@ -56,13 +50,7 @@ message CreateNamespaceRequest {
 	}];
 	map<string, string> metadata = 2;
 }
-message CreateNamespaceReply {}
-
-message UpdateNamespaceRequest {
-	string name = 1 [(buf.validate.field).required = true];
-	map<string, string> metadata = 2;
-}
-message UpdateNamespaceReply {}
+message SaveNamespaceReply {}
 
 message UpdateNamespaceStatusRequest {
 	string name = 1 [(buf.validate.field).required = true];
@@ -81,7 +69,6 @@ message DeleteNamespaceReply {}
 message GetNamespaceRequest {
 	string name = 1 [(buf.validate.field).required = true];
 }
-message GetNamespaceReply {}
 
 message ListNamespaceRequest {
 	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
@@ -92,9 +79,17 @@ message ListNamespaceRequest {
 		expression: "this >= 1 && this <= 100",
 		message: "pageSize must be greater than or equal to 1 and less than or equal to 100",
 	}];
+	string keyword = 3 [(buf.validate.field).cel = {
+		expression: "this.size() <= 100",
+		message: "keyword must be less than or equal to 100",
+	}];
+	rabbit.enum.GlobalStatus status = 4;
 }
 message ListNamespaceReply {
-	repeated NamespaceItem namespaces = 1;
+	int64 total = 1;
+	int32 page = 2;
+	int32 pageSize = 3;
+	repeated NamespaceItem items = 4;
 }
 
 message NamespaceItem {

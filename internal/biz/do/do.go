@@ -36,7 +36,7 @@ func (b *BaseModel) WithCreator(ctx context.Context) *BaseModel {
 type NamespaceModel struct {
 	BaseModel
 
-	Namespace string `gorm:"column:namespace;type:varchar(100);not null;uniqueIndex"`
+	Namespace string `gorm:"column:namespace;type:varchar(100);not null;index"`
 }
 
 func (n *NamespaceModel) WithNamespace(namespace string) *NamespaceModel {

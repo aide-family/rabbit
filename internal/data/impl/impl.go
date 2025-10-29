@@ -9,4 +9,5 @@ var ProviderSetImpl = wire.NewSet(
 	NewEmailConfigRepository,
 	NewEmailTemplateRepository,
 	NewMessageLogRepository,
+	NewNamespaceRepository,
 )

@@ -7,14 +7,14 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/repository"
 )
 
-func NewEmail(messageLogRepository repository.MessageLog) *Email {
+func NewEmail(messageLogRepo repository.MessageLog) *Email {
 	return &Email{
-		messageLogRepository: messageLogRepository,
+		messageLogRepo: messageLogRepo,
 	}
 }
 
 type Email struct {
-	messageLogRepository repository.MessageLog
+	messageLogRepo repository.MessageLog
 }
 
 func (e *Email) SendEmail(ctx context.Context, req *bo.SendEmailBo) error {
