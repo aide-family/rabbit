@@ -9,15 +9,15 @@ import (
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
-type MessageLogService struct {
-	apiv1.UnimplementedMessageLogServer
-	messageLogBiz *biz.MessageLog
-}
-
 func NewMessageLogService(messageLogBiz *biz.MessageLog) *MessageLogService {
 	return &MessageLogService{
 		messageLogBiz: messageLogBiz,
 	}
+}
+
+type MessageLogService struct {
+	apiv1.UnimplementedMessageLogServer
+	messageLogBiz *biz.MessageLog
 }
 
 func (s *MessageLogService) RetryMessage(ctx context.Context, req *apiv1.RetryMessageLogRequest) (*apiv1.RetryMessageLogReply, error) {

@@ -9,4 +9,5 @@ var ProviderSetBiz = wire.NewSet(
 	NewEmailConfig,
 	NewNamespace,
 	NewMessageLog,
+	NewWebhookConfig,
 )

@@ -11,16 +11,16 @@ import (
 	"github.com/aide-family/rabbit/pkg/middler"
 )
 
-type SenderService struct {
-	apiv1.UnimplementedSenderServer
-
-	emailBiz *biz.Email
-}
-
 func NewSenderService(emailBiz *biz.Email) *SenderService {
 	return &SenderService{
 		emailBiz: emailBiz,
 	}
+}
+
+type SenderService struct {
+	apiv1.UnimplementedSenderServer
+
+	emailBiz *biz.Email
 }
 
 func (s *SenderService) SendEmail(ctx context.Context, req *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {

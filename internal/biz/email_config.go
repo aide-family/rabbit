@@ -12,7 +12,12 @@ import (
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
-func NewEmailConfig(emailConfigRepo repository.EmailConfig, emailTemplateRepo repository.EmailTemplate, helper *klog.Helper) *EmailConfig {
+func NewEmailConfig(
+	emailConfigRepo repository.EmailConfig,
+	emailTemplateRepo repository.EmailTemplate,
+	namespace string,
+	helper *klog.Helper,
+) *EmailConfig {
 	return &EmailConfig{
 		emailConfigRepo:   emailConfigRepo,
 		emailTemplateRepo: emailTemplateRepo,
