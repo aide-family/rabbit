@@ -10,76 +10,70 @@ option go_package = "github.com/aide-family/rabbit/pkg/api/v1;v1";
 option java_multiple_files = true;
 option java_package = "rabbit.api.v1";
 
-service Email {
-	rpc CreateEmailConfig (CreateEmailConfigRequest) returns (CreateEmailConfigReply) {
+service Template {
+	rpc CreateTemplate (CreateTemplateRequest) returns (CreateTemplateReply) {
 		option (google.api.http) = {
-			post: "/v1/email/config"
+			post: "/v1/template"
 			body: "*"
 		};
 	}
-	rpc UpdateEmailConfig (UpdateEmailConfigRequest) returns (UpdateEmailConfigReply) {
+	rpc UpdateTemplate (UpdateTemplateRequest) returns (UpdateTemplateReply) {
 		option (google.api.http) = {
-			put: "/v1/email/config/{uid}"
+			put: "/v1/template/{uid}"
 			body: "*"
 		};
 	}
-	rpc UpdateEmailConfigStatus (UpdateEmailConfigStatusRequest) returns (UpdateEmailConfigStatusReply) {
+	rpc UpdateTemplateStatus (UpdateTemplateStatusRequest) returns (UpdateTemplateStatusReply) {
 		option (google.api.http) = {
-			put: "/v1/email/config/{uid}/status"
+			put: "/v1/template/{uid}/status"
 			body: "*"
 		};
 	}
-	rpc DeleteEmailConfig (DeleteEmailConfigRequest) returns (DeleteEmailConfigReply) {
+	rpc DeleteTemplate (DeleteTemplateRequest) returns (DeleteTemplateReply) {
 		option (google.api.http) = {
-			delete: "/v1/email/config/{uid}"
+			delete: "/v1/template/{uid}"
 		};
 	}
-	rpc GetEmailConfig (GetEmailConfigRequest) returns (EmailConfigItem) {
+	rpc GetTemplate (GetTemplateRequest) returns (TemplateItem) {
 		option (google.api.http) = {
-			get: "/v1/email/config/{uid}"
+			get: "/v1/template/{uid}"
 		};
 	}
-	rpc ListEmailConfig (ListEmailConfigRequest) returns (ListEmailConfigReply) {
+	rpc ListTemplate (ListTemplateRequest) returns (ListTemplateReply) {
 		option (google.api.http) = {
-			get: "/v1/email/configs"
+			get: "/v1/templates"
 		};
 	}
 }
 
-message EmailConfigItem {
+message TemplateItem {
 	string uid = 1;
 	string name = 2;
-	string host = 3;
-	int32 port = 4;
-	string username = 5;
-	string password = 6;
-	string createdAt = 7;
-	string updatedAt = 8;
-	rabbit.enum.GlobalStatus status = 9;
+	rabbit.enum.TemplateAPP app = 3;
+	bytes jsonData = 4; // JSONData in Go code
+	string createdAt = 5;
+	string updatedAt = 6;
+	rabbit.enum.GlobalStatus status = 7;
 }
 
-message CreateEmailConfigRequest {
+message CreateTemplateRequest {
 	string name = 1 [(buf.validate.field).required = true];
-	string host = 2 [(buf.validate.field).required = true];
-	int32 port = 3 [(buf.validate.field).required = true];
-	string username = 4 [(buf.validate.field).required = true];
-	string password = 5 [(buf.validate.field).required = true];
+	rabbit.enum.TemplateAPP app = 2 [(buf.validate.field).required = true];
+	bytes jsonData = 3 [(buf.validate.field).required = true];
 }
-message CreateEmailConfigReply {}
+message CreateTemplateReply {}
 
-message UpdateEmailConfigRequest {
+message UpdateTemplateRequest {
 	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
 		uuid: true,
 	}];
 	string name = 2 [(buf.validate.field).required = true];
-	string host = 3 [(buf.validate.field).required = true];
-	int32 port = 4 [(buf.validate.field).required = true];
-	string username = 5 [(buf.validate.field).required = true];
-	string password = 6 [(buf.validate.field).required = true];
+	rabbit.enum.TemplateAPP app = 3 [(buf.validate.field).required = true];
+	bytes jsonData = 4 [(buf.validate.field).required = true];
 }
-message UpdateEmailConfigReply {}
+message UpdateTemplateReply {}
 
-message UpdateEmailConfigStatusRequest {
+message UpdateTemplateStatusRequest {
 	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
 		uuid: true,
 	}];
@@ -88,22 +82,22 @@ message UpdateEmailConfigStatusRequest {
 		message: "status must be in ['ENABLED', 'DISABLED']",
 	}];
 }
-message UpdateEmailConfigStatusReply {}
+message UpdateTemplateStatusReply {}
 
-message DeleteEmailConfigRequest {
+message DeleteTemplateRequest {
 	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
 		uuid: true,
 	}];
 }
-message DeleteEmailConfigReply {}
+message DeleteTemplateReply {}
 
-message GetEmailConfigRequest {
+message GetTemplateRequest {
 	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
 		uuid: true,
 	}];
 }
 
-message ListEmailConfigRequest {
+message ListTemplateRequest {
 	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this >= 1",
 		message: "page must be greater than or equal to 1",
@@ -117,10 +111,12 @@ message ListEmailConfigRequest {
 		message: "keyword must be less than or equal to 100",
 	}];
 	rabbit.enum.GlobalStatus status = 4;
+	rabbit.enum.TemplateAPP app = 5;
 }
-message ListEmailConfigReply {
-	repeated EmailConfigItem items = 1;
+message ListTemplateReply {
+	repeated TemplateItem items = 1;
 	int64 total = 2;
 	int32 page = 3;
 	int32 pageSize = 4;
 }
+

@@ -179,15 +179,8 @@ func (c *CreateEmailTemplateBo) ToDoEmailTemplate() *do.EmailTemplate {
 	}
 }
 
-func NewCreateEmailTemplateBo(req *apiv1.CreateEmailTemplateRequest) *CreateEmailTemplateBo {
-	return &CreateEmailTemplateBo{
-		Name:        req.Name,
-		Subject:     req.Subject,
-		Body:        req.Body,
-		ContentType: req.ContentType,
-		Headers:     req.Headers,
-	}
-}
+// NewCreateEmailTemplateBo 已被移除，请使用 template 统一接口
+// 使用 bo.CreateEmailTemplateBoFromEmail 将旧的 BO 转换为新的统一 Template BO
 
 type UpdateEmailTemplateBo struct {
 	UID string
@@ -207,30 +200,14 @@ func (c *UpdateEmailTemplateBo) ToDoEmailTemplate() *do.EmailTemplate {
 	}
 }
 
-func NewUpdateEmailTemplateBo(req *apiv1.UpdateEmailTemplateRequest) *UpdateEmailTemplateBo {
-	return &UpdateEmailTemplateBo{
-		UID: req.Uid,
-		CreateEmailTemplateBo: CreateEmailTemplateBo{
-			Name:        req.Name,
-			Subject:     req.Subject,
-			Body:        req.Body,
-			ContentType: req.ContentType,
-			Headers:     req.Headers,
-		},
-	}
-}
+// NewUpdateEmailTemplateBo 已被移除，请使用 template 统一接口
 
 type UpdateEmailTemplateStatusBo struct {
 	UID    string
 	Status vobj.GlobalStatus
 }
 
-func NewUpdateEmailTemplateStatusBo(req *apiv1.UpdateEmailTemplateStatusRequest) *UpdateEmailTemplateStatusBo {
-	return &UpdateEmailTemplateStatusBo{
-		UID:    req.Uid,
-		Status: vobj.GlobalStatus(req.Status),
-	}
-}
+// NewUpdateEmailTemplateStatusBo 已被移除，请使用 template 统一接口
 
 type EmailTemplateItemBo struct {
 	UID         string
@@ -256,18 +233,7 @@ func NewEmailTemplateItemBo(doEmailTemplate *do.EmailTemplate) *EmailTemplateIte
 	}
 }
 
-func (b *EmailTemplateItemBo) ToAPIV1EmailTemplateItem() *apiv1.EmailTemplateItem {
-	return &apiv1.EmailTemplateItem{
-		Uid:         b.UID,
-		Subject:     b.Subject,
-		Body:        b.Body,
-		ContentType: b.ContentType,
-		Headers:     b.Headers,
-		Status:      enum.GlobalStatus(b.Status),
-		CreatedAt:   b.CreatedAt.Format(time.DateTime),
-		UpdatedAt:   b.UpdatedAt.Format(time.DateTime),
-	}
-}
+// ToAPIV1EmailTemplateItem 已被移除，请使用 template 统一接口
 
 type ListEmailTemplateBo struct {
 	*PageRequestBo
@@ -275,23 +241,6 @@ type ListEmailTemplateBo struct {
 	Status  vobj.GlobalStatus
 }
 
-func NewListEmailTemplateBo(req *apiv1.ListEmailTemplateRequest) *ListEmailTemplateBo {
-	return &ListEmailTemplateBo{
-		PageRequestBo: NewPageRequestBo(req.Page, req.PageSize),
-		Keyword:       req.Keyword,
-		Status:        vobj.GlobalStatus(req.Status),
-	}
-}
+// NewListEmailTemplateBo 已被移除，请使用 template 统一接口
 
-func ToAPIV1ListEmailTemplateReply(pageResponseBo *PageResponseBo[*EmailTemplateItemBo]) *apiv1.ListEmailTemplateReply {
-	items := make([]*apiv1.EmailTemplateItem, 0, len(pageResponseBo.GetItems()))
-	for _, item := range pageResponseBo.GetItems() {
-		items = append(items, item.ToAPIV1EmailTemplateItem())
-	}
-	return &apiv1.ListEmailTemplateReply{
-		Items:    items,
-		Total:    pageResponseBo.GetTotal(),
-		Page:     pageResponseBo.GetPage(),
-		PageSize: pageResponseBo.GetPageSize(),
-	}
-}
+// ToAPIV1ListEmailTemplateReply 已被移除，请使用 template 统一接口

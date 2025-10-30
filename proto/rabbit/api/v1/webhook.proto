@@ -44,39 +44,6 @@ service Webhook {
 			get: "/v1/webhook/configs"
 		};
 	}
-	rpc CreateWebhookTemplate (CreateWebhookTemplateRequest) returns (CreateWebhookTemplateReply) {
-		option (google.api.http) = {
-			post: "/v1/webhook/template"
-			body: "*"
-		};
-	}
-	rpc UpdateWebhookTemplate (UpdateWebhookTemplateRequest) returns (UpdateWebhookTemplateReply) {
-		option (google.api.http) = {
-			put: "/v1/webhook/template/{uid}"
-			body: "*"
-		};
-	}
-	rpc UpdateWebhookTemplateStatus (UpdateWebhookTemplateStatusRequest) returns (UpdateWebhookTemplateStatusReply) {
-		option (google.api.http) = {
-			put: "/v1/webhook/template/{uid}/status"
-			body: "*"
-		};
-	}
-	rpc DeleteWebhookTemplate (DeleteWebhookTemplateRequest) returns (DeleteWebhookTemplateReply) {
-		option (google.api.http) = {
-			delete: "/v1/webhook/template/{uid}"
-		};
-	}
-	rpc GetWebhookTemplate (GetWebhookTemplateRequest) returns (WebhookTemplateItem) {
-		option (google.api.http) = {
-			get: "/v1/webhook/template/{uid}"
-		};
-	}
-	rpc ListWebhookTemplate (ListWebhookTemplateRequest) returns (ListWebhookTemplateReply) {
-		option (google.api.http) = {
-			get: "/v1/webhook/templates"
-		};
-	}
 }
 
 message WebhookItem {
@@ -90,16 +57,6 @@ message WebhookItem {
 	string createdAt = 8;
 	string updatedAt = 9;
 	rabbit.enum.GlobalStatus status = 10;
-}
-
-message WebhookTemplateItem {
-	string uid = 1;
-	string name = 2;
-	string body = 3;
-	string createdAt = 4;
-	string updatedAt = 5;
-	rabbit.enum.GlobalStatus status = 6;
-	rabbit.enum.WebhookAPP app = 7;
 }
 
 message CreateWebhookRequest {
@@ -190,76 +147,6 @@ message ListWebhookRequest {
 }
 message ListWebhookReply {
 	repeated WebhookItem items = 1;
-	int32 total = 2;
-	int32 page = 3;
-	int32 pageSize = 4;
-}
-
-message CreateWebhookTemplateRequest {
-	string name = 1 [(buf.validate.field).required = true];
-	string body = 2 [(buf.validate.field).required = true];
-	rabbit.enum.WebhookAPP app = 3 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
-		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
-	}];
-}
-message CreateWebhookTemplateReply {}
-
-message UpdateWebhookTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-	string name = 2 [(buf.validate.field).required = true];
-	string body = 3 [(buf.validate.field).required = true];
-	rabbit.enum.WebhookAPP app = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
-		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
-	}];
-}
-message UpdateWebhookTemplateReply {}
-
-message UpdateWebhookTemplateStatusRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this in [rabbit.enum.GlobalStatus.ENABLED, rabbit.enum.GlobalStatus.DISABLED]",
-		message: "status must be in [ENABLED, DISABLED]",
-	}];
-}
-message UpdateWebhookTemplateStatusReply {}
-
-message DeleteWebhookTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-}
-message DeleteWebhookTemplateReply {}
-
-message GetWebhookTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-}
-
-message ListWebhookTemplateRequest {
-	int32 page = 1 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1",
-		message: "page must be greater than or equal to 1",
-	}];
-	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 1 && this <= 200",
-		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
-	}];
-	string keyword = 3 [(buf.validate.field).cel = {
-		expression: "this.size() <= 100",
-		message: "keyword must be less than or equal to 100",
-	}];
-	rabbit.enum.GlobalStatus status = 4;
-	rabbit.enum.WebhookAPP app = 5;
-}
-message ListWebhookTemplateReply {
-	repeated WebhookTemplateItem items = 1;
 	int32 total = 2;
 	int32 page = 3;
 	int32 pageSize = 4;

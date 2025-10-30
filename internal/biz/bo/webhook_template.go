@@ -5,8 +5,6 @@ import (
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
-	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 type CreateWebhookTemplateBo struct {
@@ -23,13 +21,8 @@ func (b *CreateWebhookTemplateBo) ToDoWebhookTemplate() *do.WebhookTemplate {
 	}
 }
 
-func NewCreateWebhookTemplateBo(req *apiv1.CreateWebhookTemplateRequest) *CreateWebhookTemplateBo {
-	return &CreateWebhookTemplateBo{
-		App:  vobj.WebhookApp(req.App),
-		Name: req.Name,
-		Body: req.Body,
-	}
-}
+// NewCreateWebhookTemplateBo 已被移除，请使用 template 统一接口
+// 使用 bo.CreateTemplateBoFromWebhook 将旧的 BO 转换为新的统一 Template BO
 
 type UpdateWebhookTemplateBo struct {
 	UID  string
@@ -49,26 +42,14 @@ func (b *UpdateWebhookTemplateBo) ToDoWebhookTemplate() *do.WebhookTemplate {
 	}
 }
 
-func NewUpdateWebhookTemplateBo(req *apiv1.UpdateWebhookTemplateRequest) *UpdateWebhookTemplateBo {
-	return &UpdateWebhookTemplateBo{
-		UID:  req.Uid,
-		Name: req.Name,
-		Body: req.Body,
-		App:  vobj.WebhookApp(req.App),
-	}
-}
+// NewUpdateWebhookTemplateBo 已被移除，请使用 template 统一接口
 
 type UpdateWebhookTemplateStatusBo struct {
 	UID    string
 	Status vobj.GlobalStatus
 }
 
-func NewUpdateWebhookTemplateStatusBo(req *apiv1.UpdateWebhookTemplateStatusRequest) *UpdateWebhookTemplateStatusBo {
-	return &UpdateWebhookTemplateStatusBo{
-		UID:    req.Uid,
-		Status: vobj.GlobalStatus(req.Status),
-	}
-}
+// NewUpdateWebhookTemplateStatusBo 已被移除，请使用 template 统一接口
 
 type WebhookTemplateItemBo struct {
 	UID       string
@@ -92,17 +73,7 @@ func NewWebhookTemplateItemBo(doTemplate *do.WebhookTemplate) *WebhookTemplateIt
 	}
 }
 
-func (b *WebhookTemplateItemBo) ToAPIV1WebhookTemplateItem() *apiv1.WebhookTemplateItem {
-	return &apiv1.WebhookTemplateItem{
-		Uid:       b.UID,
-		App:       enum.WebhookAPP(b.App),
-		Name:      b.Name,
-		Body:      b.Body,
-		Status:    enum.GlobalStatus(b.Status),
-		CreatedAt: b.CreatedAt.Format(time.DateTime),
-		UpdatedAt: b.UpdatedAt.Format(time.DateTime),
-	}
-}
+// ToAPIV1WebhookTemplateItem 已被移除，请使用 template 统一接口
 
 type ListWebhookTemplateBo struct {
 	*PageRequestBo
@@ -111,24 +82,6 @@ type ListWebhookTemplateBo struct {
 	App     vobj.WebhookApp
 }
 
-func NewListWebhookTemplateBo(req *apiv1.ListWebhookTemplateRequest) *ListWebhookTemplateBo {
-	return &ListWebhookTemplateBo{
-		PageRequestBo: NewPageRequestBo(req.Page, req.PageSize),
-		Keyword:       req.Keyword,
-		Status:        vobj.GlobalStatus(req.Status),
-		App:           vobj.WebhookApp(req.App),
-	}
-}
+// NewListWebhookTemplateBo 已被移除，请使用 template 统一接口
 
-func ToAPIV1ListWebhookTemplateReply(pageResponseBo *PageResponseBo[*WebhookTemplateItemBo]) *apiv1.ListWebhookTemplateReply {
-	items := make([]*apiv1.WebhookTemplateItem, 0, len(pageResponseBo.GetItems()))
-	for _, item := range pageResponseBo.GetItems() {
-		items = append(items, item.ToAPIV1WebhookTemplateItem())
-	}
-	return &apiv1.ListWebhookTemplateReply{
-		Items:    items,
-		Total:    int32(pageResponseBo.GetTotal()),
-		Page:     pageResponseBo.GetPage(),
-		PageSize: pageResponseBo.GetPageSize(),
-	}
-}
+// ToAPIV1ListWebhookTemplateReply 已被移除，请使用 template 统一接口
