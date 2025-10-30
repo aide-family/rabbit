@@ -16,8 +16,6 @@ func Models() []any {
 		&Namespace{},
 		&WebhookConfig{},
 		&EmailConfig{},
-		&EmailTemplate{},
-		&WebhookTemplate{},
 		&Template{},
 		&MessageLog{},
 	}

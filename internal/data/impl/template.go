@@ -64,6 +64,14 @@ func (t *templateRepositoryImpl) GetTemplate(ctx context.Context, uid string) (*
 	return wrappers.First()
 }
 
+// GetTemplateByName implements repository.Template.
+func (t *templateRepositoryImpl) GetTemplateByName(ctx context.Context, name string) (*do.Template, error) {
+	namespace := middler.GetNamespace(ctx)
+	template := t.d.BizQuery(namespace).Template
+	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.Name.Eq(name))
+	return wrappers.First()
+}
+
 // ListTemplate implements repository.Template.
 func (t *templateRepositoryImpl) ListTemplate(ctx context.Context, req *bo.ListTemplateBo) (*bo.PageResponseBo[*do.Template], error) {
 	namespace := middler.GetNamespace(ctx)

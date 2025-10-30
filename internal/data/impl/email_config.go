@@ -41,6 +41,14 @@ func (e *emailConfigRepositoryImpl) GetEmailConfig(ctx context.Context, uid stri
 	return wrappers.First()
 }
 
+// GetEmailConfigByName implements repository.EmailConfig.
+func (e *emailConfigRepositoryImpl) GetEmailConfigByName(ctx context.Context, name string) (*do.EmailConfig, error) {
+	namespace := middler.GetNamespace(ctx)
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.Name.Eq(name))
+	return wrappers.First()
+}
+
 // ListEmailConfig implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) ListEmailConfig(ctx context.Context, req *bo.ListEmailConfigBo) (*bo.PageResponseBo[*do.EmailConfig], error) {
 	namespace := middler.GetNamespace(ctx)

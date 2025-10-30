@@ -1,7 +1,6 @@
 package bo
 
 import (
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -187,39 +186,4 @@ func ToAPIV1ListTemplateReply(pageResponseBo *PageResponseBo[*TemplateItemBo]) *
 		Page:     pageResponseBo.GetPage(),
 		PageSize: pageResponseBo.GetPageSize(),
 	}
-}
-
-// CreateEmailTemplateBo 从旧的 Email Template BO 创建新的统一 Template BO
-func CreateEmailTemplateBoFromEmail(req *CreateEmailTemplateBo) (*CreateTemplateBo, error) {
-	data := &do.EmailTemplateData{
-		Subject:     req.Subject,
-		Body:        req.Body,
-		ContentType: req.ContentType,
-		Headers:     req.Headers,
-	}
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	return &CreateTemplateBo{
-		Name:     req.Name,
-		App:      vobj.TemplateAppEmail,
-		JSONData: jsonData,
-	}, nil
-}
-
-// CreateWebhookTemplateBoFromWebhook 从旧的 Webhook Template BO 创建新的统一 Template BO
-func CreateTemplateBoFromWebhook(req *CreateWebhookTemplateBo) (*CreateTemplateBo, error) {
-	data := &do.WebhookTemplateData{
-		Body: req.Body,
-	}
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return nil, err
-	}
-	return &CreateTemplateBo{
-		Name:     req.Name,
-		App:      vobj.FromWebhookApp(req.App),
-		JSONData: jsonData,
-	}, nil
 }

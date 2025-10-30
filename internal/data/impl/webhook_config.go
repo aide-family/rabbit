@@ -63,6 +63,14 @@ func (w *webhookConfigRepositoryImpl) GetWebhookConfig(ctx context.Context, uid 
 	return wrappers.First()
 }
 
+// GetWebhookConfigByName implements repository.WebhookConfig.
+func (w *webhookConfigRepositoryImpl) GetWebhookConfigByName(ctx context.Context, name string) (*do.WebhookConfig, error) {
+	namespace := middler.GetNamespace(ctx)
+	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.Name.Eq(name))
+	return wrappers.First()
+}
+
 // ListWebhookConfig implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) ListWebhookConfig(ctx context.Context, req *bo.ListWebhookBo) (*bo.PageResponseBo[*do.WebhookConfig], error) {
 	namespace := middler.GetNamespace(ctx)

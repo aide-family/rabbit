@@ -4,7 +4,6 @@ package bo
 import (
 	"time"
 
-	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -160,87 +159,3 @@ func (b *EmailConfigItemBo) ToAPIV1EmailConfigItem() *apiv1.EmailConfigItem {
 		UpdatedAt: b.UpdatedAt.Format(time.DateTime),
 	}
 }
-
-type CreateEmailTemplateBo struct {
-	Name        string
-	Subject     string
-	Body        string
-	ContentType string
-	Headers     map[string]string
-}
-
-func (c *CreateEmailTemplateBo) ToDoEmailTemplate() *do.EmailTemplate {
-	return &do.EmailTemplate{
-		Name:        c.Name,
-		Subject:     c.Subject,
-		Body:        c.Body,
-		ContentType: c.ContentType,
-		Headers:     safety.NewMap(c.Headers),
-	}
-}
-
-// NewCreateEmailTemplateBo 已被移除，请使用 template 统一接口
-// 使用 bo.CreateEmailTemplateBoFromEmail 将旧的 BO 转换为新的统一 Template BO
-
-type UpdateEmailTemplateBo struct {
-	UID string
-	CreateEmailTemplateBo
-}
-
-func (c *UpdateEmailTemplateBo) ToDoEmailTemplate() *do.EmailTemplate {
-	return &do.EmailTemplate{
-		NamespaceModel: do.NamespaceModel{
-			UID: c.UID,
-		},
-		Name:        c.Name,
-		Subject:     c.Subject,
-		Body:        c.Body,
-		ContentType: c.ContentType,
-		Headers:     safety.NewMap(c.Headers),
-	}
-}
-
-// NewUpdateEmailTemplateBo 已被移除，请使用 template 统一接口
-
-type UpdateEmailTemplateStatusBo struct {
-	UID    string
-	Status vobj.GlobalStatus
-}
-
-// NewUpdateEmailTemplateStatusBo 已被移除，请使用 template 统一接口
-
-type EmailTemplateItemBo struct {
-	UID         string
-	Subject     string
-	Body        string
-	ContentType string
-	Headers     map[string]string
-	Status      vobj.GlobalStatus
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-}
-
-func NewEmailTemplateItemBo(doEmailTemplate *do.EmailTemplate) *EmailTemplateItemBo {
-	return &EmailTemplateItemBo{
-		UID:         doEmailTemplate.UID,
-		Subject:     doEmailTemplate.Subject,
-		Body:        doEmailTemplate.Body,
-		ContentType: doEmailTemplate.ContentType,
-		Headers:     doEmailTemplate.Headers.Map(),
-		Status:      doEmailTemplate.Status,
-		CreatedAt:   doEmailTemplate.CreatedAt,
-		UpdatedAt:   doEmailTemplate.UpdatedAt,
-	}
-}
-
-// ToAPIV1EmailTemplateItem 已被移除，请使用 template 统一接口
-
-type ListEmailTemplateBo struct {
-	*PageRequestBo
-	Keyword string
-	Status  vobj.GlobalStatus
-}
-
-// NewListEmailTemplateBo 已被移除，请使用 template 统一接口
-
-// ToAPIV1ListEmailTemplateReply 已被移除，请使用 template 统一接口

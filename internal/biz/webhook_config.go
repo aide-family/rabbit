@@ -14,24 +14,27 @@ import (
 
 func NewWebhookConfig(
 	webhookConfigRepo repository.WebhookConfig,
-	webhookTemplateRepo repository.WebhookTemplate,
 	helper *klog.Helper,
 ) *WebhookConfig {
 	return &WebhookConfig{
-		webhookConfigRepo:   webhookConfigRepo,
-		webhookTemplateRepo: webhookTemplateRepo,
-		helper:              klog.NewHelper(klog.With(helper.Logger(), "biz", "webhookConfig")),
+		webhookConfigRepo: webhookConfigRepo,
+		helper:            klog.NewHelper(klog.With(helper.Logger(), "biz", "webhookConfig")),
 	}
 }
 
 type WebhookConfig struct {
-	helper              *klog.Helper
-	webhookConfigRepo   repository.WebhookConfig
-	webhookTemplateRepo repository.WebhookTemplate
+	helper            *klog.Helper
+	webhookConfigRepo repository.WebhookConfig
 }
 
 func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhookBo) error {
 	doWebhookConfig := req.ToDoWebhookConfig()
+	if _, err := w.webhookConfigRepo.GetWebhookConfigByName(ctx, doWebhookConfig.Name); err == nil {
+		return merr.ErrorParams("webhook config %s already exists", doWebhookConfig.Name)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		w.helper.Errorw("msg", "check webhook config exists failed", "error", err, "name", doWebhookConfig.Name)
+		return merr.ErrorInternal("create webhook config %s failed", doWebhookConfig.Name)
+	}
 	if err := w.webhookConfigRepo.SaveWebhookConfig(ctx, doWebhookConfig); err != nil {
 		w.helper.Errorw("msg", "create webhook config failed", "error", err, "name", doWebhookConfig.Name)
 		return merr.ErrorInternal("create webhook config %s failed", doWebhookConfig.Name)
@@ -85,65 +88,6 @@ func (w *WebhookConfig) ListWebhook(ctx context.Context, req *bo.ListWebhookBo) 
 	items := make([]*bo.WebhookItemBo, 0, len(pageResponseBo.GetItems()))
 	for _, item := range pageResponseBo.GetItems() {
 		items = append(items, bo.NewWebhookItemBo(item))
-	}
-	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
-}
-
-func (w *WebhookConfig) CreateWebhookTemplate(ctx context.Context, req *bo.CreateWebhookTemplateBo) error {
-	doWebhookTemplate := req.ToDoWebhookTemplate()
-	if err := w.webhookTemplateRepo.SaveWebhookTemplate(ctx, doWebhookTemplate); err != nil {
-		w.helper.Errorw("msg", "create webhook template failed", "error", err, "name", doWebhookTemplate.Name)
-		return merr.ErrorInternal("create webhook template %s failed", doWebhookTemplate.Name)
-	}
-	return nil
-}
-
-func (w *WebhookConfig) UpdateWebhookTemplate(ctx context.Context, req *bo.UpdateWebhookTemplateBo) error {
-	doWebhookTemplate := req.ToDoWebhookTemplate()
-	if err := w.webhookTemplateRepo.SaveWebhookTemplate(ctx, doWebhookTemplate); err != nil {
-		w.helper.Errorw("msg", "update webhook template failed", "error", err, "uid", doWebhookTemplate.UID)
-		return merr.ErrorInternal("update webhook template %s failed", doWebhookTemplate.UID)
-	}
-	return nil
-}
-
-func (w *WebhookConfig) UpdateWebhookTemplateStatus(ctx context.Context, req *bo.UpdateWebhookTemplateStatusBo) error {
-	if err := w.webhookTemplateRepo.UpdateWebhookTemplateStatus(ctx, req.UID, req.Status); err != nil {
-		w.helper.Errorw("msg", "update webhook template status failed", "error", err, "uid", req.UID)
-		return merr.ErrorInternal("update webhook template status %s failed", req.UID)
-	}
-	return nil
-}
-
-func (w *WebhookConfig) DeleteWebhookTemplate(ctx context.Context, uid string) error {
-	if err := w.webhookTemplateRepo.DeleteWebhookTemplate(ctx, uid); err != nil {
-		w.helper.Errorw("msg", "delete webhook template failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("delete webhook template %s failed", uid)
-	}
-	return nil
-}
-
-func (w *WebhookConfig) GetWebhookTemplate(ctx context.Context, uid string) (*bo.WebhookTemplateItemBo, error) {
-	doWebhookTemplate, err := w.webhookTemplateRepo.GetWebhookTemplate(ctx, uid)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, merr.ErrorNotFound("webhook template %s not found", uid)
-		}
-		w.helper.Errorw("msg", "get webhook template failed", "error", err, "uid", uid)
-		return nil, merr.ErrorInternal("get webhook template %s failed", uid)
-	}
-	return bo.NewWebhookTemplateItemBo(doWebhookTemplate), nil
-}
-
-func (w *WebhookConfig) ListWebhookTemplate(ctx context.Context, req *bo.ListWebhookTemplateBo) (*bo.PageResponseBo[*bo.WebhookTemplateItemBo], error) {
-	pageResponseBo, err := w.webhookTemplateRepo.ListWebhookTemplate(ctx, req)
-	if err != nil {
-		w.helper.Errorw("msg", "list webhook template failed", "error", err, "req", req)
-		return nil, merr.ErrorInternal("list webhook template failed")
-	}
-	items := make([]*bo.WebhookTemplateItemBo, 0, len(pageResponseBo.GetItems()))
-	for _, item := range pageResponseBo.GetItems() {
-		items = append(items, bo.NewWebhookTemplateItemBo(item))
 	}
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }

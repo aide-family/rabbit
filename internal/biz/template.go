@@ -33,6 +33,12 @@ func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo)
 		t.helper.Errorw("msg", "convert to do failed", "error", err)
 		return merr.ErrorInternal("convert to do failed")
 	}
+	if _, err := t.templateRepo.GetTemplateByName(ctx, doTemplate.Name); err == nil {
+		return merr.ErrorParams("template %s already exists", doTemplate.Name)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		t.helper.Errorw("msg", "check template exists failed", "error", err, "name", doTemplate.Name)
+		return merr.ErrorInternal("create template %s failed", doTemplate.Name)
+	}
 	if err := t.templateRepo.SaveTemplate(ctx, doTemplate); err != nil {
 		t.helper.Errorw("msg", "create template failed", "error", err, "name", doTemplate.Name)
 		return merr.ErrorInternal("create template %s failed", doTemplate.Name)
@@ -93,4 +99,3 @@ func (t *Template) ListTemplate(ctx context.Context, req *bo.ListTemplateBo) (*b
 	}
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }
-
