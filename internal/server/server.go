@@ -81,6 +81,7 @@ func RegisterService(
 	senderService *service.SenderService,
 	namespaceService *service.NamespaceService,
 	messageLogService *service.MessageLogService,
+	templateService *service.TemplateService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
@@ -88,6 +89,7 @@ func RegisterService(
 	apiv1.RegisterSenderServer(grpcSrv, senderService)
 	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
 	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
+	apiv1.RegisterTemplateServer(grpcSrv, templateService)
 
 	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
 	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
@@ -95,5 +97,6 @@ func RegisterService(
 	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
 	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
+	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
 	return Servers{httpSrv, grpcSrv}
 }

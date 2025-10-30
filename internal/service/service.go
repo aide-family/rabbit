@@ -11,4 +11,5 @@ var ProviderSetService = wire.NewSet(
 	NewSenderService,
 	NewNamespaceService,
 	NewMessageLogService,
+	NewTemplateService,
 )

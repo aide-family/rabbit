@@ -10,4 +10,5 @@ var ProviderSetImpl = wire.NewSet(
 	NewMessageLogRepository,
 	NewNamespaceRepository,
 	NewWebhookConfigRepository,
+	NewTemplateRepository,
 )

@@ -26,12 +26,6 @@ type Namespace struct {
 
 func (n *Namespace) SaveNamespace(ctx context.Context, req *bo.SaveNamespaceBo) error {
 	doNamespace := req.ToDoNamespace()
-	if _, err := n.namespaceRepo.GetNamespace(ctx, doNamespace.Name); err == nil {
-		return merr.ErrorParams("namespace %s already exists", doNamespace.Name)
-	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
-		n.helper.Errorw("msg", "check namespace exists failed", "error", err, "name", doNamespace.Name)
-		return merr.ErrorInternal("save namespace %s failed", doNamespace.Name)
-	}
 	if err := n.namespaceRepo.SaveNamespace(ctx, doNamespace); err != nil {
 		n.helper.Errorw("msg", "save namespace failed", "error", err, "name", doNamespace.Name)
 		return merr.ErrorInternal("save namespace %s failed", doNamespace.Name)
