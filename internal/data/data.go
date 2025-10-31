@@ -79,6 +79,10 @@ func (d *Data) BizQuery(namespace string) *query.Query {
 	return query.Use(d.BizDB(namespace))
 }
 
+func (d *Data) BizQueryWithTable(namespace string, tableName string, args ...any) *query.Query {
+	return query.Use(d.BizDB(namespace).Table(tableName, args...))
+}
+
 func (d *Data) BizDB(namespace string) *gorm.DB {
 	db, ok := d.dbs.Get(namespace)
 	if ok {

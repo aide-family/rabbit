@@ -41,8 +41,11 @@ message MessageLogItem {
 	rabbit.enum.MessageStatus status = 3;
 	string sendAt = 4;
 	string message = 5;
-	string createdAt = 6;
-	string updatedAt = 7;
+	string config = 6;
+	int32 retryTotal = 7;
+	string lastError = 8;
+	string createdAt = 9;
+	string updatedAt = 10;
 }
 
 message RetryMessageLogRequest {
@@ -67,10 +70,6 @@ message ListMessageLogRequest {
 	int32 pageSize = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this >= 1 && this <= 200",
 		message: "pageSize must be greater than or equal to 1 and less than or equal to 200",
-	}];
-	string keyword = 3 [(buf.validate.field).cel = {
-		expression: "this.size() <= 100",
-		message: "keyword must be less than or equal to 100",
 	}];
 	rabbit.enum.GlobalStatus status = 4;
 	rabbit.enum.MessageType type = 5;

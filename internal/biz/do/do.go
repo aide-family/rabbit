@@ -20,6 +20,7 @@ func Models() []any {
 		&EmailConfig{},
 		&Template{},
 		&MessageLog{},
+		&MessageRetryLog{},
 	}
 }
 

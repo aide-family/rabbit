@@ -2,7 +2,6 @@
 package bo
 
 import (
-	"context"
 	"time"
 
 	"github.com/aide-family/magicbox/serialize"
@@ -13,35 +12,39 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/middler"
 )
 
 type SendEmailBo struct {
-	Namespace   string
-	Subject     string
-	Body        string
-	To          []string
-	Cc          []string
-	ContentType string
-	Headers     map[string]string
+	UID         snowflake.ID      `json:"uid"`
+	Subject     string            `json:"subject"`
+	Body        string            `json:"body"`
+	To          []string          `json:"to"`
+	Cc          []string          `json:"cc"`
+	ContentType string            `json:"content_type"`
+	Headers     map[string]string `json:"headers"`
 }
 
-func (b *SendEmailBo) ToMessageLog() (*do.MessageLog, error) {
+func (b *SendEmailBo) ToMessageLog(emailConfig *do.EmailConfig) (*do.MessageLog, error) {
 	messageBytes, err := serialize.JSONMarshal(b)
+	if err != nil {
+		return nil, err
+	}
+	emailConfigBytes, err := serialize.JSONMarshal(NewEmailConfigItemBo(emailConfig))
 	if err != nil {
 		return nil, err
 	}
 	return &do.MessageLog{
 		SendAt:  time.Now(),
-		Message: string(messageBytes),
+		Message: strutil.EncryptString(messageBytes),
+		Config:  strutil.EncryptString(emailConfigBytes),
 		Type:    vobj.MessageTypeEmail,
 		Status:  vobj.MessageStatusPending,
 	}, nil
 }
 
-func NewSendEmailBo(ctx context.Context, req *apiv1.SendEmailRequest) *SendEmailBo {
+func NewSendEmailBo(req *apiv1.SendEmailRequest) *SendEmailBo {
 	return &SendEmailBo{
-		Namespace:   middler.GetNamespace(ctx),
+		UID:         snowflake.ParseInt64(req.Uid),
 		Subject:     req.Subject,
 		Body:        req.Body,
 		To:          req.To,
@@ -149,15 +152,15 @@ func ToAPIV1ListEmailConfigReply(pageResponseBo *PageResponseBo[*EmailConfigItem
 }
 
 type EmailConfigItemBo struct {
-	UID       snowflake.ID
-	Name      string
-	Host      string
-	Port      int32
-	Username  string
-	Password  string
-	Status    vobj.GlobalStatus
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	UID       snowflake.ID      `json:"uid"`
+	Name      string            `json:"name"`
+	Host      string            `json:"host"`
+	Port      int32             `json:"port"`
+	Username  string            `json:"username"`
+	Password  string            `json:"password"`
+	Status    vobj.GlobalStatus `json:"status"`
+	CreatedAt time.Time         `json:"-"`
+	UpdatedAt time.Time         `json:"-"`
 }
 
 func NewEmailConfigItemBo(doEmailConfig *do.EmailConfig) *EmailConfigItemBo {

@@ -232,10 +232,6 @@ paths:
                   schema:
                     type: integer
                     format: int32
-                - name: keyword
-                  in: query
-                  schema:
-                    type: string
                 - name: status
                   in: query
                   schema:
@@ -967,6 +963,13 @@ components:
                 sendAt:
                     type: string
                 message:
+                    type: string
+                config:
+                    type: string
+                retryTotal:
+                    type: integer
+                    format: int32
+                lastError:
                     type: string
                 createdAt:
                     type: string

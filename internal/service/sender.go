@@ -21,7 +21,7 @@ type SenderService struct {
 }
 
 func (s *SenderService) SendEmail(ctx context.Context, req *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
-	sendEmailBo := bo.NewSendEmailBo(ctx, req)
+	sendEmailBo := bo.NewSendEmailBo(req)
 	if err := s.emailBiz.AppendEmailMessage(ctx, sendEmailBo); err != nil {
 		return nil, err
 	}
