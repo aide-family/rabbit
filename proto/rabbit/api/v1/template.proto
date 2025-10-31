@@ -47,7 +47,7 @@ service Template {
 }
 
 message TemplateItem {
-	string uid = 1;
+	int64 uid = 1;
 	string name = 2;
 	rabbit.enum.TemplateAPP app = 3;
 	bytes jsonData = 4; // JSONData in Go code
@@ -64,9 +64,7 @@ message CreateTemplateRequest {
 message CreateTemplateReply {}
 
 message UpdateTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	string name = 2 [(buf.validate.field).required = true];
 	rabbit.enum.TemplateAPP app = 3 [(buf.validate.field).required = true];
 	bytes jsonData = 4 [(buf.validate.field).required = true];
@@ -74,9 +72,7 @@ message UpdateTemplateRequest {
 message UpdateTemplateReply {}
 
 message UpdateTemplateStatusRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this in [rabbit.enum.GlobalStatus.ENABLED, rabbit.enum.GlobalStatus.DISABLED]",
 		message: "status must be in ['ENABLED', 'DISABLED']",
@@ -85,16 +81,12 @@ message UpdateTemplateStatusRequest {
 message UpdateTemplateStatusReply {}
 
 message DeleteTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 message DeleteTemplateReply {}
 
 message GetTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 
 message ListTemplateRequest {

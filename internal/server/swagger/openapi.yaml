@@ -161,10 +161,6 @@ paths:
                   required: true
                   schema:
                     type: string
-                - name: sendAtUnix
-                  in: query
-                  schema:
-                    type: string
             responses:
                 "200":
                     description: OK
@@ -173,7 +169,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.MessageLogItem'
     /v1/message-log/{uid}/cancel:
-        post:
+        put:
             tags:
                 - MessageLog
             operationId: MessageLog_CancelMessage
@@ -197,7 +193,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.CancelMessageLogReply'
     /v1/message-log/{uid}/retry:
-        post:
+        put:
             tags:
                 - MessageLog
             operationId: MessageLog_RetryMessage
@@ -269,12 +265,12 @@ paths:
         post:
             tags:
                 - Namespace
-            operationId: Namespace_SaveNamespace
+            operationId: Namespace_CreateNamespace
             requestBody:
                 content:
                     application/json:
                         schema:
-                            $ref: '#/components/schemas/rabbit.api.v1.SaveNamespaceRequest'
+                            $ref: '#/components/schemas/rabbit.api.v1.CreateNamespaceRequest'
                 required: true
             responses:
                 "200":
@@ -282,14 +278,14 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/rabbit.api.v1.SaveNamespaceReply'
-    /v1/namespace/{name}:
+                                $ref: '#/components/schemas/rabbit.api.v1.CreateNamespaceReply'
+    /v1/namespace/{uid}:
         get:
             tags:
                 - Namespace
             operationId: Namespace_GetNamespace
             parameters:
-                - name: name
+                - name: uid
                   in: path
                   required: true
                   schema:
@@ -301,12 +297,35 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.NamespaceItem'
+        put:
+            tags:
+                - Namespace
+            operationId: Namespace_UpdateNamespace
+            parameters:
+                - name: uid
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.UpdateNamespaceReply'
         delete:
             tags:
                 - Namespace
             operationId: Namespace_DeleteNamespace
             parameters:
-                - name: name
+                - name: uid
                   in: path
                   required: true
                   schema:
@@ -318,13 +337,13 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.DeleteNamespaceReply'
-    /v1/namespace/{name}/status:
+    /v1/namespace/{uid}/status:
         put:
             tags:
                 - Namespace
             operationId: Namespace_UpdateNamespaceStatus
             parameters:
-                - name: name
+                - name: uid
                   in: path
                   required: true
                   schema:
@@ -749,8 +768,6 @@ components:
             properties:
                 uid:
                     type: string
-                sendAtUnix:
-                    type: string
         rabbit.api.v1.CreateEmailConfigReply:
             type: object
             properties: {}
@@ -768,6 +785,18 @@ components:
                     type: string
                 password:
                     type: string
+        rabbit.api.v1.CreateNamespaceReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.CreateNamespaceRequest:
+            type: object
+            properties:
+                name:
+                    type: string
+                metadata:
+                    type: object
+                    additionalProperties:
+                        type: string
         rabbit.api.v1.CreateTemplateReply:
             type: object
             properties: {}
@@ -917,8 +946,7 @@ components:
                     items:
                         $ref: '#/components/schemas/rabbit.api.v1.WebhookItem'
                 total:
-                    type: integer
-                    format: int32
+                    type: string
                 page:
                     type: integer
                     format: int32
@@ -947,6 +975,8 @@ components:
         rabbit.api.v1.NamespaceItem:
             type: object
             properties:
+                uid:
+                    type: string
                 name:
                     type: string
                 metadata:
@@ -968,20 +998,6 @@ components:
             properties:
                 uid:
                     type: string
-                sendAtUnix:
-                    type: string
-        rabbit.api.v1.SaveNamespaceReply:
-            type: object
-            properties: {}
-        rabbit.api.v1.SaveNamespaceRequest:
-            type: object
-            properties:
-                name:
-                    type: string
-                metadata:
-                    type: object
-                    additionalProperties:
-                        type: string
         rabbit.api.v1.SendEmailRequest:
             type: object
             properties:
@@ -1091,13 +1107,27 @@ components:
                 status:
                     type: integer
                     format: enum
+        rabbit.api.v1.UpdateNamespaceReply:
+            type: object
+            properties: {}
+        rabbit.api.v1.UpdateNamespaceRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+                name:
+                    type: string
+                metadata:
+                    type: object
+                    additionalProperties:
+                        type: string
         rabbit.api.v1.UpdateNamespaceStatusReply:
             type: object
             properties: {}
         rabbit.api.v1.UpdateNamespaceStatusRequest:
             type: object
             properties:
-                name:
+                uid:
                     type: string
                 status:
                     type: integer

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 
@@ -24,38 +25,71 @@ type Namespace struct {
 	namespaceRepo repository.Namespace
 }
 
-func (n *Namespace) SaveNamespace(ctx context.Context, req *bo.SaveNamespaceBo) error {
+func (n *Namespace) CreateNamespace(ctx context.Context, req *bo.CreateNamespaceBo) error {
+	if _, err := n.namespaceRepo.GetNamespaceByName(ctx, req.Name); err == nil {
+		return merr.ErrorParams("namespace %s already exists", req.Name)
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		n.helper.Errorw("msg", "check namespace exists failed", "error", err, "name", req.Name)
+		return merr.ErrorInternal("create namespace %s failed", req.Name)
+	}
+	if err := n.namespaceRepo.CreateNamespace(ctx, req.ToDoNamespace()); err != nil {
+		n.helper.Errorw("msg", "create namespace failed", "error", err, "name", req.Name)
+		return merr.ErrorInternal("create namespace %s failed", req.Name)
+	}
+	return nil
+}
+
+func (n *Namespace) UpdateNamespace(ctx context.Context, req *bo.UpdateNamespaceBo) error {
 	doNamespace := req.ToDoNamespace()
-	if err := n.namespaceRepo.SaveNamespace(ctx, doNamespace); err != nil {
-		n.helper.Errorw("msg", "save namespace failed", "error", err, "name", doNamespace.Name)
-		return merr.ErrorInternal("save namespace %s failed", doNamespace.Name)
+	existNamespace, err := n.namespaceRepo.GetNamespaceByName(ctx, doNamespace.Name)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		n.helper.Errorw("msg", "check namespace exists failed", "error", err, "name", doNamespace.Name)
+		return merr.ErrorInternal("update namespace %s failed", doNamespace.Name)
+	} else if existNamespace != nil && existNamespace.UID != doNamespace.UID {
+		return merr.ErrorParams("namespace %s already exists", doNamespace.Name)
+	}
+	if err := n.namespaceRepo.UpdateNamespace(ctx, doNamespace); err != nil {
+		n.helper.Errorw("msg", "update namespace failed", "error", err, "uid", req.UID)
+		return merr.ErrorInternal("update namespace %s failed", req.UID)
 	}
 	return nil
 }
 
 func (n *Namespace) UpdateNamespaceStatus(ctx context.Context, req *bo.UpdateNamespaceStatusBo) error {
 	if err := n.namespaceRepo.UpdateNamespaceStatus(ctx, req); err != nil {
-		n.helper.Errorw("msg", "update namespace status failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("update namespace status %s failed", req.Name)
+		n.helper.Errorw("msg", "update namespace status failed", "error", err, "uid", req.UID)
+		return merr.ErrorInternal("update namespace status %s failed", req.UID)
 	}
 	return nil
 }
 
-func (n *Namespace) DeleteNamespace(ctx context.Context, name string) error {
-	if err := n.namespaceRepo.DeleteNamespace(ctx, name); err != nil {
-		n.helper.Errorw("msg", "delete namespace failed", "error", err, "name", name)
-		return merr.ErrorInternal("delete namespace %s failed", name)
+func (n *Namespace) DeleteNamespace(ctx context.Context, uid snowflake.ID) error {
+	if err := n.namespaceRepo.DeleteNamespace(ctx, uid); err != nil {
+		n.helper.Errorw("msg", "delete namespace failed", "error", err, "uid", uid)
+		return merr.ErrorInternal("delete namespace %s failed", uid)
 	}
 	return nil
 }
 
-func (n *Namespace) GetNamespace(ctx context.Context, name string) (*bo.NamespaceItemBo, error) {
-	doNamespace, err := n.namespaceRepo.GetNamespace(ctx, name)
+func (n *Namespace) GetNamespace(ctx context.Context, uid snowflake.ID) (*bo.NamespaceItemBo, error) {
+	doNamespace, err := n.namespaceRepo.GetNamespace(ctx, uid)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, merr.ErrorNotFound("namespace %s not found", uid)
+		}
+
+		n.helper.Errorw("msg", "get namespace failed", "error", err, "uid", uid)
+		return nil, merr.ErrorInternal("get namespace %s failed", uid)
+	}
+	return bo.NewNamespaceItemBo(doNamespace), nil
+}
+
+func (n *Namespace) GetNamespaceByName(ctx context.Context, name string) (*bo.NamespaceItemBo, error) {
+	doNamespace, err := n.namespaceRepo.GetNamespaceByName(ctx, name)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, merr.ErrorNotFound("namespace %s not found", name)
 		}
-
 		n.helper.Errorw("msg", "get namespace failed", "error", err, "name", name)
 		return nil, merr.ErrorInternal("get namespace %s failed", name)
 	}

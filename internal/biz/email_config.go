@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 
@@ -35,7 +36,7 @@ func (c *EmailConfig) CreateEmailConfig(ctx context.Context, req *bo.CreateEmail
 		c.helper.Errorw("msg", "check email config exists failed", "error", err, "name", doEmailConfig.Name)
 		return merr.ErrorInternal("create email config %s failed", doEmailConfig.Name)
 	}
-	if err := c.emailConfigRepo.SaveEmailConfig(ctx, doEmailConfig); err != nil {
+	if err := c.emailConfigRepo.CreateEmailConfig(ctx, doEmailConfig); err != nil {
 		c.helper.Errorw("msg", "create email config failed", "error", err, "name", doEmailConfig.Name)
 		return merr.ErrorInternal("create email config %s failed", doEmailConfig.Name)
 	}
@@ -44,7 +45,7 @@ func (c *EmailConfig) CreateEmailConfig(ctx context.Context, req *bo.CreateEmail
 
 func (c *EmailConfig) UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmailConfigBo) error {
 	doEmailConfig := req.ToDoEmailConfig()
-	if err := c.emailConfigRepo.SaveEmailConfig(ctx, doEmailConfig); err != nil {
+	if err := c.emailConfigRepo.UpdateEmailConfig(ctx, doEmailConfig); err != nil {
 		c.helper.Errorw("msg", "update email config failed", "error", err, "name", doEmailConfig.Name)
 		return merr.ErrorInternal("update email config %s failed", doEmailConfig.Name)
 	}
@@ -59,7 +60,7 @@ func (c *EmailConfig) UpdateEmailConfigStatus(ctx context.Context, req *bo.Updat
 	return nil
 }
 
-func (c *EmailConfig) DeleteEmailConfig(ctx context.Context, uid string) error {
+func (c *EmailConfig) DeleteEmailConfig(ctx context.Context, uid snowflake.ID) error {
 	if err := c.emailConfigRepo.DeleteEmailConfig(ctx, uid); err != nil {
 		c.helper.Errorw("msg", "delete email config failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("delete email config %s failed", uid)
@@ -67,7 +68,7 @@ func (c *EmailConfig) DeleteEmailConfig(ctx context.Context, uid string) error {
 	return nil
 }
 
-func (c *EmailConfig) GetEmailConfig(ctx context.Context, uid string) (*bo.EmailConfigItemBo, error) {
+func (c *EmailConfig) GetEmailConfig(ctx context.Context, uid snowflake.ID) (*bo.EmailConfigItemBo, error) {
 	doEmailConfig, err := c.emailConfigRepo.GetEmailConfig(ctx, uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
@@ -44,7 +45,7 @@ func NewCreateWebhookBo(req *apiv1.CreateWebhookRequest) *CreateWebhookBo {
 }
 
 type UpdateWebhookBo struct {
-	UID     string
+	UID     snowflake.ID
 	App     vobj.WebhookApp
 	Name    string
 	URL     string
@@ -54,10 +55,7 @@ type UpdateWebhookBo struct {
 }
 
 func (b *UpdateWebhookBo) ToDoWebhookConfig() *do.WebhookConfig {
-	return &do.WebhookConfig{
-		NamespaceModel: do.NamespaceModel{
-			UID: b.UID,
-		},
+	webhookConfig := &do.WebhookConfig{
 		App:     b.App,
 		Name:    b.Name,
 		URL:     b.URL,
@@ -65,11 +63,13 @@ func (b *UpdateWebhookBo) ToDoWebhookConfig() *do.WebhookConfig {
 		Headers: safety.NewMap(b.Headers),
 		Secret:  strutil.EncryptString(b.Secret),
 	}
+	webhookConfig.WithUID(b.UID)
+	return webhookConfig
 }
 
 func NewUpdateWebhookBo(req *apiv1.UpdateWebhookRequest) *UpdateWebhookBo {
 	return &UpdateWebhookBo{
-		UID:     req.Uid,
+		UID:     snowflake.ParseInt64(req.Uid),
 		App:     vobj.WebhookApp(req.App),
 		Name:    req.Name,
 		URL:     req.Url,
@@ -80,19 +80,19 @@ func NewUpdateWebhookBo(req *apiv1.UpdateWebhookRequest) *UpdateWebhookBo {
 }
 
 type UpdateWebhookStatusBo struct {
-	UID    string
+	UID    snowflake.ID
 	Status vobj.GlobalStatus
 }
 
 func NewUpdateWebhookStatusBo(req *apiv1.UpdateWebhookStatusRequest) *UpdateWebhookStatusBo {
 	return &UpdateWebhookStatusBo{
-		UID:    req.Uid,
+		UID:    snowflake.ParseInt64(req.Uid),
 		Status: vobj.GlobalStatus(req.Status),
 	}
 }
 
 type WebhookItemBo struct {
-	UID       string
+	UID       snowflake.ID
 	App       vobj.WebhookApp
 	Name      string
 	URL       string
@@ -121,7 +121,7 @@ func NewWebhookItemBo(doWebhook *do.WebhookConfig) *WebhookItemBo {
 
 func (b *WebhookItemBo) ToAPIV1WebhookItem() *apiv1.WebhookItem {
 	return &apiv1.WebhookItem{
-		Uid:       b.UID,
+		Uid:       b.UID.Int64(),
 		App:       enum.WebhookAPP(b.App),
 		Name:      b.Name,
 		Url:       b.URL,
@@ -155,7 +155,7 @@ func ToAPIV1ListWebhookReply(pageResponseBo *PageResponseBo[*WebhookItemBo]) *ap
 	}
 	return &apiv1.ListWebhookReply{
 		Items:    items,
-		Total:    int32(pageResponseBo.GetTotal()),
+		Total:    pageResponseBo.GetTotal(),
 		Page:     pageResponseBo.GetPage(),
 		PageSize: pageResponseBo.GetPageSize(),
 	}

@@ -47,7 +47,7 @@ service Email {
 }
 
 message EmailConfigItem {
-	string uid = 1;
+	int64 uid = 1;
 	string name = 2;
 	string host = 3;
 	int32 port = 4;
@@ -68,9 +68,7 @@ message CreateEmailConfigRequest {
 message CreateEmailConfigReply {}
 
 message UpdateEmailConfigRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	string name = 2 [(buf.validate.field).required = true];
 	string host = 3 [(buf.validate.field).required = true];
 	int32 port = 4 [(buf.validate.field).required = true];
@@ -80,9 +78,7 @@ message UpdateEmailConfigRequest {
 message UpdateEmailConfigReply {}
 
 message UpdateEmailConfigStatusRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this in [rabbit.enum.GlobalStatus.ENABLED, rabbit.enum.GlobalStatus.DISABLED]",
 		message: "status must be in ['ENABLED', 'DISABLED']",
@@ -91,16 +87,12 @@ message UpdateEmailConfigStatusRequest {
 message UpdateEmailConfigStatusReply {}
 
 message DeleteEmailConfigRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 message DeleteEmailConfigReply {}
 
 message GetEmailConfigRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 
 message ListEmailConfigRequest {

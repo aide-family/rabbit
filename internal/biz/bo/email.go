@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
@@ -51,26 +52,25 @@ func NewCreateEmailConfigBo(req *apiv1.CreateEmailConfigRequest) *CreateEmailCon
 }
 
 type UpdateEmailConfigBo struct {
-	UID string
+	UID snowflake.ID
 	CreateEmailConfigBo
 }
 
 func (c *UpdateEmailConfigBo) ToDoEmailConfig() *do.EmailConfig {
-	return &do.EmailConfig{
-		NamespaceModel: do.NamespaceModel{
-			UID: c.UID,
-		},
+	emailConfig := &do.EmailConfig{
 		Name:     c.Name,
 		Host:     c.Host,
 		Port:     c.Port,
 		Username: c.Username,
 		Password: strutil.EncryptString(c.Password),
 	}
+	emailConfig.WithUID(c.UID)
+	return emailConfig
 }
 
 func NewUpdateEmailConfigBo(req *apiv1.UpdateEmailConfigRequest) *UpdateEmailConfigBo {
 	return &UpdateEmailConfigBo{
-		UID: req.Uid,
+		UID: snowflake.ParseInt64(req.Uid),
 		CreateEmailConfigBo: CreateEmailConfigBo{
 			Name:     req.Name,
 			Host:     req.Host,
@@ -82,13 +82,13 @@ func NewUpdateEmailConfigBo(req *apiv1.UpdateEmailConfigRequest) *UpdateEmailCon
 }
 
 type UpdateEmailConfigStatusBo struct {
-	UID    string
+	UID    snowflake.ID
 	Status vobj.GlobalStatus
 }
 
 func NewUpdateEmailConfigStatusBo(req *apiv1.UpdateEmailConfigStatusRequest) *UpdateEmailConfigStatusBo {
 	return &UpdateEmailConfigStatusBo{
-		UID:    req.Uid,
+		UID:    snowflake.ParseInt64(req.Uid),
 		Status: vobj.GlobalStatus(req.Status),
 	}
 }
@@ -121,7 +121,7 @@ func ToAPIV1ListEmailConfigReply(pageResponseBo *PageResponseBo[*EmailConfigItem
 }
 
 type EmailConfigItemBo struct {
-	UID       string
+	UID       snowflake.ID
 	Name      string
 	Host      string
 	Port      int32
@@ -148,7 +148,7 @@ func NewEmailConfigItemBo(doEmailConfig *do.EmailConfig) *EmailConfigItemBo {
 
 func (b *EmailConfigItemBo) ToAPIV1EmailConfigItem() *apiv1.EmailConfigItem {
 	return &apiv1.EmailConfigItem{
-		Uid:       b.UID,
+		Uid:       b.UID.Int64(),
 		Name:      b.Name,
 		Host:      b.Host,
 		Port:      b.Port,

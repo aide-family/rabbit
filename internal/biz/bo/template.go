@@ -4,6 +4,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -20,13 +22,12 @@ type CreateTemplateBo struct {
 }
 
 // ToDoTemplate 转换为 DO
-func (c *CreateTemplateBo) ToDoTemplate() (*do.Template, error) {
-	template := &do.Template{
+func (c *CreateTemplateBo) ToDoTemplate() *do.Template {
+	return &do.Template{
 		Name:     c.Name,
 		App:      c.App,
 		JSONData: c.JSONData,
 	}
-	return template, nil
 }
 
 // NewCreateTemplateBo 从 API 请求创建 BO
@@ -40,28 +41,27 @@ func NewCreateTemplateBo(req *apiv1.CreateTemplateRequest) *CreateTemplateBo {
 
 // UpdateTemplateBo 更新模板的 BO
 type UpdateTemplateBo struct {
-	UID      string
+	UID      snowflake.ID
 	Name     string
 	App      vobj.TemplateApp
 	JSONData []byte
 }
 
 // ToDoTemplate 转换为 DO
-func (u *UpdateTemplateBo) ToDoTemplate() (*do.Template, error) {
-	return &do.Template{
-		NamespaceModel: do.NamespaceModel{
-			UID: u.UID,
-		},
+func (u *UpdateTemplateBo) ToDoTemplate() *do.Template {
+	template := &do.Template{
 		Name:     u.Name,
 		App:      u.App,
 		JSONData: u.JSONData,
-	}, nil
+	}
+	template.WithUID(u.UID)
+	return template
 }
 
 // NewUpdateTemplateBo 从 API 请求创建 BO
 func NewUpdateTemplateBo(req *apiv1.UpdateTemplateRequest) *UpdateTemplateBo {
 	return &UpdateTemplateBo{
-		UID:      req.Uid,
+		UID:      snowflake.ParseInt64(req.Uid),
 		Name:     req.Name,
 		App:      vobj.TemplateApp(req.App),
 		JSONData: req.JsonData,
@@ -70,21 +70,21 @@ func NewUpdateTemplateBo(req *apiv1.UpdateTemplateRequest) *UpdateTemplateBo {
 
 // UpdateTemplateStatusBo 更新模板状态的 BO
 type UpdateTemplateStatusBo struct {
-	UID    string
+	UID    snowflake.ID
 	Status vobj.GlobalStatus
 }
 
 // NewUpdateTemplateStatusBo 从 API 请求创建 BO
 func NewUpdateTemplateStatusBo(req *apiv1.UpdateTemplateStatusRequest) *UpdateTemplateStatusBo {
 	return &UpdateTemplateStatusBo{
-		UID:    req.Uid,
+		UID:    snowflake.ParseInt64(req.Uid),
 		Status: vobj.GlobalStatus(req.Status),
 	}
 }
 
 // TemplateItemBo 模板项的 BO
 type TemplateItemBo struct {
-	UID       string
+	UID       snowflake.ID
 	Name      string
 	App       vobj.TemplateApp
 	JSONData  []byte
@@ -109,7 +109,7 @@ func NewTemplateItemBo(doTemplate *do.Template) *TemplateItemBo {
 // ToAPIV1TemplateItem 转换为 API 响应
 func (b *TemplateItemBo) ToAPIV1TemplateItem() *apiv1.TemplateItem {
 	return &apiv1.TemplateItem{
-		Uid:       b.UID,
+		Uid:       b.UID.Int64(),
 		Name:      b.Name,
 		App:       enum.TemplateAPP(b.App),
 		JsonData:  b.JSONData,
@@ -162,15 +162,11 @@ type ListTemplateBo struct {
 
 // NewListTemplateBo 从 API 请求创建 BO
 func NewListTemplateBo(req *apiv1.ListTemplateRequest) *ListTemplateBo {
-	var app vobj.TemplateApp
-	if req.App != enum.TemplateAPP_TemplateAPP_UNKNOWN {
-		app = vobj.TemplateApp(req.App)
-	}
 	return &ListTemplateBo{
 		PageRequestBo: NewPageRequestBo(req.Page, req.PageSize),
 		Keyword:       req.Keyword,
 		Status:        vobj.GlobalStatus(req.Status),
-		App:           app,
+		App:           vobj.TemplateApp(req.App),
 	}
 }
 

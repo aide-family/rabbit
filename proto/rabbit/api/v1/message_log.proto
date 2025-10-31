@@ -13,13 +13,13 @@ option java_package = "rabbit.api.v1";
 service MessageLog {
 	rpc RetryMessage (RetryMessageLogRequest) returns (RetryMessageLogReply) {
 		option (google.api.http) = {
-			post: "/v1/message-log/{uid}/retry"
+			put: "/v1/message-log/{uid}/retry"
 			body: "*"
 		};
 	}
 	rpc CancelMessage (CancelMessageLogRequest) returns (CancelMessageLogReply) {
 		option (google.api.http) = {
-			post: "/v1/message-log/{uid}/cancel"
+			put: "/v1/message-log/{uid}/cancel"
 			body: "*"
 		};
 	}
@@ -36,7 +36,7 @@ service MessageLog {
 }
 
 message MessageLogItem {
-	string uid = 1;
+	int64 uid = 1;
 	rabbit.enum.MessageType type = 2;
 	rabbit.enum.MessageStatus status = 3;
 	string sendAt = 4;
@@ -46,35 +46,17 @@ message MessageLogItem {
 }
 
 message RetryMessageLogRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-	int64 sendAtUnix = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 0",
-		message: "sendAtUnix must be greater than or equal to 0",
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 message RetryMessageLogReply {}
 
 message CancelMessageLogRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-	int64 sendAtUnix = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 0",
-		message: "sendAtUnix must be greater than or equal to 0",
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 message CancelMessageLogReply {}
 
 message GetMessageLogRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
-	int64 sendAtUnix = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
-		expression: "this >= 0",
-		message: "sendAtUnix must be greater than or equal to 0",
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 
 message ListMessageLogRequest {

@@ -3,6 +3,8 @@ package bo
 import (
 	"time"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -35,7 +37,7 @@ func NewCreateMessageLogBo(sendAt time.Time, message string, messageType vobj.Me
 }
 
 type MessageLogItemBo struct {
-	UID       string
+	UID       snowflake.ID
 	SendAt    time.Time
 	Message   string
 	Type      vobj.MessageType
@@ -58,7 +60,7 @@ func NewMessageLogItemBo(doMessageLog *do.MessageLog) *MessageLogItemBo {
 
 func (b *MessageLogItemBo) ToAPIV1MessageLogItem() *apiv1.MessageLogItem {
 	return &apiv1.MessageLogItem{
-		Uid:       b.UID,
+		Uid:       b.UID.Int64(),
 		Type:      enum.MessageType(b.Type),
 		Status:    enum.MessageStatus(b.Status),
 		SendAt:    b.SendAt.Format(time.DateTime),

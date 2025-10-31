@@ -47,7 +47,7 @@ service Webhook {
 }
 
 message WebhookItem {
-	string uid = 1;
+	int64 uid = 1;
 	rabbit.enum.WebhookAPP app = 2;
 	string name = 3;
 	string url = 4;
@@ -77,14 +77,12 @@ message CreateWebhookRequest {
 		message: "method must be in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
 	}];
 	map<string, string> headers = 5;
-	string secret = 6 [(buf.validate.field).required = true];
+	string secret = 6;
 }
 message CreateWebhookReply {}
 
 message UpdateWebhookRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	rabbit.enum.WebhookAPP app = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this in [rabbit.enum.WebhookAPP.OTHER, rabbit.enum.WebhookAPP.DINGTALK, rabbit.enum.WebhookAPP.WECHAT, rabbit.enum.WebhookAPP.FEISHU]",
 		message: "app must be in ['OTHER', 'DINGTALK', 'WECHAT', 'FEISHU']",
@@ -102,14 +100,12 @@ message UpdateWebhookRequest {
 		message: "method must be in ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']",
 	}];
 	map<string, string> headers = 6;
-	string secret = 7 [(buf.validate.field).required = true];
+	string secret = 7;
 }
 message UpdateWebhookReply {}
 
 message UpdateWebhookStatusRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	rabbit.enum.GlobalStatus status = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
 		expression: "this in [rabbit.enum.GlobalStatus.ENABLED, rabbit.enum.GlobalStatus.DISABLED]",
 		message: "status must be in ['ENABLED', 'DISABLED']",
@@ -118,16 +114,12 @@ message UpdateWebhookStatusRequest {
 message UpdateWebhookStatusReply {}
 
 message DeleteWebhookRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 message DeleteWebhookReply {}
 
 message GetWebhookRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 
 message ListWebhookRequest {
@@ -147,7 +139,7 @@ message ListWebhookRequest {
 }
 message ListWebhookReply {
 	repeated WebhookItem items = 1;
-	int32 total = 2;
+	int64 total = 2;
 	int32 page = 3;
 	int32 pageSize = 4;
 }

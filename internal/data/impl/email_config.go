@@ -5,6 +5,7 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -25,19 +26,19 @@ type emailConfigRepositoryImpl struct {
 }
 
 // DeleteEmailConfig implements repository.EmailConfig.
-func (e *emailConfigRepositoryImpl) DeleteEmailConfig(ctx context.Context, uid string) error {
+func (e *emailConfigRepositoryImpl) DeleteEmailConfig(ctx context.Context, uid snowflake.ID) error {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
 
 // GetEmailConfig implements repository.EmailConfig.
-func (e *emailConfigRepositoryImpl) GetEmailConfig(ctx context.Context, uid string) (*do.EmailConfig, error) {
+func (e *emailConfigRepositoryImpl) GetEmailConfig(ctx context.Context, uid snowflake.ID) (*do.EmailConfig, error) {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid.Int64()))
 	return wrappers.First()
 }
 
@@ -75,25 +76,28 @@ func (e *emailConfigRepositoryImpl) ListEmailConfig(ctx context.Context, req *bo
 	return bo.NewPageResponseBo(req.PageRequestBo, emailConfigs), nil
 }
 
-// SaveEmailConfig implements repository.EmailConfig.
-func (e *emailConfigRepositoryImpl) SaveEmailConfig(ctx context.Context, req *do.EmailConfig) error {
+// CreateEmailConfig implements repository.EmailConfig.
+func (e *emailConfigRepositoryImpl) CreateEmailConfig(ctx context.Context, req *do.EmailConfig) error {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	req.WithNamespace(namespace)
 	wrappers := emailConfig.WithContext(ctx)
-	if strutil.IsNotEmpty(req.UID) {
-		wrappers = wrappers.Where(emailConfig.UID.Eq(req.UID), emailConfig.Namespace.Eq(namespace))
-		_, err := wrappers.Updates(req)
-		return err
-	}
 	return wrappers.Create(req)
 }
 
-// UpdateEmailConfigStatus implements repository.EmailConfig.
-func (e *emailConfigRepositoryImpl) UpdateEmailConfigStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
+// UpdateEmailConfig implements repository.EmailConfig.
+func (e *emailConfigRepositoryImpl) UpdateEmailConfig(ctx context.Context, req *do.EmailConfig) error {
 	namespace := middler.GetNamespace(ctx)
 	emailConfig := e.d.BizQuery(namespace).EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.UID.Eq(req.UID.Int64()), emailConfig.Namespace.Eq(namespace))
+	_, err := wrappers.Updates(req)
+	return err
+}
+
+// UpdateEmailConfigStatus implements repository.EmailConfig.
+func (e *emailConfigRepositoryImpl) UpdateEmailConfigStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error {
+	namespace := middler.GetNamespace(ctx)
+	emailConfig := e.d.BizQuery(namespace).EmailConfig
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace), emailConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Update(emailConfig.Status, status)
 	return err
 }

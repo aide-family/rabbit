@@ -43,9 +43,7 @@ message SendReply {
 }
 
 message SendEmailRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	string subject = 2;
 	string body = 3 [(buf.validate.field).required = true];
 	repeated string to = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
@@ -58,23 +56,17 @@ message SendEmailRequest {
 }
 
 message SendEmailWithTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	string templateUID = 2 [(buf.validate.field).required = true];
 	bytes jsonData = 3 [(buf.validate.field).required = true];
 }
 
 message SendWebhookRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	bytes data = 5 [(buf.validate.field).required = true];
 }
 message SendWebhookWithTemplateRequest {
-	string uid = 1 [(buf.validate.field).required = true, (buf.validate.field).string = {
-		uuid: true,
-	}];
+	int64 uid = 1 [(buf.validate.field).required = true];
 	string templateUID = 2 [(buf.validate.field).required = true];
 	bytes jsonData = 3 [(buf.validate.field).required = true];
 }

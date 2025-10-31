@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -45,14 +47,14 @@ func (s *EmailService) UpdateEmailConfigStatus(ctx context.Context, req *apiv1.U
 }
 
 func (s *EmailService) DeleteEmailConfig(ctx context.Context, req *apiv1.DeleteEmailConfigRequest) (*apiv1.DeleteEmailConfigReply, error) {
-	if err := s.emailConfigBiz.DeleteEmailConfig(ctx, req.Uid); err != nil {
+	if err := s.emailConfigBiz.DeleteEmailConfig(ctx, snowflake.ParseInt64(req.Uid)); err != nil {
 		return nil, err
 	}
 	return &apiv1.DeleteEmailConfigReply{}, nil
 }
 
 func (s *EmailService) GetEmailConfig(ctx context.Context, req *apiv1.GetEmailConfigRequest) (*apiv1.EmailConfigItem, error) {
-	getEmailConfigBo, err := s.emailConfigBiz.GetEmailConfig(ctx, req.Uid)
+	getEmailConfigBo, err := s.emailConfigBiz.GetEmailConfig(ctx, snowflake.ParseInt64(req.Uid))
 	if err != nil {
 		return nil, err
 	}

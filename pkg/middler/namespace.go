@@ -45,3 +45,15 @@ func MustNamespace() middleware.Middleware {
 		}
 	}
 }
+
+// MustNamespaceExist 检查namespace必须存在且有效
+func MustNamespaceExist(hasNamespace func(ctx context.Context) error) middleware.Middleware {
+	return func(handler middleware.Handler) middleware.Handler {
+		return func(ctx context.Context, req any) (any, error) {
+			if err := hasNamespace(ctx); err != nil {
+				return nil, err
+			}
+			return handler(ctx, req)
+		}
+	}
+}

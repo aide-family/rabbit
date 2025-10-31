@@ -14,7 +14,7 @@ import (
 type Flags struct {
 	cmd.GlobalFlags
 
-	UID         string   `json:"uid" yaml:"uid"`
+	UID         int64    `json:"uid" yaml:"uid"`
 	Subject     string   `json:"subject" yaml:"subject"`
 	Body        string   `json:"body" yaml:"body"`
 	To          []string `json:"to" yaml:"to"`
@@ -29,7 +29,7 @@ type Flags struct {
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
-	c.Flags().StringVarP(&f.UID, "uid", "u", "", "The uid of the email")
+	c.Flags().Int64VarP(&f.UID, "uid", "u", 0, "The uid of the email")
 	c.Flags().StringVarP(&f.Subject, "subject", "s", "", "The subject of the email")
 	c.Flags().StringVarP(&f.Body, "body", "b", "", "The body of the email")
 	c.Flags().StringSliceVarP(&f.To, "to", "t", []string{}, "The to of the email, example: --to=user1@example.com --to=user2@example.com")

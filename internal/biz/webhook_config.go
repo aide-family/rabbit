@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 
@@ -59,7 +60,7 @@ func (w *WebhookConfig) UpdateWebhookStatus(ctx context.Context, req *bo.UpdateW
 	return nil
 }
 
-func (w *WebhookConfig) DeleteWebhook(ctx context.Context, uid string) error {
+func (w *WebhookConfig) DeleteWebhook(ctx context.Context, uid snowflake.ID) error {
 	if err := w.webhookConfigRepo.DeleteWebhookConfig(ctx, uid); err != nil {
 		w.helper.Errorw("msg", "delete webhook config failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("delete webhook config %s failed", uid)
@@ -67,7 +68,7 @@ func (w *WebhookConfig) DeleteWebhook(ctx context.Context, uid string) error {
 	return nil
 }
 
-func (w *WebhookConfig) GetWebhook(ctx context.Context, uid string) (*bo.WebhookItemBo, error) {
+func (w *WebhookConfig) GetWebhook(ctx context.Context, uid snowflake.ID) (*bo.WebhookItemBo, error) {
 	doWebhookConfig, err := w.webhookConfigRepo.GetWebhookConfig(ctx, uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -44,14 +46,14 @@ func (s *WebhookService) UpdateWebhookStatus(ctx context.Context, req *apiv1.Upd
 }
 
 func (s *WebhookService) DeleteWebhook(ctx context.Context, req *apiv1.DeleteWebhookRequest) (*apiv1.DeleteWebhookReply, error) {
-	if err := s.webhookConfigBiz.DeleteWebhook(ctx, req.Uid); err != nil {
+	if err := s.webhookConfigBiz.DeleteWebhook(ctx, snowflake.ParseInt64(req.Uid)); err != nil {
 		return nil, err
 	}
 	return &apiv1.DeleteWebhookReply{}, nil
 }
 
 func (s *WebhookService) GetWebhook(ctx context.Context, req *apiv1.GetWebhookRequest) (*apiv1.WebhookItem, error) {
-	webhookBo, err := s.webhookConfigBiz.GetWebhook(ctx, req.Uid)
+	webhookBo, err := s.webhookConfigBiz.GetWebhook(ctx, snowflake.ParseInt64(req.Uid))
 	if err != nil {
 		return nil, err
 	}

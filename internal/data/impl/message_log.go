@@ -8,6 +8,7 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
@@ -90,9 +91,9 @@ func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.L
 }
 
 // GetMessageLog implements repository.MessageLog.
-func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid string, sendAt time.Time) (*do.MessageLog, error) {
+func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid snowflake.ID) (*do.MessageLog, error) {
 	namespace := middler.GetNamespace(ctx)
-
+	sendAt := time.UnixMilli(uid.Int64())
 	tableName := do.GenMessageLogTableName(namespace, sendAt)
 	bizDB := m.d.BizDB(namespace)
 	if !do.HasTable(bizDB, tableName) {
@@ -102,17 +103,17 @@ func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid string
 	bizQuery := query.Use(bizDB.Table(tableName))
 	messageLog := bizQuery.MessageLog
 	wrappers := messageLog.WithContext(ctx)
-	wrappers = wrappers.Where(messageLog.UID.Eq(uid))
+	wrappers = wrappers.Where(messageLog.UID.Eq(uid.Int64()))
 	wrappers = wrappers.Where(messageLog.SendAt.Eq(sendAt))
 	wrappers = wrappers.Where(messageLog.Namespace.Eq(namespace))
 	return wrappers.First()
 }
 
 // UpdateMessageLogStatus implements repository.MessageLog.
-func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, uid string, sendAt time.Time, status vobj.MessageStatus) error {
+func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, uid snowflake.ID, status vobj.MessageStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	bizDB := m.d.BizDB(namespace)
-
+	sendAt := time.UnixMilli(uid.Int64())
 	tableName := do.GenMessageLogTableName(namespace, sendAt)
 	if !do.HasTable(bizDB, tableName) {
 		return gorm.ErrRecordNotFound
@@ -120,7 +121,7 @@ func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, u
 
 	messageLog := query.Use(bizDB.Table(tableName)).MessageLog
 	wrappers := messageLog.WithContext(ctx)
-	wrappers = wrappers.Where(messageLog.UID.Eq(uid))
+	wrappers = wrappers.Where(messageLog.UID.Eq(uid.Int64()))
 	wrappers = wrappers.Where(messageLog.SendAt.Eq(sendAt))
 	wrappers = wrappers.Where(messageLog.Namespace.Eq(namespace))
 	_, err := wrappers.Update(messageLog.Status, status)

@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"time"
+
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -12,6 +13,6 @@ import (
 type MessageLog interface {
 	CreateMessageLog(ctx context.Context, messageLog *do.MessageLog) error
 	ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*do.MessageLog], error)
-	GetMessageLog(ctx context.Context, uid string, sendAt time.Time) (*do.MessageLog, error)
-	UpdateMessageLogStatus(ctx context.Context, uid string, sendAt time.Time, status vobj.MessageStatus) error
+	GetMessageLog(ctx context.Context, uid snowflake.ID) (*do.MessageLog, error)
+	UpdateMessageLogStatus(ctx context.Context, uid snowflake.ID, status vobj.MessageStatus) error
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -30,8 +31,8 @@ func (t *templateRepositoryImpl) SaveTemplate(ctx context.Context, req *do.Templ
 	template := t.d.BizQuery(namespace).Template
 	req.WithNamespace(namespace)
 	wrappers := template.WithContext(ctx)
-	if strutil.IsNotEmpty(req.UID) {
-		wrappers = wrappers.Where(template.UID.Eq(req.UID), template.Namespace.Eq(namespace))
+	if strutil.IsNotEmpty(req.UID.String()) {
+		wrappers = wrappers.Where(template.UID.Eq(req.UID.Int64()), template.Namespace.Eq(namespace))
 		_, err := wrappers.Updates(req)
 		return err
 	}
@@ -39,28 +40,28 @@ func (t *templateRepositoryImpl) SaveTemplate(ctx context.Context, req *do.Templ
 }
 
 // UpdateTemplateStatus implements repository.Template.
-func (t *templateRepositoryImpl) UpdateTemplateStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
+func (t *templateRepositoryImpl) UpdateTemplateStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	template := t.d.BizQuery(namespace).Template
-	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid))
+	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid.Int64()))
 	_, err := wrappers.Update(template.Status, status)
 	return err
 }
 
 // DeleteTemplate implements repository.Template.
-func (t *templateRepositoryImpl) DeleteTemplate(ctx context.Context, uid string) error {
+func (t *templateRepositoryImpl) DeleteTemplate(ctx context.Context, uid snowflake.ID) error {
 	namespace := middler.GetNamespace(ctx)
 	template := t.d.BizQuery(namespace).Template
-	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid))
+	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
 
 // GetTemplate implements repository.Template.
-func (t *templateRepositoryImpl) GetTemplate(ctx context.Context, uid string) (*do.Template, error) {
+func (t *templateRepositoryImpl) GetTemplate(ctx context.Context, uid snowflake.ID) (*do.Template, error) {
 	namespace := middler.GetNamespace(ctx)
 	template := t.d.BizQuery(namespace).Template
-	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid))
+	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid.Int64()))
 	return wrappers.First()
 }
 

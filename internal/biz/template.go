@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 
@@ -28,11 +29,7 @@ type Template struct {
 }
 
 func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) error {
-	doTemplate, err := req.ToDoTemplate()
-	if err != nil {
-		t.helper.Errorw("msg", "convert to do failed", "error", err)
-		return merr.ErrorInternal("convert to do failed")
-	}
+	doTemplate := req.ToDoTemplate()
 	if _, err := t.templateRepo.GetTemplateByName(ctx, doTemplate.Name); err == nil {
 		return merr.ErrorParams("template %s already exists", doTemplate.Name)
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -47,11 +44,7 @@ func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo)
 }
 
 func (t *Template) UpdateTemplate(ctx context.Context, req *bo.UpdateTemplateBo) error {
-	doTemplate, err := req.ToDoTemplate()
-	if err != nil {
-		t.helper.Errorw("msg", "convert to do failed", "error", err)
-		return merr.ErrorInternal("convert to do failed")
-	}
+	doTemplate := req.ToDoTemplate()
 	if err := t.templateRepo.SaveTemplate(ctx, doTemplate); err != nil {
 		t.helper.Errorw("msg", "update template failed", "error", err, "uid", doTemplate.UID)
 		return merr.ErrorInternal("update template %s failed", doTemplate.UID)
@@ -67,7 +60,7 @@ func (t *Template) UpdateTemplateStatus(ctx context.Context, req *bo.UpdateTempl
 	return nil
 }
 
-func (t *Template) DeleteTemplate(ctx context.Context, uid string) error {
+func (t *Template) DeleteTemplate(ctx context.Context, uid snowflake.ID) error {
 	if err := t.templateRepo.DeleteTemplate(ctx, uid); err != nil {
 		t.helper.Errorw("msg", "delete template failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("delete template %s failed", uid)
@@ -75,7 +68,7 @@ func (t *Template) DeleteTemplate(ctx context.Context, uid string) error {
 	return nil
 }
 
-func (t *Template) GetTemplate(ctx context.Context, uid string) (*bo.TemplateItemBo, error) {
+func (t *Template) GetTemplate(ctx context.Context, uid snowflake.ID) (*bo.TemplateItemBo, error) {
 	doTemplate, err := t.templateRepo.GetTemplate(ctx, uid)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

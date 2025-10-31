@@ -3,6 +3,8 @@ package bo
 import (
 	"time"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
@@ -10,20 +12,50 @@ import (
 	"github.com/aide-family/rabbit/pkg/enum"
 )
 
-type SaveNamespaceBo struct {
+type CreateNamespaceBo struct {
 	Name     string
 	Metadata map[string]string
 }
 
-func (b *SaveNamespaceBo) ToDoNamespace() *do.Namespace {
+func (b *CreateNamespaceBo) ToDoNamespace() *do.Namespace {
 	return &do.Namespace{
 		Name:     b.Name,
 		Metadata: safety.NewMap(b.Metadata),
 	}
 }
 
+func NewCreateNamespaceBo(req *apiv1.CreateNamespaceRequest) *CreateNamespaceBo {
+	return &CreateNamespaceBo{
+		Name:     req.Name,
+		Metadata: req.Metadata,
+	}
+}
+
+type UpdateNamespaceBo struct {
+	UID      snowflake.ID
+	Name     string
+	Metadata map[string]string
+}
+
+func (b *UpdateNamespaceBo) ToDoNamespace() *do.Namespace {
+	namespace := &do.Namespace{
+		Name:     b.Name,
+		Metadata: safety.NewMap(b.Metadata),
+	}
+	namespace.WithUID(b.UID)
+	return namespace
+}
+
+func NewUpdateNamespaceBo(req *apiv1.UpdateNamespaceRequest) *UpdateNamespaceBo {
+	return &UpdateNamespaceBo{
+		UID:      snowflake.ParseInt64(req.Uid),
+		Name:     req.Name,
+		Metadata: req.Metadata,
+	}
+}
+
 type UpdateNamespaceStatusBo struct {
-	Name   string
+	UID    snowflake.ID
 	Status vobj.GlobalStatus
 }
 
@@ -34,6 +66,7 @@ type ListNamespaceBo struct {
 }
 
 type NamespaceItemBo struct {
+	UID       snowflake.ID
 	Name      string
 	Metadata  map[string]string
 	Status    vobj.GlobalStatus
@@ -43,6 +76,7 @@ type NamespaceItemBo struct {
 
 func NewNamespaceItemBo(doNamespace *do.Namespace) *NamespaceItemBo {
 	return &NamespaceItemBo{
+		UID:       doNamespace.UID,
 		Name:      doNamespace.Name,
 		Metadata:  doNamespace.Metadata.Map(),
 		Status:    doNamespace.Status,
@@ -53,6 +87,7 @@ func NewNamespaceItemBo(doNamespace *do.Namespace) *NamespaceItemBo {
 
 func (b *NamespaceItemBo) ToAPIV1NamespaceItem() *apiv1.NamespaceItem {
 	return &apiv1.NamespaceItem{
+		Uid:       b.UID.Int64(),
 		Name:      b.Name,
 		Metadata:  b.Metadata,
 		Status:    enum.GlobalStatus(b.Status),
@@ -61,17 +96,10 @@ func (b *NamespaceItemBo) ToAPIV1NamespaceItem() *apiv1.NamespaceItem {
 	}
 }
 
-func NewSaveNamespaceBo(name string, metadata map[string]string) *SaveNamespaceBo {
-	return &SaveNamespaceBo{
-		Name:     name,
-		Metadata: metadata,
-	}
-}
-
-func NewUpdateNamespaceStatusBo(name string, status vobj.GlobalStatus) *UpdateNamespaceStatusBo {
+func NewUpdateNamespaceStatusBo(req *apiv1.UpdateNamespaceStatusRequest) *UpdateNamespaceStatusBo {
 	return &UpdateNamespaceStatusBo{
-		Name:   name,
-		Status: status,
+		UID:    snowflake.ParseInt64(req.Uid),
+		Status: vobj.GlobalStatus(req.Status),
 	}
 }
 

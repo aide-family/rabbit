@@ -2,8 +2,8 @@ package biz
 
 import (
 	"context"
-	"time"
 
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
@@ -36,8 +36,8 @@ func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogB
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }
 
-func (m *MessageLog) GetMessageLog(ctx context.Context, uid string, sendAt time.Time) (*bo.MessageLogItemBo, error) {
-	messageLogDO, err := m.messageLogRepo.GetMessageLog(ctx, uid, sendAt)
+func (m *MessageLog) GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.MessageLogItemBo, error) {
+	messageLogDO, err := m.messageLogRepo.GetMessageLog(ctx, uid)
 	if err != nil {
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
 		return nil, merr.ErrorInternal("get message log failed")
@@ -45,10 +45,10 @@ func (m *MessageLog) GetMessageLog(ctx context.Context, uid string, sendAt time.
 	return bo.NewMessageLogItemBo(messageLogDO), nil
 }
 
-func (m *MessageLog) RetryMessage(ctx context.Context, uid string, sendAt time.Time) error {
+func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	return nil
 }
 
-func (m *MessageLog) CancelMessage(ctx context.Context, uid string, sendAt time.Time) error {
+func (m *MessageLog) CancelMessage(ctx context.Context, uid snowflake.ID) error {
 	return nil
 }

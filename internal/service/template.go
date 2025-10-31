@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -44,14 +46,14 @@ func (s *TemplateService) UpdateTemplateStatus(ctx context.Context, req *apiv1.U
 }
 
 func (s *TemplateService) DeleteTemplate(ctx context.Context, req *apiv1.DeleteTemplateRequest) (*apiv1.DeleteTemplateReply, error) {
-	if err := s.templateBiz.DeleteTemplate(ctx, req.Uid); err != nil {
+	if err := s.templateBiz.DeleteTemplate(ctx, snowflake.ParseInt64(req.Uid)); err != nil {
 		return nil, err
 	}
 	return &apiv1.DeleteTemplateReply{}, nil
 }
 
 func (s *TemplateService) GetTemplate(ctx context.Context, req *apiv1.GetTemplateRequest) (*apiv1.TemplateItem, error) {
-	templateBo, err := s.templateBiz.GetTemplate(ctx, req.Uid)
+	templateBo, err := s.templateBiz.GetTemplate(ctx, snowflake.ParseInt64(req.Uid))
 	if err != nil {
 		return nil, err
 	}
@@ -66,4 +68,3 @@ func (s *TemplateService) ListTemplate(ctx context.Context, req *apiv1.ListTempl
 	}
 	return bo.ToAPIV1ListTemplateReply(pageResponseBo), nil
 }
-

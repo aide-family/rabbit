@@ -2,7 +2,8 @@ package service
 
 import (
 	"context"
-	"time"
+
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/biz/bo"
@@ -21,8 +22,7 @@ type MessageLogService struct {
 }
 
 func (s *MessageLogService) RetryMessage(ctx context.Context, req *apiv1.RetryMessageLogRequest) (*apiv1.RetryMessageLogReply, error) {
-	sendAt := time.Unix(req.SendAtUnix, 0)
-	err := s.messageLogBiz.RetryMessage(ctx, req.Uid, sendAt)
+	err := s.messageLogBiz.RetryMessage(ctx, snowflake.ParseInt64(req.Uid))
 	if err != nil {
 		return nil, err
 	}
@@ -30,8 +30,7 @@ func (s *MessageLogService) RetryMessage(ctx context.Context, req *apiv1.RetryMe
 }
 
 func (s *MessageLogService) CancelMessage(ctx context.Context, req *apiv1.CancelMessageLogRequest) (*apiv1.CancelMessageLogReply, error) {
-	sendAt := time.Unix(req.SendAtUnix, 0)
-	err := s.messageLogBiz.CancelMessage(ctx, req.Uid, sendAt)
+	err := s.messageLogBiz.CancelMessage(ctx, snowflake.ParseInt64(req.Uid))
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +38,7 @@ func (s *MessageLogService) CancelMessage(ctx context.Context, req *apiv1.Cancel
 }
 
 func (s *MessageLogService) GetMessageLog(ctx context.Context, req *apiv1.GetMessageLogRequest) (*apiv1.MessageLogItem, error) {
-	sendAt := time.Unix(req.SendAtUnix, 0)
-	messageLogBo, err := s.messageLogBiz.GetMessageLog(ctx, req.Uid, sendAt)
+	messageLogBo, err := s.messageLogBiz.GetMessageLog(ctx, snowflake.ParseInt64(req.Uid))
 	if err != nil {
 		return nil, err
 	}

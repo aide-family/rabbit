@@ -12,16 +12,21 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/internal/service"
 	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
 // NewGRPCServer new a gRPC server.
-func NewGRPCServer(bc *conf.Bootstrap, helper *klog.Helper) *grpc.Server {
+func NewGRPCServer(bc *conf.Bootstrap, namespaceService *service.NamespaceService, helper *klog.Helper) *grpc.Server {
 	serverConf := bc.GetServer()
 	grpcConf := serverConf.GetGrpc()
 	jwtConf := bc.GetJwt()
 
-	namespaceMiddleware := selector.Server(rabbitMiddler.MustNamespace()).Match(middler.AllowListMatcher(bc.GetNamespaceAllowList()...)).Build()
+	selectorNamespaceMiddlewares := []middleware.Middleware{
+		rabbitMiddler.MustNamespace(),
+		rabbitMiddler.MustNamespaceExist(namespaceService.HasNamespace),
+	}
+	namespaceMiddleware := selector.Server(selectorNamespaceMiddlewares...).Match(middler.AllowListMatcher(bc.GetNamespaceAllowList()...)).Build()
 	selectorMustAuthMiddlewares := []middleware.Middleware{
 		rabbitMiddler.JwtServe(jwtConf.GetSecret()),
 		rabbitMiddler.MustLogin(),

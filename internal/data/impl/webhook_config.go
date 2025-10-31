@@ -5,6 +5,7 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -29,8 +30,8 @@ func (w *webhookConfigRepositoryImpl) SaveWebhookConfig(ctx context.Context, req
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx)
-	if strutil.IsNotEmpty(req.UID) {
-		wrappers = wrappers.Where(webhookConfig.UID.Eq(req.UID), webhookConfig.Namespace.Eq(namespace))
+	if strutil.IsNotEmpty(req.UID.String()) {
+		wrappers = wrappers.Where(webhookConfig.UID.Eq(req.UID.Int64()), webhookConfig.Namespace.Eq(namespace))
 		_, err := wrappers.Updates(req)
 		return err
 	}
@@ -38,28 +39,28 @@ func (w *webhookConfigRepositoryImpl) SaveWebhookConfig(ctx context.Context, req
 }
 
 // UpdateWebhookStatus implements repository.Webhook.
-func (w *webhookConfigRepositoryImpl) UpdateWebhookStatus(ctx context.Context, uid string, status vobj.GlobalStatus) error {
+func (w *webhookConfigRepositoryImpl) UpdateWebhookStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Update(webhookConfig.Status, status)
 	return err
 }
 
 // DeleteWebhookConfig implements repository.Webhook.
-func (w *webhookConfigRepositoryImpl) DeleteWebhookConfig(ctx context.Context, uid string) error {
+func (w *webhookConfigRepositoryImpl) DeleteWebhookConfig(ctx context.Context, uid snowflake.ID) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
 
 // GetWebhookConfig implements repository.Webhook.
-func (w *webhookConfigRepositoryImpl) GetWebhookConfig(ctx context.Context, uid string) (*do.WebhookConfig, error) {
+func (w *webhookConfigRepositoryImpl) GetWebhookConfig(ctx context.Context, uid snowflake.ID) (*do.WebhookConfig, error) {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid.Int64()))
 	return wrappers.First()
 }
 
