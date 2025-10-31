@@ -18,7 +18,7 @@ import (
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
-var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService)
+var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewEventBus)
 
 // init initializes the json.MarshalOptions.
 func init() {
@@ -82,6 +82,7 @@ func RegisterService(
 	namespaceService *service.NamespaceService,
 	messageLogService *service.MessageLogService,
 	templateService *service.TemplateService,
+	eventBus *EventBus,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
@@ -98,5 +99,5 @@ func RegisterService(
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
 	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
 	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
-	return Servers{httpSrv, grpcSrv}
+	return Servers{httpSrv, grpcSrv, eventBus}
 }

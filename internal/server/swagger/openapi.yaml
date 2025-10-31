@@ -437,6 +437,24 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/rabbit.api.v1.SendReply'
+    /v1/sender/message:
+        post:
+            tags:
+                - Sender
+            operationId: Sender_SendMessage
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/rabbit.api.v1.SendMessageRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/rabbit.api.v1.SendReply'
     /v1/sender/webhook/{uid}:
         post:
             tags:
@@ -1034,6 +1052,11 @@ components:
                 jsonData:
                     type: string
                     format: bytes
+        rabbit.api.v1.SendMessageRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
         rabbit.api.v1.SendReply:
             type: object
             properties:

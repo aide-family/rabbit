@@ -8,4 +8,7 @@ import (
 
 type MessageBus interface {
 	AppendMessage(ctx context.Context, message *do.MessageLog) error
+	SendMessage(ctx context.Context, message *do.MessageLog) error
+	Stop()
+	Start()
 }

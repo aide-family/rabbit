@@ -52,3 +52,7 @@ main:
   loc: Asia/Shanghai
   debug: true
   useSystemLogger: false
+
+eventBus:
+  workerCount: 1
+  timeout: 10s

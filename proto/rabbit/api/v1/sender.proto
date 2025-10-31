@@ -10,6 +10,12 @@ option java_multiple_files = true;
 option java_package = "rabbit.api.v1";
 
 service Sender {
+	rpc SendMessage (SendMessageRequest) returns (SendReply) {
+		option (google.api.http) = {
+			post: "/v1/sender/message"
+			body: "*"
+		};
+	}
 	rpc SendEmail (SendEmailRequest) returns (SendReply) {
 		option (google.api.http) = {
 			post: "/v1/sender/email/{uid}"
@@ -40,6 +46,10 @@ service Sender {
 message SendReply {
 	int32 code = 1;
 	string message = 2;
+}
+
+message SendMessageRequest {
+	int64 uid = 1 [(buf.validate.field).required = true];
 }
 
 message SendEmailRequest {
