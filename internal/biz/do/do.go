@@ -5,6 +5,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	"gorm.io/gorm"
@@ -36,7 +37,7 @@ func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
 		b.WithCreator(tx.Statement.Context)
 	}
 
-	node, err := snowflake.NewNode(strutil.GetNodeIDFromIP())
+	node, err := snowflake.NewNode(hello.NodeID())
 	if err != nil {
 		return err
 	}

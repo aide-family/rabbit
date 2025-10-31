@@ -1,7 +1,7 @@
 package do
 
 import (
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/aide-family/rabbit/internal/biz/vobj"
@@ -27,7 +27,7 @@ func (m *MessageLog) TableName() string {
 
 func GenMessageLogTableName(namespace string, sendAt time.Time) string {
 	weekStart := getFirstMonday(sendAt)
-	return fmt.Sprintf("%s_%s_%s", tableNameMessageLog, namespace, weekStart.Format("20060102"))
+	return strings.Join([]string{tableNameMessageLog, namespace, weekStart.Format("20060102")}, "__")
 }
 
 func GenMessageLogTableNames(tx *gorm.DB, namespace string, startAt time.Time, endAt time.Time) []string {

@@ -2,8 +2,10 @@
 package bo
 
 import (
+	"context"
 	"time"
 
+	"github.com/aide-family/magicbox/serialize"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/rabbit/pkg/middler"
 )
 
 type SendEmailBo struct {
@@ -20,7 +23,32 @@ type SendEmailBo struct {
 	To          []string
 	Cc          []string
 	ContentType string
-	Headers     []string
+	Headers     map[string]string
+}
+
+func (b *SendEmailBo) ToMessageLog() (*do.MessageLog, error) {
+	messageBytes, err := serialize.JSONMarshal(b)
+	if err != nil {
+		return nil, err
+	}
+	return &do.MessageLog{
+		SendAt:  time.Now(),
+		Message: string(messageBytes),
+		Type:    vobj.MessageTypeEmail,
+		Status:  vobj.MessageStatusPending,
+	}, nil
+}
+
+func NewSendEmailBo(ctx context.Context, req *apiv1.SendEmailRequest) *SendEmailBo {
+	return &SendEmailBo{
+		Namespace:   middler.GetNamespace(ctx),
+		Subject:     req.Subject,
+		Body:        req.Body,
+		To:          req.To,
+		Cc:          req.Cc,
+		ContentType: req.ContentType,
+		Headers:     req.Headers,
+	}
 }
 
 type CreateEmailConfigBo struct {

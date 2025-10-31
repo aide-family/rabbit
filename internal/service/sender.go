@@ -3,12 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/aide-family/magicbox/merr"
-	"github.com/aide-family/magicbox/strutil"
-
 	"github.com/aide-family/rabbit/internal/biz"
+	"github.com/aide-family/rabbit/internal/biz/bo"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/middler"
 )
 
 func NewSenderService(emailBiz *biz.Email) *SenderService {
@@ -24,9 +21,9 @@ type SenderService struct {
 }
 
 func (s *SenderService) SendEmail(ctx context.Context, req *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
-	namespace := middler.GetNamespace(ctx)
-	if strutil.IsEmpty(namespace) {
-		return nil, merr.ErrorBadRequest("namespace is required")
+	sendEmailBo := bo.NewSendEmailBo(ctx, req)
+	if err := s.emailBiz.AppendEmailMessage(ctx, sendEmailBo); err != nil {
+		return nil, err
 	}
 	return &apiv1.SendReply{}, nil
 }

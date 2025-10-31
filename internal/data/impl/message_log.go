@@ -31,7 +31,22 @@ type messageLogRepositoryImpl struct {
 // CreateMessageLog implements repository.MessageLog.
 func (m *messageLogRepositoryImpl) CreateMessageLog(ctx context.Context, req *do.MessageLog) error {
 	namespace := middler.GetNamespace(ctx)
-	messageLog := m.d.BizQuery(namespace).MessageLog
+	req.WithNamespace(namespace)
+	tableName := req.TableName()
+	bizDB := m.d.BizDB(namespace)
+	if !do.HasTable(bizDB, tableName) {
+		initModel := &do.MessageLog{}
+		oldTableName := initModel.TableName()
+		if !do.HasTable(bizDB, oldTableName) {
+			if err := bizDB.Migrator().CreateTable(initModel); err != nil {
+				return err
+			}
+		}
+		if err := bizDB.Migrator().RenameTable(oldTableName, tableName); err != nil {
+			return err
+		}
+	}
+	messageLog := m.d.BizQuery(namespace).MessageLog.Table(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	return wrappers.Create(req)
 }
