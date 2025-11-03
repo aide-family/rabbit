@@ -3,10 +3,14 @@ package data
 
 import (
 	"strings"
+	"time"
 
 	"github.com/aide-family/magicbox/safety"
+	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
+	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
+	clientV3 "go.etcd.io/etcd/client/v3"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do/query"
@@ -24,6 +28,9 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		c:      c,
 		dbs:    safety.NewSyncMap(make(map[string]*gorm.DB)),
 		closes: make(map[string]func() error),
+	}
+	if err := d.initRegistry(); err != nil {
+		return nil, d.close, err
 	}
 	mainDB, err := connect.NewGorm(d.c.GetMain(), d.helper)
 	if err != nil {
@@ -49,12 +56,17 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 }
 
 type Data struct {
-	helper *klog.Helper
-	c      *conf.Bootstrap
-	dbs    *safety.SyncMap[string, *gorm.DB]
-	mainDB *gorm.DB
+	helper   *klog.Helper
+	c        *conf.Bootstrap
+	dbs      *safety.SyncMap[string, *gorm.DB]
+	mainDB   *gorm.DB
+	registry connect.Registry
 
 	closes map[string]func() error
+}
+
+func (d *Data) AppendClose(name string, close func() error) {
+	d.closes[name] = close
 }
 
 func (d *Data) close() {
@@ -89,4 +101,36 @@ func (d *Data) BizDB(namespace string) *gorm.DB {
 		return db
 	}
 	return d.mainDB
+}
+
+func (d *Data) Registry() connect.Registry {
+	return d.registry
+}
+
+func (d *Data) initRegistry() error {
+	if kubeConfig := d.c.GetKubernetes(); kubeConfig != nil {
+		kubeClient, err := connect.NewKubernetesClientSet(kubeConfig.GetKubeConfig())
+		if err != nil {
+			d.helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
+			return err
+		}
+		registrar := kuberegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
+		d.registry = registrar
+	}
+	if etcdConfig := d.c.GetEtcd(); etcdConfig != nil {
+		client, err := clientV3.New(clientV3.Config{
+			Endpoints:   etcdConfig.GetEndpoints(),
+			Username:    etcdConfig.GetUsername(),
+			Password:    etcdConfig.GetPassword(),
+			DialTimeout: 5 * time.Second,
+		})
+		if err != nil {
+			d.helper.Errorw("msg", "etcd client initialization failed", "error", err)
+			return err
+		}
+		registrar := etcd.New(client)
+		d.registry = registrar
+		d.closes["etcdClient"] = func() error { return client.Close() }
+	}
+	return nil
 }

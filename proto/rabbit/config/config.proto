@@ -42,3 +42,8 @@ message MySQL {
 	bool debug = 9;
 	bool useSystemLogger = 10;
 }
+
+message Kubernetes {
+	string namespace = 1;
+	string kubeConfig = 2;
+}

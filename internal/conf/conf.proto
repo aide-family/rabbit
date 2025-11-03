@@ -18,6 +18,7 @@ message Bootstrap {
 	repeated string namespaceAllowList = 8;
 	EventBus eventBus = 9;
 	repeated rabbit.config.Cluster clusters = 10;
+	rabbit.config.Kubernetes kubernetes = 11;
 }
 
 enum Environment {

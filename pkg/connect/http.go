@@ -41,8 +41,7 @@ func InitHTTPClient(c InitConfig, opts ...InitOption) (*http.Client, error) {
 
 	if pointer.IsNotNil(cfg.discovery) {
 		clientOpts = append(clientOpts, http.WithDiscovery(cfg.discovery), http.WithBlock())
-		nodeVersion := strings.TrimSpace(cfg.nodeVersion)
-		if strutil.IsNotEmpty(nodeVersion) {
+		if nodeVersion := strings.TrimSpace(cfg.nodeVersion); nodeVersion != "" {
 			nodeFilter := filter.Version(nodeVersion)
 			clientOpts = append(clientOpts, http.WithNodeFilter(nodeFilter))
 		}

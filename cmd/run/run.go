@@ -2,19 +2,16 @@
 package run
 
 import (
-	"time"
-
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/load"
-	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
-	clientV3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/internal/server"
 )
 
@@ -75,7 +72,7 @@ func runServer(_ *cobra.Command, _ []string) {
 	}
 }
 
-func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) (*kratos.App, error) {
+func newApp(d *data.Data, srvs server.Servers, helper *klog.Helper) (*kratos.App, error) {
 	defer hello.Hello()
 	opts := []kratos.Option{
 		kratos.Logger(helper.Logger()),
@@ -85,19 +82,9 @@ func newApp(bc *conf.Bootstrap, srvs server.Servers, helper *klog.Helper) (*krat
 		kratos.Name(hello.Name()),
 		kratos.Metadata(hello.Metadata()),
 	}
-	if etcdConfig := bc.GetEtcd(); etcdConfig != nil {
-		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   etcdConfig.GetEndpoints(),
-			Username:    etcdConfig.GetUsername(),
-			Password:    etcdConfig.GetPassword(),
-			DialTimeout: 5 * time.Second,
-		})
-		if err != nil {
-			helper.Errorw("msg", "etcd client initialization failed", "error", err)
-			return nil, err
-		}
-		registrar := etcd.New(client)
-		opts = append(opts, kratos.Registrar(registrar))
+
+	if registry := d.Registry(); registry != nil {
+		opts = append(opts, kratos.Registrar(registry))
 	}
 
 	srvs.BindSwagger(flags.enableSwagger, helper)

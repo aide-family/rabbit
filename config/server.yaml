@@ -35,11 +35,16 @@ namespaceAllowList:
   - /rabbit.api.v1.Namespace/DeleteNamespace
   - /rabbit.api.v1.Namespace/GetNamespace
   - /rabbit.api.v1.Namespace/ListNamespace
+
 # etcd:
 #   endpoints:
 #     - http://127.0.0.1:2379
 #   username:
 #   password:
+
+# kubernetes:
+#   kubeConfig: ~/.kube/config
+#   namespace: moon
 
 main:
   username: root
