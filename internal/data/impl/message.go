@@ -176,6 +176,7 @@ func (m *messageBusImpl) waitProcessMessage(ctx context.Context, message *do.Mes
 }
 
 func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog) error {
+	// TODO 增加分布式锁控制并发， 同一时间只能有一个服务或者协程能够访问此UID的消息
 	newMessage, err := m.messageLogRepo.GetMessageLog(ctx, message.UID)
 	if err != nil {
 		return err
