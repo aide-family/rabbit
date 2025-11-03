@@ -23,7 +23,7 @@ import (
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
-func newClusterSender(conn *grpc.ClientConn, http *http.Client, protocol config.Cluster_Protocol) sender.Sender {
+func newClusterSender(conn *grpc.ClientConn, http *http.Client, protocol config.ClusterConfig_Protocol) sender.Sender {
 	return &clusterSender{
 		conn:     conn,
 		http:     http,
@@ -34,14 +34,14 @@ func newClusterSender(conn *grpc.ClientConn, http *http.Client, protocol config.
 type clusterSender struct {
 	conn     *grpc.ClientConn
 	http     *http.Client
-	protocol config.Cluster_Protocol
+	protocol config.ClusterConfig_Protocol
 }
 
 func (c *clusterSender) SendMessage(ctx context.Context, req *apiv1.SendMessageRequest) (*apiv1.SendReply, error) {
 	switch c.protocol {
-	case config.Cluster_GRPC:
+	case config.ClusterConfig_GRPC:
 		return apiv1.NewSenderClient(c.conn).SendMessage(ctx, req)
-	case config.Cluster_HTTP:
+	case config.ClusterConfig_HTTP:
 		return apiv1.NewSenderHTTPClient(c.http).SendMessage(ctx, req)
 	}
 	return nil, nil
@@ -86,7 +86,7 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 			connect.WithSecret(secret),
 		}
 		switch protocol {
-		case config.Cluster_GRPC:
+		case config.ClusterConfig_GRPC:
 			grpcClient, err := connect.InitGRPCClient(clusterConfig, opts...)
 			if err != nil {
 				helper.Errorw("msg", "create GRPC client failed", "error", err)
@@ -94,7 +94,7 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 			}
 			d.AppendClose("grpcClient."+clusterConfig.GetName(), func() error { return grpcClient.Close() })
 			bus.clusters = append(bus.clusters, newClusterSender(grpcClient, nil, protocol))
-		case config.Cluster_HTTP:
+		case config.ClusterConfig_HTTP:
 			httpClient, err := connect.InitHTTPClient(clusterConfig, opts...)
 			if err != nil {
 				helper.Errorw("msg", "create HTTP client failed", "error", err)

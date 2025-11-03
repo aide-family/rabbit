@@ -8,9 +8,9 @@ import (
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
+	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/metadata"
-	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/spf13/cobra"
 	clientV3 "go.etcd.io/etcd/client/v3"
 
@@ -35,8 +35,13 @@ func run(_ *cobra.Command, _ []string) {
 		flags.Helper.Errorw("msg", "parse request params failed", "error", err)
 		return
 	}
-	var discovery registry.Discovery
-	if pointer.IsNotNil(bc.GetEtcd()) {
+	var discovery connect.Registry
+	switch registryType := bc.GetRegistryType(); registryType {
+	case config.RegistryType_ETCD:
+		if pointer.IsNotNil(bc.GetEtcd()) {
+			flags.Helper.Errorw("msg", "etcd config is not found")
+			return
+		}
 		client, err := clientV3.New(clientV3.Config{
 			Endpoints:   bc.GetEtcd().GetEndpoints(),
 			Username:    bc.GetEtcd().GetUsername(),
@@ -48,6 +53,17 @@ func run(_ *cobra.Command, _ []string) {
 			return
 		}
 		discovery = etcd.New(client)
+	case config.RegistryType_KUBERNETES:
+		if pointer.IsNotNil(bc.GetKubernetes()) {
+			flags.Helper.Errorw("msg", "kubernetes config is not found")
+			return
+		}
+		kubeClient, err := connect.NewKubernetesClientSet(bc.GetKubernetes().GetKubeConfig())
+		if err != nil {
+			flags.Helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
+			return
+		}
+		discovery = kuberegistry.NewRegistry(kubeClient, bc.GetKubernetes().GetNamespace())
 	}
 
 	for _, cluster := range bc.GetClusters() {
@@ -76,7 +92,7 @@ type Sender interface {
 type sender struct {
 	helper   *klog.Helper
 	name     string
-	protocol config.Cluster_Protocol
+	protocol config.ClusterConfig_Protocol
 	timeout  time.Duration
 	call     func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error)
 	close    func() error
@@ -91,7 +107,7 @@ func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*ap
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster *config.Cluster, discovery registry.Discovery, token string, helper *klog.Helper) (Sender, error) {
+func NewSender(cluster *config.ClusterConfig, discovery connect.Registry, token string, helper *klog.Helper) (Sender, error) {
 	name, protocol, secret := cluster.GetName(), cluster.GetProtocol(), cluster.GetSecret()
 	newSender := &sender{
 		helper:   helper,
@@ -111,7 +127,7 @@ func NewSender(cluster *config.Cluster, discovery registry.Discovery, token stri
 		connect.WithDiscovery(discovery),
 	}
 	switch newSender.protocol {
-	case config.Cluster_GRPC:
+	case config.ClusterConfig_GRPC:
 		grpcClient, err := connect.InitGRPCClient(cluster, opts...)
 		if err != nil {
 			helper.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "protocol", protocol, "error", err)
@@ -121,7 +137,7 @@ func NewSender(cluster *config.Cluster, discovery registry.Discovery, token stri
 		newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
 			return apiv1.NewSenderClient(grpcClient).SendEmail(ctx, in)
 		}
-	case config.Cluster_HTTP:
+	case config.ClusterConfig_HTTP:
 		httpClient, err := connect.InitHTTPClient(cluster, opts...)
 		if err != nil {
 			helper.Errorw("msg", "cluster HTTP client initialization failed", "cluster", name, "protocol", protocol, "error", err)

@@ -12,7 +12,7 @@ import (
 	"github.com/aide-family/rabbit/pkg/config"
 )
 
-func NewGorm(mysqlConf *config.MySQL, logger *klog.Helper) (*gorm.DB, error) {
+func NewGorm(mysqlConf *config.MySQLConfig, logger *klog.Helper) (*gorm.DB, error) {
 	params := url.Values{}
 	params.Add("charset", mysqlConf.Charset)
 	params.Add("parseTime", mysqlConf.ParseTime)

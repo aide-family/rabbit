@@ -7,12 +7,14 @@ import "google/protobuf/duration.proto";
 option go_package = "github.com/aide-family/rabbit/pkg/config;config";
 
 message ClientConfig {
-	repeated Cluster clusters = 1;
+	repeated ClusterConfig clusters = 1;
 	string jwtToken = 2;
-	ETCD etcd = 3;
+	ETCDConfig etcd = 3;
+	KubernetesConfig kubernetes = 4;
+	RegistryType registryType = 5;
 }
 
-message Cluster {
+message ClusterConfig {
 	enum Protocol {
 		GRPC = 0;
 		HTTP = 1;
@@ -24,13 +26,13 @@ message Cluster {
 	string secret = 5;
 }
 
-message ETCD {
+message ETCDConfig {
 	repeated string endpoints = 1;
 	string username = 2;
 	string password = 3;
 }
 
-message MySQL {
+message MySQLConfig {
 	string username = 1;
 	string password = 2;
 	string host     = 3;
@@ -43,7 +45,13 @@ message MySQL {
 	bool useSystemLogger = 10;
 }
 
-message Kubernetes {
+message KubernetesConfig {
 	string namespace = 1;
 	string kubeConfig = 2;
+}
+
+enum RegistryType {
+	UNKNOWN = 0;
+	ETCD = 1;
+	KUBERNETES = 2;
 }

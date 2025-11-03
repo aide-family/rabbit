@@ -12,16 +12,6 @@ server:
   #   network: tcp
   #   timeout: 10s
 
-# clusters:
-#   - name: rabbit01
-#     endpoint: 127.0.0.1:8080
-#     protocol: HTTP
-#     timeout: 10s
-#   - name: rabbit02
-#     endpoint: 127.0.0.1:9090
-#     protocol: GRPC
-#     timeout: 10s
-
 jwt:
   secret: xxx
   expire: 10m
@@ -35,16 +25,6 @@ namespaceAllowList:
   - /rabbit.api.v1.Namespace/DeleteNamespace
   - /rabbit.api.v1.Namespace/GetNamespace
   - /rabbit.api.v1.Namespace/ListNamespace
-
-# etcd:
-#   endpoints:
-#     - http://127.0.0.1:2379
-#   username:
-#   password:
-
-# kubernetes:
-#   kubeConfig: ~/.kube/config
-#   namespace: moon
 
 main:
   username: root
@@ -61,3 +41,25 @@ main:
 eventBus:
   workerCount: 1
   timeout: 10s
+
+# registryType: ETCD
+
+# clusters:
+#   - name: rabbit01
+#     endpoint: 127.0.0.1:8080
+#     protocol: HTTP
+#     timeout: 10s
+#   - name: rabbit02
+#     endpoint: 127.0.0.1:9090
+#     protocol: GRPC
+#     timeout: 10s
+
+# etcd:
+#   endpoints:
+#     - http://127.0.0.1:2379
+#   username:
+#   password:
+
+# kubernetes:
+#   kubeConfig: ~/.kube/config
+#   namespace: moon

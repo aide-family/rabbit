@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
@@ -15,7 +16,9 @@ import (
 
 	"github.com/aide-family/rabbit/internal/biz/do/query"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 // ProviderSetData is a set of data providers.
@@ -108,7 +111,12 @@ func (d *Data) Registry() connect.Registry {
 }
 
 func (d *Data) initRegistry() error {
-	if kubeConfig := d.c.GetKubernetes(); kubeConfig != nil {
+	switch registryType := d.c.GetRegistryType(); registryType {
+	case config.RegistryType_KUBERNETES:
+		kubeConfig := d.c.GetKubernetes()
+		if pointer.IsNil(kubeConfig) {
+			return merr.ErrorInternalServer("kubernetes config is not found")
+		}
 		kubeClient, err := connect.NewKubernetesClientSet(kubeConfig.GetKubeConfig())
 		if err != nil {
 			d.helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
@@ -116,8 +124,11 @@ func (d *Data) initRegistry() error {
 		}
 		registrar := kuberegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
 		d.registry = registrar
-	}
-	if etcdConfig := d.c.GetEtcd(); etcdConfig != nil {
+	case config.RegistryType_ETCD:
+		etcdConfig := d.c.GetEtcd()
+		if pointer.IsNil(etcdConfig) {
+			return merr.ErrorInternalServer("etcd config is not found")
+		}
 		client, err := clientV3.New(clientV3.Config{
 			Endpoints:   etcdConfig.GetEndpoints(),
 			Username:    etcdConfig.GetUsername(),
