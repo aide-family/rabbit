@@ -38,11 +38,9 @@ message MySQLConfig {
 	string host     = 3;
 	int32 port     = 4;
 	string database = 5;
-	string charset  = 6;
-	string parseTime = 7;
-	string loc = 8;
-	bool debug = 9;
-	bool useSystemLogger = 10;
+	bool debug = 6;
+	bool useSystemLogger = 7;
+	map<string, string> parameters = 8;
 }
 
 message KubernetesConfig {

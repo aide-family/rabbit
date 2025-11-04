@@ -32,11 +32,12 @@ main:
   host: localhost
   port: 3306
   database: rabbit
-  charset: utf8mb4
-  parseTime: true
-  loc: Asia/Shanghai
   debug: true
   useSystemLogger: false
+  parameters:
+    charset: utf8mb4
+    parseTime: true
+    loc: Asia/Shanghai
 
 # biz:
 #   <namespace>,<namespace2>:
@@ -44,19 +45,22 @@ main:
 #     password: '123456'
 #     host: localhost
 #     port: 3306
-#     database: rabbit
-#     charset: utf8mb4
-#     parseTime: true
-#     loc: Asia/Shanghai
+#     database: rabbit1
+#     parameters:
+#       charset: utf8mb4
+#       parseTime: true
+#       loc: Asia/Shanghai
+
 #   <namespace3>,<namespace4>:
 #     username: root
 #     password: '123456'
 #     host: localhost
 #     port: 3306
-#     database: rabbit
-#     charset: utf8mb4
-#     parseTime: true
-#     loc: Asia/Shanghai
+#     database: rabbit2
+#     parameters:
+#       charset: utf8mb4
+#       parseTime: true
+#       loc: Asia/Shanghai
 
 eventBus:
   workerCount: 1

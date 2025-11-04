@@ -14,9 +14,10 @@ import (
 
 func NewGorm(mysqlConf *config.MySQLConfig, logger *klog.Helper) (*gorm.DB, error) {
 	params := url.Values{}
-	params.Add("charset", mysqlConf.Charset)
-	params.Add("parseTime", mysqlConf.ParseTime)
-	params.Add("loc", mysqlConf.Loc)
+	for key, value := range mysqlConf.Parameters {
+		params.Add(key, value)
+	}
+
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", mysqlConf.Username, mysqlConf.Password, mysqlConf.Host, mysqlConf.Port, mysqlConf.Database, params.Encode())
 	gormConfig := &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
