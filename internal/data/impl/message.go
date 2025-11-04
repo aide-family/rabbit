@@ -8,6 +8,7 @@ import (
 
 	"github.com/aide-family/magicbox/safety"
 	klog "github.com/go-kratos/kratos/v2/log"
+	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
@@ -20,7 +21,6 @@ import (
 	"github.com/aide-family/rabbit/pkg/connect"
 	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/aide-family/rabbit/pkg/middler"
-	"gorm.io/gorm"
 )
 
 func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog, helper *klog.Helper) repository.MessageBus {

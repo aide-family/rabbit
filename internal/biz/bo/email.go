@@ -2,8 +2,10 @@
 package bo
 
 import (
+	"net/http"
 	"time"
 
+	"github.com/aide-family/magicbox/message/email"
 	"github.com/aide-family/magicbox/serialize"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
@@ -14,14 +16,16 @@ import (
 	"github.com/aide-family/rabbit/pkg/enum"
 )
 
+var _ email.Config = (*EmailConfigItemBo)(nil)
+
 type SendEmailBo struct {
-	UID         snowflake.ID      `json:"uid"`
-	Subject     string            `json:"subject"`
-	Body        string            `json:"body"`
-	To          []string          `json:"to"`
-	Cc          []string          `json:"cc"`
-	ContentType string            `json:"content_type"`
-	Headers     map[string]string `json:"headers"`
+	UID         snowflake.ID `json:"uid"`
+	Subject     string       `json:"subject"`
+	Body        string       `json:"body"`
+	To          []string     `json:"to"`
+	Cc          []string     `json:"cc"`
+	ContentType string       `json:"content_type"`
+	Headers     http.Header  `json:"headers"`
 }
 
 func (b *SendEmailBo) ToMessageLog(emailConfig *do.EmailConfig) (*do.MessageLog, error) {
@@ -43,6 +47,10 @@ func (b *SendEmailBo) ToMessageLog(emailConfig *do.EmailConfig) (*do.MessageLog,
 }
 
 func NewSendEmailBo(req *apiv1.SendEmailRequest) *SendEmailBo {
+	headers := make(http.Header)
+	for key, value := range req.Headers {
+		headers.Add(key, value)
+	}
 	return &SendEmailBo{
 		UID:         snowflake.ParseInt64(req.Uid),
 		Subject:     req.Subject,
@@ -50,7 +58,7 @@ func NewSendEmailBo(req *apiv1.SendEmailRequest) *SendEmailBo {
 		To:          req.To,
 		Cc:          req.Cc,
 		ContentType: req.ContentType,
-		Headers:     req.Headers,
+		Headers:     headers,
 	}
 }
 
@@ -161,6 +169,26 @@ type EmailConfigItemBo struct {
 	Status    vobj.GlobalStatus `json:"status"`
 	CreatedAt time.Time         `json:"-"`
 	UpdatedAt time.Time         `json:"-"`
+}
+
+// GetHost implements email.Config.
+func (b *EmailConfigItemBo) GetHost() string {
+	return b.Host
+}
+
+// GetPassword implements email.Config.
+func (b *EmailConfigItemBo) GetPassword() string {
+	return b.Password
+}
+
+// GetPort implements email.Config.
+func (b *EmailConfigItemBo) GetPort() int32 {
+	return b.Port
+}
+
+// GetUsername implements email.Config.
+func (b *EmailConfigItemBo) GetUsername() string {
+	return b.Username
 }
 
 func NewEmailConfigItemBo(doEmailConfig *do.EmailConfig) *EmailConfigItemBo {
