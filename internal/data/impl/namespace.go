@@ -25,14 +25,14 @@ type namespaceRepositoryImpl struct {
 
 // SaveNamespace implements repository.Namespace.
 func (n *namespaceRepositoryImpl) CreateNamespace(ctx context.Context, req *do.Namespace) error {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx)
 	return wrappers.Create(req)
 }
 
 // UpdateNamespace implements repository.Namespace.
 func (n *namespaceRepositoryImpl) UpdateNamespace(ctx context.Context, req *do.Namespace) error {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx).Where(namespaceDO.UID.Eq(req.UID.Int64()))
 	_, err := wrappers.Updates(req)
 	return err
@@ -40,7 +40,7 @@ func (n *namespaceRepositoryImpl) UpdateNamespace(ctx context.Context, req *do.N
 
 // UpdateNamespaceStatus implements repository.Namespace.
 func (n *namespaceRepositoryImpl) UpdateNamespaceStatus(ctx context.Context, req *bo.UpdateNamespaceStatusBo) error {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx).Where(namespaceDO.UID.Eq(req.UID.Int64()))
 	_, err := wrappers.Update(namespaceDO.Status, req.Status)
 	return err
@@ -48,7 +48,7 @@ func (n *namespaceRepositoryImpl) UpdateNamespaceStatus(ctx context.Context, req
 
 // DeleteNamespace implements repository.Namespace.
 func (n *namespaceRepositoryImpl) DeleteNamespace(ctx context.Context, uid snowflake.ID) error {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx).Where(namespaceDO.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
@@ -56,14 +56,14 @@ func (n *namespaceRepositoryImpl) DeleteNamespace(ctx context.Context, uid snowf
 
 // GetNamespace implements repository.Namespace.
 func (n *namespaceRepositoryImpl) GetNamespace(ctx context.Context, uid snowflake.ID) (*do.Namespace, error) {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx).Where(namespaceDO.UID.Eq(uid.Int64()))
 	return wrappers.First()
 }
 
 // ListNamespace implements repository.Namespace.
 func (n *namespaceRepositoryImpl) ListNamespace(ctx context.Context, req *bo.ListNamespaceBo) (*bo.PageResponseBo[*do.Namespace], error) {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx)
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(namespaceDO.Name.Like("%" + req.Keyword + "%"))
@@ -88,7 +88,7 @@ func (n *namespaceRepositoryImpl) ListNamespace(ctx context.Context, req *bo.Lis
 
 // GetNamespaceByName implements repository.Namespace.
 func (n *namespaceRepositoryImpl) GetNamespaceByName(ctx context.Context, name string) (*do.Namespace, error) {
-	namespaceDO := n.d.MainQuery().Namespace
+	namespaceDO := n.d.MainQuery(ctx).Namespace
 	wrappers := namespaceDO.WithContext(ctx).Where(namespaceDO.Name.Eq(name))
 	return wrappers.First()
 }

@@ -19,6 +19,8 @@ import (
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
 	"github.com/aide-family/rabbit/pkg/merr"
+	"github.com/aide-family/rabbit/pkg/middler"
+	"gorm.io/gorm"
 )
 
 func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog, helper *klog.Helper) repository.MessageBus {
@@ -140,27 +142,58 @@ func (m *messageBusImpl) waitProcessMessage(ctx context.Context, message *do.Mes
 }
 
 func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog) error {
-	// TODO 增加分布式锁控制并发， 同一时间只能有一个服务或者协程能够访问此UID的消息
-	newMessage, err := m.messageLogRepo.GetMessageLog(ctx, message.UID)
+	// 使用分布式锁控制并发，同一时间只能有一个服务或者协程能够访问此UID的消息
+	namespace := middler.GetNamespace(ctx)
+	// 在事务中使用 SELECT FOR UPDATE 获取分布式锁
+	var newMessage *do.MessageLog
+	err := m.d.BizDB(ctx, namespace).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		ctx = data.WithBizTransaction(ctx, tx, namespace)
+		// 使用 SELECT FOR UPDATE 获取行锁，确保同一时间只有一个节点能处理该消息
+		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(ctx, message.UID)
+		if err != nil {
+			return err
+		}
+
+		// 如果消息已经发送或正在发送，直接返回
+		if lockedMessage.Status.IsSent() || lockedMessage.Status.IsSending() {
+			return nil
+		}
+
+		// 使用 CAS 操作原子性地更新状态为发送中
+		// 只有当前状态为待处理或失败时才更新为发送中
+		result, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, message.UID, vobj.MessageStatusPending, vobj.MessageStatusSending)
+		if err != nil {
+			return err
+		}
+		if !result {
+			return nil
+		}
+
+		newMessage = lockedMessage
+		// 更新状态为发送中
+		newMessage.Status = vobj.MessageStatusSending
+		return nil
+	})
 	if err != nil {
 		return err
 	}
-	if newMessage.Status.IsSent() || newMessage.Status.IsSending() {
+
+	// 如果消息已经被处理或者状态更新失败，直接返回
+	if newMessage == nil {
 		return nil
 	}
+
+	// 在事务外处理消息发送（发送操作可能需要较长时间，不应该在数据库事务中执行）
 	return m.processMessage(ctx, newMessage)
 }
 
 // processMessage 处理消息
 func (m *messageBusImpl) processMessage(ctx context.Context, message *do.MessageLog) error {
+	if message.Status.IsSent() || message.Status.IsSending() {
+		return nil
+	}
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
 	defer cancel()
-
-	// 更新状态为发送中
-	if err := m.messageLogRepo.UpdateMessageLogStatus(ctx, message.UID, vobj.MessageStatusSending); err != nil {
-		m.helper.Errorw("msg", "update message status to sending failed", "error", err, "uid", message.UID)
-		return merr.ErrorInternal("update message status to sending failed")
-	}
 
 	senderType := message.Type
 	sender, ok := m.senders.Get(senderType)
@@ -175,19 +208,25 @@ func (m *messageBusImpl) processMessage(ctx context.Context, message *do.Message
 	// 发送消息
 	if err := sender.Send(ctx, message); err != nil {
 		m.helper.Errorw("msg", "send message failed", "error", err, "uid", message.UID, "type", senderType)
-		if updateErr := m.messageLogRepo.UpdateMessageLogStatus(ctx, message.UID, vobj.MessageStatusFailed); updateErr != nil {
+		success, updateErr := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, message.UID, vobj.MessageStatusSending, vobj.MessageStatusFailed)
+		if updateErr != nil {
 			m.helper.Errorw("msg", "update message status to failed failed", "error", updateErr, "uid", message.UID)
 		}
-		return merr.ErrorInternal("send message failed")
+		if !success {
+			m.helper.Warnw("msg", "message status is not sending, message sent failed", "uid", message.UID, "type", senderType)
+		}
+		return merr.ErrorInternal("send message failed").WithCause(err)
 	}
 
 	// 更新状态为已发送
-	if err := m.messageLogRepo.UpdateMessageLogStatus(ctx, message.UID, vobj.MessageStatusSent); err != nil {
+	success, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, message.UID, vobj.MessageStatusSending, vobj.MessageStatusSent)
+	if err != nil {
 		m.helper.Errorw("msg", "update message status to sent failed", "error", err, "uid", message.UID)
 		return merr.ErrorInternal("update message status to sent failed")
 	}
-
-	m.helper.Infow("msg", "message sent successfully", "uid", message.UID, "type", senderType)
+	if !success {
+		m.helper.Warnw("msg", "message status is not sending, message sent successfully", "uid", message.UID, "type", senderType)
+	}
 	return nil
 }
 

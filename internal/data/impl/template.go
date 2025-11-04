@@ -28,7 +28,7 @@ type templateRepositoryImpl struct {
 // SaveTemplate implements repository.Template.
 func (t *templateRepositoryImpl) SaveTemplate(ctx context.Context, req *do.Template) error {
 	namespace := middler.GetNamespace(ctx)
-	template := t.d.BizQuery(namespace).Template
+	template := t.d.BizQuery(ctx, namespace).Template
 	req.WithNamespace(namespace)
 	wrappers := template.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID.String()) {
@@ -42,7 +42,7 @@ func (t *templateRepositoryImpl) SaveTemplate(ctx context.Context, req *do.Templ
 // UpdateTemplateStatus implements repository.Template.
 func (t *templateRepositoryImpl) UpdateTemplateStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
-	template := t.d.BizQuery(namespace).Template
+	template := t.d.BizQuery(ctx, namespace).Template
 	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid.Int64()))
 	_, err := wrappers.Update(template.Status, status)
 	return err
@@ -51,7 +51,7 @@ func (t *templateRepositoryImpl) UpdateTemplateStatus(ctx context.Context, uid s
 // DeleteTemplate implements repository.Template.
 func (t *templateRepositoryImpl) DeleteTemplate(ctx context.Context, uid snowflake.ID) error {
 	namespace := middler.GetNamespace(ctx)
-	template := t.d.BizQuery(namespace).Template
+	template := t.d.BizQuery(ctx, namespace).Template
 	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
@@ -60,7 +60,7 @@ func (t *templateRepositoryImpl) DeleteTemplate(ctx context.Context, uid snowfla
 // GetTemplate implements repository.Template.
 func (t *templateRepositoryImpl) GetTemplate(ctx context.Context, uid snowflake.ID) (*do.Template, error) {
 	namespace := middler.GetNamespace(ctx)
-	template := t.d.BizQuery(namespace).Template
+	template := t.d.BizQuery(ctx, namespace).Template
 	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(uid.Int64()))
 	return wrappers.First()
 }
@@ -68,7 +68,7 @@ func (t *templateRepositoryImpl) GetTemplate(ctx context.Context, uid snowflake.
 // GetTemplateByName implements repository.Template.
 func (t *templateRepositoryImpl) GetTemplateByName(ctx context.Context, name string) (*do.Template, error) {
 	namespace := middler.GetNamespace(ctx)
-	template := t.d.BizQuery(namespace).Template
+	template := t.d.BizQuery(ctx, namespace).Template
 	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.Name.Eq(name))
 	return wrappers.First()
 }
@@ -76,7 +76,7 @@ func (t *templateRepositoryImpl) GetTemplateByName(ctx context.Context, name str
 // ListTemplate implements repository.Template.
 func (t *templateRepositoryImpl) ListTemplate(ctx context.Context, req *bo.ListTemplateBo) (*bo.PageResponseBo[*do.Template], error) {
 	namespace := middler.GetNamespace(ctx)
-	template := t.d.BizQuery(namespace).Template
+	template := t.d.BizQuery(ctx, namespace).Template
 	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace))
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(template.Name.Like("%" + req.Keyword + "%"))

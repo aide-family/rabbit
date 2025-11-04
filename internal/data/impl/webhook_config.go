@@ -28,7 +28,7 @@ type webhookConfigRepositoryImpl struct {
 // SaveWebhookConfig implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) SaveWebhookConfig(ctx context.Context, req *do.WebhookConfig) error {
 	namespace := middler.GetNamespace(ctx)
-	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx)
 	if strutil.IsNotEmpty(req.UID.String()) {
 		wrappers = wrappers.Where(webhookConfig.UID.Eq(req.UID.Int64()), webhookConfig.Namespace.Eq(namespace))
@@ -41,7 +41,7 @@ func (w *webhookConfigRepositoryImpl) SaveWebhookConfig(ctx context.Context, req
 // UpdateWebhookStatus implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) UpdateWebhookStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error {
 	namespace := middler.GetNamespace(ctx)
-	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Update(webhookConfig.Status, status)
 	return err
@@ -50,7 +50,7 @@ func (w *webhookConfigRepositoryImpl) UpdateWebhookStatus(ctx context.Context, u
 // DeleteWebhookConfig implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) DeleteWebhookConfig(ctx context.Context, uid snowflake.ID) error {
 	namespace := middler.GetNamespace(ctx)
-	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
@@ -59,7 +59,7 @@ func (w *webhookConfigRepositoryImpl) DeleteWebhookConfig(ctx context.Context, u
 // GetWebhookConfig implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) GetWebhookConfig(ctx context.Context, uid snowflake.ID) (*do.WebhookConfig, error) {
 	namespace := middler.GetNamespace(ctx)
-	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(uid.Int64()))
 	return wrappers.First()
 }
@@ -67,7 +67,7 @@ func (w *webhookConfigRepositoryImpl) GetWebhookConfig(ctx context.Context, uid 
 // GetWebhookConfigByName implements repository.WebhookConfig.
 func (w *webhookConfigRepositoryImpl) GetWebhookConfigByName(ctx context.Context, name string) (*do.WebhookConfig, error) {
 	namespace := middler.GetNamespace(ctx)
-	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.Name.Eq(name))
 	return wrappers.First()
 }
@@ -75,7 +75,7 @@ func (w *webhookConfigRepositoryImpl) GetWebhookConfigByName(ctx context.Context
 // ListWebhookConfig implements repository.Webhook.
 func (w *webhookConfigRepositoryImpl) ListWebhookConfig(ctx context.Context, req *bo.ListWebhookBo) (*bo.PageResponseBo[*do.WebhookConfig], error) {
 	namespace := middler.GetNamespace(ctx)
-	webhookConfig := w.d.BizQuery(namespace).WebhookConfig
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace))
 	if req.App.Exist() && !req.App.IsUnknown() {
 		wrappers = wrappers.Where(webhookConfig.App.Eq(req.App.GetValue()))

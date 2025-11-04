@@ -2,6 +2,7 @@
 package data
 
 import (
+	"context"
 	"strings"
 	"time"
 
@@ -82,28 +83,34 @@ func (d *Data) close() {
 	}
 }
 
-func (d *Data) MainDB() *gorm.DB {
-	return d.mainDB
+func (d *Data) MainDB(ctx context.Context) *gorm.DB {
+	if tx, ok := GetMainTransaction(ctx); ok {
+		return tx.DB.WithContext(ctx)
+	}
+	return d.mainDB.WithContext(ctx)
 }
 
-func (d *Data) MainQuery() *query.Query {
-	return query.Use(d.MainDB())
+func (d *Data) MainQuery(ctx context.Context) *query.Query {
+	return query.Use(d.MainDB(ctx))
 }
 
-func (d *Data) BizQuery(namespace string) *query.Query {
-	return query.Use(d.BizDB(namespace))
+func (d *Data) BizQuery(ctx context.Context, namespace string) *query.Query {
+	return query.Use(d.BizDB(ctx, namespace))
 }
 
-func (d *Data) BizQueryWithTable(namespace string, tableName string, args ...any) *query.Query {
-	return query.Use(d.BizDB(namespace).Table(tableName, args...))
+func (d *Data) BizQueryWithTable(ctx context.Context, namespace string, tableName string, args ...any) *query.Query {
+	return query.Use(d.BizDB(ctx, namespace).Table(tableName, args...))
 }
 
-func (d *Data) BizDB(namespace string) *gorm.DB {
+func (d *Data) BizDB(ctx context.Context, namespace string) *gorm.DB {
+	if tx, ok := GetBizTransaction(ctx, namespace); ok {
+		return tx.DB.WithContext(ctx)
+	}
 	db, ok := d.dbs.Get(namespace)
 	if ok {
-		return db
+		return db.WithContext(ctx)
 	}
-	return d.mainDB
+	return d.mainDB.WithContext(ctx)
 }
 
 func (d *Data) Registry() connect.Registry {

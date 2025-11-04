@@ -11,6 +11,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"gorm.io/gen"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -41,7 +42,7 @@ func (m *messageLogRepositoryImpl) getTableName(ctx context.Context, req *do.Mes
 	if _, ok := m.cache.Get(tableName); ok {
 		return tableName, nil
 	}
-	if bizDB := m.d.BizDB(namespace); !do.HasTable(bizDB, tableName) {
+	if bizDB := m.d.BizDB(ctx, namespace); !do.HasTable(bizDB, tableName) {
 		initModel := &do.MessageLog{}
 		oldTableName := initModel.TableName()
 		if !do.HasTable(bizDB, oldTableName) {
@@ -64,7 +65,7 @@ func (m *messageLogRepositoryImpl) CreateMessageLog(ctx context.Context, req *do
 	if err != nil {
 		return err
 	}
-	messageLog := m.d.BizQueryWithTable(req.Namespace, tableName).MessageLog
+	messageLog := m.d.BizQueryWithTable(ctx, req.Namespace, tableName).MessageLog
 	wrappers := messageLog.WithContext(ctx)
 	return wrappers.Create(req)
 }
@@ -79,7 +80,7 @@ func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.L
 	if req.EndAt.IsZero() {
 		req.EndAt = time.Now()
 	}
-	bizDB := m.d.BizDB(namespace)
+	bizDB := m.d.BizDB(ctx, namespace)
 
 	tableNames := do.GenMessageLogTableNames(bizDB, namespace, req.StartAt, req.EndAt)
 	if len(tableNames) == 0 {
@@ -101,7 +102,7 @@ func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.L
 		wrappers = wrappers.Table(fmt.Sprintf("%s as %s", tableNames[0], do.TableNameMessageLog))
 	}
 
-	messageLog := m.d.BizQuery(namespace).MessageLog.As(do.TableNameMessageLog)
+	messageLog := m.d.BizQuery(ctx, namespace).MessageLog.As(do.TableNameMessageLog)
 
 	wrappers = wrappers.Where(messageLog.SendAt.Gte(req.StartAt))
 	wrappers = wrappers.Where(messageLog.SendAt.Lte(req.EndAt))
@@ -132,11 +133,11 @@ func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.L
 func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid snowflake.ID) (*do.MessageLog, error) {
 	namespace := middler.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Int64()))
-	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(namespace), tableName) {
+	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(ctx, namespace), tableName) {
 		return nil, gorm.ErrRecordNotFound
 	}
 
-	bizQuery := m.d.BizQueryWithTable(namespace, tableName)
+	bizQuery := m.d.BizQueryWithTable(ctx, namespace, tableName)
 	messageLog := bizQuery.MessageLog
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
@@ -151,11 +152,11 @@ func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid snowfl
 func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, uid snowflake.ID, status vobj.MessageStatus) error {
 	namespace := middler.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Int64()))
-	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(namespace), tableName) {
+	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(ctx, namespace), tableName) {
 		return gorm.ErrRecordNotFound
 	}
 
-	messageLog := m.d.BizQueryWithTable(namespace, tableName).MessageLog
+	messageLog := m.d.BizQueryWithTable(ctx, namespace, tableName).MessageLog
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
 		messageLog.UID.Eq(uid.Int64()),
@@ -164,4 +165,47 @@ func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, u
 	wrappers = wrappers.Where(wheres...)
 	_, err := wrappers.Update(messageLog.Status, status)
 	return err
+}
+
+// GetMessageLogWithLock implements repository.MessageLog.
+// 使用 SELECT FOR UPDATE 获取消息日志并加锁，用于分布式锁场景
+func (m *messageLogRepositoryImpl) GetMessageLogWithLock(ctx context.Context, uid snowflake.ID) (*do.MessageLog, error) {
+	namespace := middler.GetNamespace(ctx)
+	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Int64()))
+	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(ctx, namespace), tableName) {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	messageLog := m.d.BizQueryWithTable(ctx, namespace, tableName).MessageLog
+	wrappers := messageLog.WithContext(ctx)
+	wheres := []gen.Condition{
+		messageLog.UID.Eq(uid.Int64()),
+		messageLog.Namespace.Eq(namespace),
+	}
+	wrappers = wrappers.Where(wheres...).Clauses(clause.Locking{Strength: "UPDATE"})
+	return wrappers.First()
+}
+
+// UpdateMessageLogStatusIf implements repository.MessageLog.
+// 条件更新消息状态，只有当前状态匹配时才更新，用于实现 CAS 操作
+func (m *messageLogRepositoryImpl) UpdateMessageLogStatusIf(ctx context.Context, uid snowflake.ID, oldStatus, newStatus vobj.MessageStatus) (bool, error) {
+	namespace := middler.GetNamespace(ctx)
+	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Int64()))
+	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(ctx, namespace), tableName) {
+		return false, gorm.ErrRecordNotFound
+	}
+
+	messageLog := m.d.BizQueryWithTable(ctx, namespace, tableName).MessageLog
+	wrappers := messageLog.WithContext(ctx)
+	wheres := []gen.Condition{
+		messageLog.UID.Eq(uid.Int64()),
+		messageLog.Namespace.Eq(namespace),
+		messageLog.Status.Eq(oldStatus.GetValue()),
+	}
+	wrappers = wrappers.Where(wheres...)
+	result, err := wrappers.Update(messageLog.Status, newStatus)
+	if err != nil {
+		return false, err
+	}
+	return result.RowsAffected > 0, nil
 }
