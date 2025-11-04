@@ -2,6 +2,7 @@ package do
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
@@ -44,10 +45,10 @@ func (t *Template) BeforeCreate(tx *gorm.DB) (err error) {
 
 // EmailTemplateData Email 模板的数据结构
 type EmailTemplateData struct {
-	Subject     string            `json:"subject"`
-	Body        string            `json:"body"`
-	ContentType string            `json:"content_type"`
-	Headers     map[string]string `json:"headers,omitempty"`
+	Subject     string      `json:"subject"`
+	Body        string      `json:"body"`
+	ContentType string      `json:"content_type"`
+	Headers     http.Header `json:"headers,omitempty"`
 }
 
 // SMSTemplateData SMS 模板的数据结构
@@ -66,6 +67,9 @@ func (t *Template) ToEmailTemplateData() (*EmailTemplateData, error) {
 	var data EmailTemplateData
 	if err := json.Unmarshal(t.JSONData, &data); err != nil {
 		return nil, err
+	}
+	if data.ContentType == "" {
+		data.ContentType = "text/html"
 	}
 	return &data, nil
 }

@@ -1051,7 +1051,14 @@ components:
                     type: string
                 jsonData:
                     type: string
-                    format: bytes
+                to:
+                    type: array
+                    items:
+                        type: string
+                cc:
+                    type: array
+                    items:
+                        type: string
         rabbit.api.v1.SendMessageRequest:
             type: object
             properties:
@@ -1072,7 +1079,6 @@ components:
                     type: string
                 data:
                     type: string
-                    format: bytes
         rabbit.api.v1.SendWebhookWithTemplateRequest:
             type: object
             properties:
@@ -1082,7 +1088,6 @@ components:
                     type: string
                 jsonData:
                     type: string
-                    format: bytes
         rabbit.api.v1.TemplateItem:
             type: object
             properties:

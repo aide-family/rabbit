@@ -67,16 +67,21 @@ message SendEmailRequest {
 
 message SendEmailWithTemplateRequest {
 	int64 uid = 1 [(buf.validate.field).required = true];
-	string templateUID = 2 [(buf.validate.field).required = true];
-	bytes jsonData = 3 [(buf.validate.field).required = true];
+	int64 templateUID = 2 [(buf.validate.field).required = true];
+	string jsonData = 3 [(buf.validate.field).required = true];
+	repeated string to = 4 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this.size() > 0",
+		message: "to must be greater than 0",
+	}];
+	repeated string cc = 5;
 }
 
 message SendWebhookRequest {
 	int64 uid = 1 [(buf.validate.field).required = true];
-	bytes data = 5 [(buf.validate.field).required = true];
+	string data = 5 [(buf.validate.field).required = true];
 }
 message SendWebhookWithTemplateRequest {
 	int64 uid = 1 [(buf.validate.field).required = true];
-	string templateUID = 2 [(buf.validate.field).required = true];
-	bytes jsonData = 3 [(buf.validate.field).required = true];
+	int64 templateUID = 2 [(buf.validate.field).required = true];
+	string jsonData = 3 [(buf.validate.field).required = true];
 }

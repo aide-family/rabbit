@@ -1,7 +1,6 @@
 package bo
 
 import (
-	"errors"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -10,9 +9,8 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
-
-var ErrInvalidTemplateApp = errors.New("invalid template app type")
 
 // CreateTemplateBo 创建模板的 BO
 type CreateTemplateBo struct {
@@ -122,7 +120,7 @@ func (b *TemplateItemBo) ToAPIV1TemplateItem() *apiv1.TemplateItem {
 // ToEmailTemplateData 转换为 Email 模板数据
 func (b *TemplateItemBo) ToEmailTemplateData() (*do.EmailTemplateData, error) {
 	if !b.App.IsEmailType() {
-		return nil, ErrInvalidTemplateApp
+		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppEmail, b.App)
 	}
 	template := &do.Template{
 		JSONData: b.JSONData,
@@ -133,7 +131,7 @@ func (b *TemplateItemBo) ToEmailTemplateData() (*do.EmailTemplateData, error) {
 // ToSMSTemplateData 转换为 SMS 模板数据
 func (b *TemplateItemBo) ToSMSTemplateData() (*do.SMSTemplateData, error) {
 	if !b.App.IsSMSType() {
-		return nil, ErrInvalidTemplateApp
+		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppSMS, b.App)
 	}
 	template := &do.Template{
 		JSONData: b.JSONData,
@@ -144,7 +142,7 @@ func (b *TemplateItemBo) ToSMSTemplateData() (*do.SMSTemplateData, error) {
 // ToWebhookTemplateData 转换为 Webhook 模板数据
 func (b *TemplateItemBo) ToWebhookTemplateData() (*do.WebhookTemplateData, error) {
 	if !b.App.IsWebhookType() {
-		return nil, ErrInvalidTemplateApp
+		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppWebhookOther, b.App)
 	}
 	template := &do.Template{
 		JSONData: b.JSONData,

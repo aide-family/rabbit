@@ -14,6 +14,7 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 var _ email.Config = (*EmailConfigItemBo)(nil)
@@ -60,6 +61,74 @@ func NewSendEmailBo(req *apiv1.SendEmailRequest) *SendEmailBo {
 		ContentType: req.ContentType,
 		Headers:     headers,
 	}
+}
+
+type SendEmailWithTemplateBo struct {
+	UID         snowflake.ID
+	TemplateUID snowflake.ID
+	JSONData    []byte
+	To          []string
+	Cc          []string
+}
+
+func NewSendEmailWithTemplateBo(req *apiv1.SendEmailWithTemplateRequest) *SendEmailWithTemplateBo {
+	return &SendEmailWithTemplateBo{
+		UID:         snowflake.ParseInt64(req.Uid),
+		TemplateUID: snowflake.ParseInt64(req.TemplateUID),
+		JSONData:    []byte(req.JsonData),
+		To:          req.To,
+		Cc:          req.Cc,
+	}
+}
+
+func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateDo *do.Template) (*SendEmailBo, error) {
+	if !templateDo.App.IsEmailType() {
+		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppEmail, templateDo.App)
+	}
+	if !templateDo.Status.IsEnabled() {
+		return nil, merr.ErrorParams("template %s(%s) is disabled", templateDo.Name, templateDo.UID)
+	}
+	emailTemplateData, err := templateDo.ToEmailTemplateData()
+	if err != nil {
+		return nil, err
+	}
+	var jsonData map[string]any
+	if err := serialize.JSONUnmarshal(b.JSONData, &jsonData); err != nil {
+		return nil, merr.ErrorParams("unmarshal json data failed: %s", err)
+	}
+	var subjectData, bodyData string
+	switch emailTemplateData.ContentType {
+	case "text/html":
+		subjectData, err = strutil.ExecuteHTMLTemplateFile(emailTemplateData.Subject, jsonData)
+		if err != nil {
+			return nil, err
+		}
+		bodyData, err = strutil.ExecuteHTMLTemplateFile(emailTemplateData.Body, jsonData)
+		if err != nil {
+			return nil, err
+		}
+	case "text/plain":
+		subjectData, err = strutil.ExecuteTextTemplate(emailTemplateData.Subject, jsonData)
+		if err != nil {
+			return nil, err
+		}
+		bodyData, err = strutil.ExecuteTextTemplate(emailTemplateData.Body, jsonData)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, merr.ErrorParams("invalid content type, expected %s, got %s", "text/html, text/plain", emailTemplateData.ContentType)
+	}
+
+	return &SendEmailBo{
+		UID:         b.UID,
+		To:          b.To,
+		Cc:          b.Cc,
+		Subject:     subjectData,
+		Body:        bodyData,
+		ContentType: emailTemplateData.ContentType,
+		Headers:     emailTemplateData.Headers,
+	}, nil
 }
 
 type CreateEmailConfigBo struct {
