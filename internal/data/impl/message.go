@@ -8,8 +8,6 @@ import (
 
 	"github.com/aide-family/magicbox/safety"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/transport/http"
-	"google.golang.org/grpc"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
@@ -22,40 +20,6 @@ import (
 	"github.com/aide-family/rabbit/pkg/connect"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
-
-func newClusterSender(conn *grpc.ClientConn, http *http.Client, protocol config.ClusterConfig_Protocol) sender.Sender {
-	return &clusterSender{
-		conn:     conn,
-		http:     http,
-		protocol: protocol,
-	}
-}
-
-type clusterSender struct {
-	conn     *grpc.ClientConn
-	http     *http.Client
-	protocol config.ClusterConfig_Protocol
-}
-
-func (c *clusterSender) SendMessage(ctx context.Context, req *apiv1.SendMessageRequest) (*apiv1.SendReply, error) {
-	switch c.protocol {
-	case config.ClusterConfig_GRPC:
-		return apiv1.NewSenderClient(c.conn).SendMessage(ctx, req)
-	case config.ClusterConfig_HTTP:
-		return apiv1.NewSenderHTTPClient(c.http).SendMessage(ctx, req)
-	}
-	return nil, nil
-}
-
-func (c *clusterSender) Close() error {
-	if c.conn != nil {
-		return c.conn.Close()
-	}
-	if c.http != nil {
-		return c.http.Close()
-	}
-	return nil
-}
 
 func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog, helper *klog.Helper) repository.MessageBus {
 	eventBusConf := bc.GetEventBus()
@@ -93,7 +57,7 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 				continue
 			}
 			d.AppendClose("grpcClient."+clusterConfig.GetName(), func() error { return grpcClient.Close() })
-			bus.clusters = append(bus.clusters, newClusterSender(grpcClient, nil, protocol))
+			bus.clusters = append(bus.clusters, sender.NewClusterSender(grpcClient, nil, protocol))
 		case config.ClusterConfig_HTTP:
 			httpClient, err := connect.InitHTTPClient(clusterConfig, opts...)
 			if err != nil {
@@ -101,7 +65,7 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 				continue
 			}
 			d.AppendClose("httpClient."+clusterConfig.GetName(), func() error { return httpClient.Close() })
-			bus.clusters = append(bus.clusters, newClusterSender(nil, httpClient, protocol))
+			bus.clusters = append(bus.clusters, sender.NewClusterSender(nil, httpClient, protocol))
 		}
 	}
 
