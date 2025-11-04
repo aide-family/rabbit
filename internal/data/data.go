@@ -49,11 +49,11 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 			return nil, d.close, err
 		}
 
-		for _, namespace := range strings.Split(namespace, ",") {
-			d.dbs.Set(namespace, db)
+		for _, ns := range strings.Split(namespace, ",") {
+			d.dbs.Set(strings.TrimSpace(ns), db)
 		}
 
-		d.closes["bizDB."+namespace] = func() error { return connect.CloseDB(db) }
+		d.closes["bizDB.["+namespace+"]"] = func() error { return connect.CloseDB(db) }
 	}
 
 	return d, d.close, nil
