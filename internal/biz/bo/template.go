@@ -9,7 +9,6 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 // CreateTemplateBo 创建模板的 BO
@@ -115,39 +114,6 @@ func (b *TemplateItemBo) ToAPIV1TemplateItem() *apiv1.TemplateItem {
 		CreatedAt: b.CreatedAt.Format(time.DateTime),
 		UpdatedAt: b.UpdatedAt.Format(time.DateTime),
 	}
-}
-
-// ToEmailTemplateData 转换为 Email 模板数据
-func (b *TemplateItemBo) ToEmailTemplateData() (*do.EmailTemplateData, error) {
-	if !b.App.IsEmailType() {
-		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppEmail, b.App)
-	}
-	template := &do.Template{
-		JSONData: b.JSONData,
-	}
-	return template.ToEmailTemplateData()
-}
-
-// ToSMSTemplateData 转换为 SMS 模板数据
-func (b *TemplateItemBo) ToSMSTemplateData() (*do.SMSTemplateData, error) {
-	if !b.App.IsSMSType() {
-		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppSMS, b.App)
-	}
-	template := &do.Template{
-		JSONData: b.JSONData,
-	}
-	return template.ToSMSTemplateData()
-}
-
-// ToWebhookTemplateData 转换为 Webhook 模板数据
-func (b *TemplateItemBo) ToWebhookTemplateData() (*do.WebhookTemplateData, error) {
-	if !b.App.IsWebhookType() {
-		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppWebhookOther, b.App)
-	}
-	template := &do.Template{
-		JSONData: b.JSONData,
-	}
-	return template.ToWebhookTemplateData()
 }
 
 // ListTemplateBo 列表查询的 BO
