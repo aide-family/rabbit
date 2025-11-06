@@ -34,6 +34,14 @@ func (s *NamespaceService) CreateNamespace(ctx context.Context, req *apiv1.Creat
 	return &apiv1.CreateNamespaceReply{}, nil
 }
 
+func (s *NamespaceService) UpdateNamespace(ctx context.Context, req *apiv1.UpdateNamespaceRequest) (*apiv1.UpdateNamespaceReply, error) {
+	updateNamespaceBo := bo.NewUpdateNamespaceBo(req)
+	if err := s.namespaceBiz.UpdateNamespace(ctx, updateNamespaceBo); err != nil {
+		return nil, err
+	}
+	return &apiv1.UpdateNamespaceReply{}, nil
+}
+
 func (s *NamespaceService) UpdateNamespaceStatus(ctx context.Context, req *apiv1.UpdateNamespaceStatusRequest) (*apiv1.UpdateNamespaceStatusReply, error) {
 	updateNamespaceStatusBo := bo.NewUpdateNamespaceStatusBo(req)
 	if err := s.namespaceBiz.UpdateNamespaceStatus(ctx, updateNamespaceStatusBo); err != nil {

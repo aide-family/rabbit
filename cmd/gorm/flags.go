@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
@@ -17,14 +18,12 @@ type Flags struct {
 	configPath string
 	forceGen   bool
 
-	username  string
-	password  string
-	host      string
-	port      int32
-	database  string
-	charset   string
-	parseTime string
-	loc       string
+	username string
+	password string
+	host     string
+	port     int32
+	database string
+	params   []string
 }
 
 var flags Flags
@@ -38,9 +37,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	c.PersistentFlags().StringVar(&f.host, "host", "localhost", "mysql host")
 	c.PersistentFlags().Int32Var(&f.port, "port", 3306, "mysql port")
 	c.PersistentFlags().StringVar(&f.database, "database", "rabbit", "mysql database")
-	c.PersistentFlags().StringVar(&f.charset, "charset", "utf8mb4", "mysql charset")
-	c.PersistentFlags().StringVar(&f.parseTime, "parseTime", "true", "mysql parseTime")
-	c.PersistentFlags().StringVar(&f.loc, "loc", "Asia/Shanghai", "mysql location")
+	c.PersistentFlags().StringSliceVar(&f.params, "params", []string{"charset=utf8mb4", "parseTime=true", "loc=Asia/Shanghai"}, "mysql params")
 }
 
 func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
@@ -63,20 +60,17 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 	if database := mysqlConf.GetDatabase(); strutil.IsNotEmpty(database) {
 		f.database = database
 	}
-	if charset := mysqlConf.GetCharset(); strutil.IsNotEmpty(charset) {
-		f.charset = charset
-	}
-	if parseTime := mysqlConf.GetParseTime(); strutil.IsNotEmpty(parseTime) {
-		f.parseTime = parseTime
-	}
-	if loc := mysqlConf.GetLoc(); strutil.IsNotEmpty(loc) {
-		f.loc = loc
-	}
 }
 
 func (f *Flags) databaseDSN() string {
-	loc := url.QueryEscape(f.loc)
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=%s&loc=%s", f.username, f.password, f.host, f.port, f.database, f.charset, f.parseTime, loc)
+	urlParams := url.Values{}
+	for _, param := range f.params {
+		parts := strings.SplitN(param, "=", 2)
+		if len(parts) == 2 {
+			urlParams.Add(parts[0], parts[1])
+		}
+	}
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", f.username, f.password, f.host, f.port, f.database, urlParams.Encode())
 }
 
 func (f *Flags) connectDSN() string {

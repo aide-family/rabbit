@@ -100,8 +100,9 @@ func initDB() (*gorm.DB, error) {
 		flags.Helper.Infow("msg", "create database success", "database", flags.database)
 	}
 
-	flags.Helper.Infow("msg", "open mysql connection", "dsn", flags.databaseDSN())
-	db, err := gorm.Open(mysql.Open(flags.databaseDSN()), &gorm.Config{
+	dsn := flags.databaseDSN()
+	flags.Helper.Infow("msg", "open mysql connection", "dsn", dsn)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: gormlog.New(flags.Helper.Logger()),
 	})
 	if err != nil {

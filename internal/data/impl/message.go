@@ -147,9 +147,9 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog
 	// 在事务中使用 SELECT FOR UPDATE 获取分布式锁
 	var newMessage *do.MessageLog
 	err := m.d.BizDB(ctx, namespace).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		ctx = data.WithBizTransaction(ctx, tx, namespace)
+		transactionCtx := data.WithBizTransaction(ctx, tx, namespace)
 		// 使用 SELECT FOR UPDATE 获取行锁，确保同一时间只有一个节点能处理该消息
-		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(ctx, message.UID)
+		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, message.UID)
 		if err != nil {
 			return err
 		}
@@ -161,7 +161,7 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog
 
 		// 使用 CAS 操作原子性地更新状态为发送中
 		// 只有当前状态为待处理或失败时才更新为发送中
-		result, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, message.UID, vobj.MessageStatusPending, vobj.MessageStatusSending)
+		result, err := m.messageLogRepo.UpdateMessageLogStatusIf(transactionCtx, message.UID, vobj.MessageStatusPending, vobj.MessageStatusSending)
 		if err != nil {
 			return err
 		}
@@ -170,8 +170,6 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog
 		}
 
 		newMessage = lockedMessage
-		// 更新状态为发送中
-		newMessage.Status = vobj.MessageStatusSending
 		return nil
 	})
 	if err != nil {
@@ -192,6 +190,7 @@ func (m *messageBusImpl) processMessage(ctx context.Context, message *do.Message
 	if message.Status.IsSent() || message.Status.IsSending() {
 		return nil
 	}
+	message.Status = vobj.MessageStatusSending
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
 	defer cancel()
 
