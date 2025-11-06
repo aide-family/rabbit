@@ -36,7 +36,7 @@ func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo)
 		t.helper.Errorw("msg", "check template exists failed", "error", err, "name", doTemplate.Name)
 		return merr.ErrorInternal("create template %s failed", doTemplate.Name)
 	}
-	if err := t.templateRepo.SaveTemplate(ctx, doTemplate); err != nil {
+	if err := t.templateRepo.CreateTemplate(ctx, doTemplate); err != nil {
 		t.helper.Errorw("msg", "create template failed", "error", err, "name", doTemplate.Name)
 		return merr.ErrorInternal("create template %s failed", doTemplate.Name)
 	}
@@ -45,7 +45,14 @@ func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo)
 
 func (t *Template) UpdateTemplate(ctx context.Context, req *bo.UpdateTemplateBo) error {
 	doTemplate := req.ToDoTemplate()
-	if err := t.templateRepo.SaveTemplate(ctx, doTemplate); err != nil {
+	existTemplate, err := t.templateRepo.GetTemplateByName(ctx, doTemplate.Name)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		t.helper.Errorw("msg", "check template exists failed", "error", err, "name", doTemplate.Name)
+		return merr.ErrorInternal("update template %s failed", doTemplate.Name)
+	} else if existTemplate != nil && existTemplate.UID != doTemplate.UID {
+		return merr.ErrorParams("template %s already exists", doTemplate.Name)
+	}
+	if err := t.templateRepo.UpdateTemplate(ctx, doTemplate); err != nil {
 		t.helper.Errorw("msg", "update template failed", "error", err, "uid", doTemplate.UID)
 		return merr.ErrorInternal("update template %s failed", doTemplate.UID)
 	}

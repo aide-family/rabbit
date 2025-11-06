@@ -2,6 +2,7 @@
 package bo
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -71,14 +72,17 @@ type SendEmailWithTemplateBo struct {
 	Cc          []string
 }
 
-func NewSendEmailWithTemplateBo(req *apiv1.SendEmailWithTemplateRequest) *SendEmailWithTemplateBo {
+func NewSendEmailWithTemplateBo(req *apiv1.SendEmailWithTemplateRequest) (*SendEmailWithTemplateBo, error) {
+	if !json.Valid([]byte(req.JsonData)) {
+		return nil, merr.ErrorParams("invalid json data")
+	}
 	return &SendEmailWithTemplateBo{
 		UID:         snowflake.ParseInt64(req.Uid),
 		TemplateUID: snowflake.ParseInt64(req.TemplateUID),
 		JSONData:    []byte(req.JsonData),
 		To:          req.To,
 		Cc:          req.Cc,
-	}
+	}, nil
 }
 
 func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateDo *do.Template) (*SendEmailBo, error) {
@@ -94,30 +98,16 @@ func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateDo *do.Template) (*SendE
 	}
 	var jsonData map[string]any
 	if err := serialize.JSONUnmarshal(b.JSONData, &jsonData); err != nil {
-		return nil, merr.ErrorParams("unmarshal json data failed: %s", err)
+		return nil, merr.ErrorInternal("unmarshal json data failed").WithCause(err)
 	}
-	var subjectData, bodyData string
-	switch emailTemplateData.ContentType {
-	case "text/html":
-		subjectData, err = strutil.ExecuteHTMLTemplateFile(emailTemplateData.Subject, jsonData)
-		if err != nil {
-			return nil, err
-		}
-		bodyData, err = strutil.ExecuteHTMLTemplateFile(emailTemplateData.Body, jsonData)
-		if err != nil {
-			return nil, err
-		}
-	case "text/plain":
-		subjectData, err = strutil.ExecuteTextTemplate(emailTemplateData.Subject, jsonData)
-		if err != nil {
-			return nil, err
-		}
-		bodyData, err = strutil.ExecuteTextTemplate(emailTemplateData.Body, jsonData)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, merr.ErrorParams("invalid content type, expected %s, got %s", "text/html, text/plain", emailTemplateData.ContentType)
+
+	subjectData, err := strutil.ExecuteTextTemplate(emailTemplateData.Subject, jsonData)
+	if err != nil {
+		return nil, merr.ErrorParams("execute text template failed").WithCause(err)
+	}
+	bodyData, err := strutil.ExecuteTextTemplate(emailTemplateData.Body, jsonData)
+	if err != nil {
+		return nil, merr.ErrorParams("execute text template failed").WithCause(err)
 	}
 
 	return &SendEmailBo{

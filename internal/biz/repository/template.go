@@ -11,7 +11,8 @@ import (
 )
 
 type Template interface {
-	SaveTemplate(ctx context.Context, req *do.Template) error
+	CreateTemplate(ctx context.Context, req *do.Template) error
+	UpdateTemplate(ctx context.Context, req *do.Template) error
 	UpdateTemplateStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error
 	DeleteTemplate(ctx context.Context, uid snowflake.ID) error
 	GetTemplate(ctx context.Context, uid snowflake.ID) (*do.Template, error)

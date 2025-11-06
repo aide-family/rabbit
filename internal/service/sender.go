@@ -39,7 +39,10 @@ func (s *SenderService) SendEmail(ctx context.Context, req *apiv1.SendEmailReque
 }
 
 func (s *SenderService) SendEmailWithTemplate(ctx context.Context, req *apiv1.SendEmailWithTemplateRequest) (*apiv1.SendReply, error) {
-	sendEmailWithTemplateBo := bo.NewSendEmailWithTemplateBo(req)
+	sendEmailWithTemplateBo, err := bo.NewSendEmailWithTemplateBo(req)
+	if err != nil {
+		return nil, err
+	}
 	if err := s.emailBiz.AppendEmailMessageWithTemplate(ctx, sendEmailWithTemplateBo); err != nil {
 		return nil, err
 	}

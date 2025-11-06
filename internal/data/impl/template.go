@@ -25,18 +25,19 @@ type templateRepositoryImpl struct {
 	d *data.Data
 }
 
-// SaveTemplate implements repository.Template.
-func (t *templateRepositoryImpl) SaveTemplate(ctx context.Context, req *do.Template) error {
+// CreateTemplate implements repository.Template.
+func (t *templateRepositoryImpl) CreateTemplate(ctx context.Context, req *do.Template) error {
 	namespace := middler.GetNamespace(ctx)
 	template := t.d.BizQuery(ctx, namespace).Template
-	req.WithNamespace(namespace)
-	wrappers := template.WithContext(ctx)
-	if strutil.IsNotEmpty(req.UID.String()) {
-		wrappers = wrappers.Where(template.UID.Eq(req.UID.Int64()), template.Namespace.Eq(namespace))
-		_, err := wrappers.Updates(req)
-		return err
-	}
-	return wrappers.Create(req)
+	return template.WithContext(ctx).Create(req)
+}
+
+func (t *templateRepositoryImpl) UpdateTemplate(ctx context.Context, req *do.Template) error {
+	namespace := middler.GetNamespace(ctx)
+	template := t.d.BizQuery(ctx, namespace).Template
+	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace), template.UID.Eq(req.UID.Int64()))
+	_, err := wrappers.Updates(req)
+	return err
 }
 
 // UpdateTemplateStatus implements repository.Template.

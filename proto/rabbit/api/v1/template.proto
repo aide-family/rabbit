@@ -50,7 +50,7 @@ message TemplateItem {
 	int64 uid = 1;
 	string name = 2;
 	rabbit.enum.TemplateAPP app = 3;
-	bytes jsonData = 4; // JSONData in Go code
+	string jsonData = 4; // JSONData in Go code
 	string createdAt = 5;
 	string updatedAt = 6;
 	rabbit.enum.GlobalStatus status = 7;
@@ -58,16 +58,22 @@ message TemplateItem {
 
 message CreateTemplateRequest {
 	string name = 1 [(buf.validate.field).required = true];
-	rabbit.enum.TemplateAPP app = 2 [(buf.validate.field).required = true];
-	bytes jsonData = 3 [(buf.validate.field).required = true];
+	rabbit.enum.TemplateAPP app = 2 [(buf.validate.field).cel = {
+		expression: "this in [rabbit.enum.TemplateAPP.TEMPLATE_APP_EMAIL, rabbit.enum.TemplateAPP.TEMPLATE_APP_SMS, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_OTHER, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_DINGTALK, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_WECHAT, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_FEISHU]",
+		message: "app must be in ['TEMPLATE_APP_EMAIL', 'TEMPLATE_APP_SMS', 'TEMPLATE_APP_WEBHOOK_OTHER', 'TEMPLATE_APP_WEBHOOK_DINGTALK', 'TEMPLATE_APP_WEBHOOK_WECHAT', 'TEMPLATE_APP_WEBHOOK_FEISHU']",
+	}];
+	string jsonData = 3 [(buf.validate.field).required = true];
 }
 message CreateTemplateReply {}
 
 message UpdateTemplateRequest {
 	int64 uid = 1 [(buf.validate.field).required = true];
 	string name = 2 [(buf.validate.field).required = true];
-	rabbit.enum.TemplateAPP app = 3 [(buf.validate.field).required = true];
-	bytes jsonData = 4 [(buf.validate.field).required = true];
+	rabbit.enum.TemplateAPP app = 3 [(buf.validate.field).cel = {
+		expression: "this in [rabbit.enum.TemplateAPP.TEMPLATE_APP_EMAIL, rabbit.enum.TemplateAPP.TEMPLATE_APP_SMS, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_OTHER, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_DINGTALK, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_WECHAT, rabbit.enum.TemplateAPP.TEMPLATE_APP_WEBHOOK_FEISHU]",
+		message: "app must be in ['TEMPLATE_APP_EMAIL', 'TEMPLATE_APP_SMS', 'TEMPLATE_APP_WEBHOOK_OTHER', 'TEMPLATE_APP_WEBHOOK_DINGTALK', 'TEMPLATE_APP_WEBHOOK_WECHAT', 'TEMPLATE_APP_WEBHOOK_FEISHU']",
+	}];
+	string jsonData = 4 [(buf.validate.field).required = true];
 }
 message UpdateTemplateReply {}
 

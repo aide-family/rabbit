@@ -1,6 +1,7 @@
 package bo
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -9,13 +10,14 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 // CreateTemplateBo 创建模板的 BO
 type CreateTemplateBo struct {
 	Name     string
 	App      vobj.TemplateApp
-	JSONData []byte
+	JSONData string
 }
 
 // ToDoTemplate 转换为 DO
@@ -23,17 +25,20 @@ func (c *CreateTemplateBo) ToDoTemplate() *do.Template {
 	return &do.Template{
 		Name:     c.Name,
 		App:      c.App,
-		JSONData: c.JSONData,
+		JSONData: json.RawMessage(c.JSONData),
 	}
 }
 
 // NewCreateTemplateBo 从 API 请求创建 BO
-func NewCreateTemplateBo(req *apiv1.CreateTemplateRequest) *CreateTemplateBo {
+func NewCreateTemplateBo(req *apiv1.CreateTemplateRequest) (*CreateTemplateBo, error) {
+	if !json.Valid([]byte(req.JsonData)) {
+		return nil, merr.ErrorParams("invalid json data")
+	}
 	return &CreateTemplateBo{
 		Name:     req.Name,
 		App:      vobj.TemplateApp(req.App),
 		JSONData: req.JsonData,
-	}
+	}, nil
 }
 
 // UpdateTemplateBo 更新模板的 BO
@@ -41,7 +46,7 @@ type UpdateTemplateBo struct {
 	UID      snowflake.ID
 	Name     string
 	App      vobj.TemplateApp
-	JSONData []byte
+	JSONData string
 }
 
 // ToDoTemplate 转换为 DO
@@ -49,20 +54,23 @@ func (u *UpdateTemplateBo) ToDoTemplate() *do.Template {
 	template := &do.Template{
 		Name:     u.Name,
 		App:      u.App,
-		JSONData: u.JSONData,
+		JSONData: json.RawMessage(u.JSONData),
 	}
 	template.WithUID(u.UID)
 	return template
 }
 
 // NewUpdateTemplateBo 从 API 请求创建 BO
-func NewUpdateTemplateBo(req *apiv1.UpdateTemplateRequest) *UpdateTemplateBo {
+func NewUpdateTemplateBo(req *apiv1.UpdateTemplateRequest) (*UpdateTemplateBo, error) {
+	if !json.Valid([]byte(req.JsonData)) {
+		return nil, merr.ErrorParams("invalid json data")
+	}
 	return &UpdateTemplateBo{
 		UID:      snowflake.ParseInt64(req.Uid),
 		Name:     req.Name,
 		App:      vobj.TemplateApp(req.App),
 		JSONData: req.JsonData,
-	}
+	}, nil
 }
 
 // UpdateTemplateStatusBo 更新模板状态的 BO
@@ -84,7 +92,7 @@ type TemplateItemBo struct {
 	UID       snowflake.ID
 	Name      string
 	App       vobj.TemplateApp
-	JSONData  []byte
+	JSONData  string
 	Status    vobj.GlobalStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -96,7 +104,7 @@ func NewTemplateItemBo(doTemplate *do.Template) *TemplateItemBo {
 		UID:       doTemplate.UID,
 		Name:      doTemplate.Name,
 		App:       doTemplate.App,
-		JSONData:  doTemplate.JSONData,
+		JSONData:  string(doTemplate.JSONData),
 		Status:    doTemplate.Status,
 		CreatedAt: doTemplate.CreatedAt,
 		UpdatedAt: doTemplate.UpdatedAt,
