@@ -8,6 +8,7 @@ import (
 
 	"github.com/aide-family/magicbox/safety"
 	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/transport"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -44,32 +45,35 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 	bus.senders.Set(vobj.MessageTypeWebhook, sender.NewWebhookSender(helper))
 
 	secret := bc.GetJwt().GetSecret()
-	for _, clusterConfig := range clustersConfig {
-		protocol := clusterConfig.GetProtocol()
-		opts := []connect.InitOption{
-			connect.WithProtocol(protocol.String()),
-			connect.WithDiscovery(d.Registry()),
-			connect.WithSecret(secret),
-		}
-		switch protocol {
-		case config.ClusterConfig_GRPC:
-			grpcClient, err := connect.InitGRPCClient(clusterConfig, opts...)
-			if err != nil {
-				helper.Errorw("msg", "create GRPC client failed", "error", err)
-				continue
+	go func() {
+		time.Sleep(5 * time.Second)
+		for _, clusterConfig := range clustersConfig {
+			protocol := clusterConfig.GetProtocol()
+			opts := []connect.InitOption{
+				connect.WithProtocol(protocol.String()),
+				connect.WithDiscovery(d.Registry()),
+				connect.WithSecret(secret),
 			}
-			d.AppendClose("grpcClient."+clusterConfig.GetName(), func() error { return grpcClient.Close() })
-			bus.clusters = append(bus.clusters, sender.NewClusterSender(grpcClient, nil, protocol))
-		case config.ClusterConfig_HTTP:
-			httpClient, err := connect.InitHTTPClient(clusterConfig, opts...)
-			if err != nil {
-				helper.Errorw("msg", "create HTTP client failed", "error", err)
-				continue
+			switch protocol {
+			case config.ClusterConfig_GRPC:
+				grpcClient, err := connect.InitGRPCClient(clusterConfig, opts...)
+				if err != nil {
+					helper.Errorw("msg", "create GRPC client failed", "error", err)
+					continue
+				}
+				d.AppendClose("grpcClient."+clusterConfig.GetName(), func() error { return grpcClient.Close() })
+				bus.clusters = append(bus.clusters, sender.NewClusterSender(grpcClient, nil, protocol))
+			case config.ClusterConfig_HTTP:
+				httpClient, err := connect.InitHTTPClient(clusterConfig, opts...)
+				if err != nil {
+					helper.Errorw("msg", "create HTTP client failed", "error", err)
+					continue
+				}
+				d.AppendClose("httpClient."+clusterConfig.GetName(), func() error { return httpClient.Close() })
+				bus.clusters = append(bus.clusters, sender.NewClusterSender(nil, httpClient, protocol))
 			}
-			d.AppendClose("httpClient."+clusterConfig.GetName(), func() error { return httpClient.Close() })
-			bus.clusters = append(bus.clusters, sender.NewClusterSender(nil, httpClient, protocol))
 		}
-	}
+	}()
 
 	return bus
 }
@@ -127,6 +131,13 @@ func (m *messageBusImpl) worker(id int) {
 func (m *messageBusImpl) waitProcessMessage(ctx context.Context, message *do.MessageLog) {
 	req := &apiv1.SendMessageRequest{
 		Uid: message.UID.Int64(),
+	}
+	tr, ok := transport.FromServerContext(ctx)
+	if ok {
+		fmt.Println("================================================")
+		fmt.Println("keys: ", tr.RequestHeader().Keys())
+		fmt.Println("header: ", tr.RequestHeader())
+		fmt.Println("================================================")
 	}
 	for _, cluster := range m.clusters {
 		reply, err := cluster.SendMessage(ctx, req)
@@ -198,7 +209,7 @@ func (m *messageBusImpl) processMessage(ctx context.Context, message *do.Message
 	sender, ok := m.senders.Get(senderType)
 	if !ok {
 		m.helper.Errorw("msg", "sender not found", "type", senderType, "uid", message.UID)
-		if err := m.messageLogRepo.UpdateMessageLogStatus(ctx, message.UID, vobj.MessageStatusFailed); err != nil {
+		if _, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, message.UID, vobj.MessageStatusSending, vobj.MessageStatusFailed); err != nil {
 			m.helper.Errorw("msg", "update message status to failed failed", "error", err, "uid", message.UID)
 		}
 		return merr.ErrorParams("sender not found")

@@ -6,7 +6,7 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/server/middler"
-	"github.com/aide-family/magicbox/strutil"
+	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
@@ -15,6 +15,7 @@ import (
 	ggrpc "google.golang.org/grpc"
 
 	"github.com/aide-family/rabbit/pkg/merr"
+	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
 func InitGRPCClient(c InitConfig, opts ...InitOption) (*ggrpc.ClientConn, error) {
@@ -29,9 +30,7 @@ func InitGRPCClient(c InitConfig, opts ...InitOption) (*ggrpc.ClientConn, error)
 		recovery.Recovery(),
 		middler.Validate(),
 		metadata.Client(),
-	}
-	if strutil.IsNotEmpty(cfg.secret) {
-		middlewares = append(middlewares, getJwtClientMiddleware(cfg.secret, cfg.claim))
+		rabbitMiddler.JwtClient(cnst.HTTPHeaderAuth, cnst.HTTPHeaderXNamespace),
 	}
 
 	clientOpts := []grpc.ClientOption{

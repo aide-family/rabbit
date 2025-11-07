@@ -3,12 +3,9 @@ package connect
 import (
 	"time"
 
-	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/p2c"
-	jwtv5 "github.com/golang-jwt/jwt/v5"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
@@ -95,15 +92,4 @@ func WithToken(token string) InitOption {
 		cfg.claim = claims
 		return nil
 	}
-}
-
-func getJwtClientMiddleware(secret string, claims *rabbitMiddler.JwtClaims) middleware.Middleware {
-	return jwt.Client(func(token *jwtv5.Token) (interface{}, error) {
-		return []byte(secret), nil
-	},
-		jwt.WithSigningMethod(jwtv5.SigningMethodHS256),
-		jwt.WithClaims(func() jwtv5.Claims {
-			return claims
-		}),
-	)
 }

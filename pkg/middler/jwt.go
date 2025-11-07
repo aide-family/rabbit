@@ -18,6 +18,24 @@ import (
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
+func JwtClient(headers ...string) middleware.Middleware {
+	return func(handler middleware.Handler) middleware.Handler {
+		return func(ctx context.Context, req any) (any, error) {
+			tr, ok := transport.FromServerContext(ctx)
+			if !ok {
+				return handler(ctx, req)
+			}
+
+			if clientContext, ok := transport.FromClientContext(ctx); ok {
+				for _, header := range headers {
+					clientContext.RequestHeader().Set(header, tr.RequestHeader().Get(header))
+				}
+			}
+			return handler(ctx, req)
+		}
+	}
+}
+
 func JwtServe(signKey string) middleware.Middleware {
 	return jwt.Server(
 		func(token *jwtv5.Token) (interface{}, error) {
@@ -43,8 +61,6 @@ type (
 	}
 
 	baseInfoKey struct{}
-
-	jwtTokenKey struct{}
 )
 
 func MustLogin() middleware.Middleware {
@@ -63,16 +79,17 @@ func MustLogin() middleware.Middleware {
 func BindJwtToken() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
-			header, ok := transport.FromServerContext(ctx)
+			tr, ok := transport.FromServerContext(ctx)
 			if !ok {
 				return nil, merr.ErrorUnauthorized("wrong context for middleware")
 			}
-			auths := strings.SplitN(header.RequestHeader().Get(cnst.HTTPHeaderAuth), " ", 2)
+			authToken := tr.RequestHeader().Get(cnst.HTTPHeaderAuth)
+			auths := strings.SplitN(tr.RequestHeader().Get(cnst.HTTPHeaderAuth), " ", 2)
 			if len(auths) != 2 || !strings.EqualFold(auths[0], cnst.HTTPHeaderBearerPrefix) {
 				return nil, merr.ErrorUnauthorized("token is invalid")
 			}
 
-			ctx = WithJwtToken(ctx, auths[1])
+			tr.RequestHeader().Set(cnst.MetadataGlobalKeyAuthorization, authToken)
 			return handler(ctx, req)
 		}
 	}
@@ -124,14 +141,6 @@ func GetBaseInfo(ctx context.Context) BaseInfo {
 		return BaseInfo{}
 	}
 	return baseInfo
-}
-
-func WithJwtToken(ctx context.Context, jwtToken string) context.Context {
-	return context.WithValue(ctx, jwtTokenKey{}, jwtToken)
-}
-
-func GetJwtToken(ctx context.Context) string {
-	return ctx.Value(jwtTokenKey{}).(string)
 }
 
 // NewJwtClaims new jwt claims

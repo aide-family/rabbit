@@ -4,6 +4,7 @@ package run
 import (
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
@@ -79,6 +80,7 @@ func newApp(d *data.Data, srvs server.Servers, helper *klog.Helper) (*kratos.App
 		kratos.Server(srvs...),
 		kratos.Version(hello.Version()),
 		kratos.ID(hello.ID()),
+		kratos.ID(strutil.RandomString(10)),
 		kratos.Name(hello.Name()),
 		kratos.Metadata(hello.Metadata()),
 	}

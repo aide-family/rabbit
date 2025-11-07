@@ -142,24 +142,6 @@ func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid snowfl
 
 	bizQuery := m.d.BizQueryWithTable(ctx, namespace, tableName)
 	messageLog := bizQuery.MessageLog
-	wrappers := messageLog.WithContext(ctx)
-	wheres := []gen.Condition{
-		messageLog.UID.Eq(uid.Int64()),
-		messageLog.Namespace.Eq(namespace),
-	}
-	wrappers = wrappers.Where(wheres...)
-	return wrappers.First()
-}
-
-// UpdateMessageLogStatus implements repository.MessageLog.
-func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, uid snowflake.ID, status vobj.MessageStatus) error {
-	namespace := middler.GetNamespace(ctx)
-	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
-	if _, ok := m.cache.Get(tableName); !ok && !do.HasTable(m.d.BizDB(ctx, namespace), tableName) {
-		return gorm.ErrRecordNotFound
-	}
-
-	messageLog := m.d.BizQueryWithTable(ctx, namespace, tableName).MessageLog
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
@@ -167,8 +149,7 @@ func (m *messageLogRepositoryImpl) UpdateMessageLogStatus(ctx context.Context, u
 		messageLogTable.Namespace.Eq(namespace),
 	}
 	wrappers = wrappers.Where(wheres...)
-	_, err := wrappers.Update(messageLogTable.Status, status)
-	return err
+	return wrappers.First()
 }
 
 // GetMessageLogWithLock implements repository.MessageLog.

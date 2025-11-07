@@ -2,6 +2,7 @@ package middler
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
@@ -25,18 +26,30 @@ func MustNamespace() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
 			var namespace string
-			if tr, ok := transport.FromServerContext(ctx); ok {
-				namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
-				ctx = WithNamespace(ctx, namespace)
+			tr, ok := transport.FromServerContext(ctx)
+			if !ok {
+				return handler(ctx, req)
 			}
+
+			fmt.Println(tr.RequestHeader().Keys())
+			fmt.Println(tr.RequestHeader())
+			namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
+			ctx = WithNamespace(ctx, namespace)
+			tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
+
 			if strutil.IsNotEmpty(namespace) {
 				return handler(ctx, req)
 			}
 
-			if metadata, ok := metadata.FromServerContext(ctx); ok {
-				namespace = metadata.Get(cnst.MetadataGlobalKeyNamespace)
+			if md, ok := metadata.FromServerContext(ctx); ok {
+				fmt.Println("================================================")
+				fmt.Println("metadata: ", md)
+				fmt.Println("================================================")
+				namespace = md.Get(cnst.MetadataGlobalKeyNamespace)
 				ctx = WithNamespace(ctx, namespace)
+				tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
 			}
+
 			if strutil.IsNotEmpty(namespace) {
 				return handler(ctx, req)
 			}

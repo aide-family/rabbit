@@ -38,5 +38,9 @@ func (m *Message) SendMessage(ctx context.Context, uid snowflake.ID) error {
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("get message log failed")
 	}
+	if messageLog.Status.IsSent() || messageLog.Status.IsSending() || messageLog.Status.IsCancelled() {
+		m.helper.Warnw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)
+		return nil
+	}
 	return m.messageBus.SendMessage(ctx, messageLog)
 }
