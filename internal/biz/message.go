@@ -42,5 +42,5 @@ func (m *Message) SendMessage(ctx context.Context, uid snowflake.ID) error {
 		m.helper.Warnw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)
 		return nil
 	}
-	return m.messageBus.SendMessage(ctx, messageLog)
+	return m.messageBus.SendMessage(ctx, uid)
 }

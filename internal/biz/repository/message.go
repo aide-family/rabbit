@@ -3,12 +3,12 @@ package repository
 import (
 	"context"
 
-	"github.com/aide-family/rabbit/internal/biz/do"
+	"github.com/bwmarrin/snowflake"
 )
 
 type MessageBus interface {
-	AppendMessage(ctx context.Context, message *do.MessageLog) error
-	SendMessage(ctx context.Context, message *do.MessageLog) error
+	AppendMessage(ctx context.Context, messageUID snowflake.ID) error
+	SendMessage(ctx context.Context, messageUID snowflake.ID) error
 	Stop()
 	Start()
 }

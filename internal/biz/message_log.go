@@ -61,7 +61,7 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	if messageLog.Status.IsSent() || messageLog.Status.IsSending() || messageLog.Status.IsCancelled() {
 		return nil
 	}
-	if err := m.messageBus.AppendMessage(ctx, messageLog); err != nil {
+	if err := m.messageBus.AppendMessage(ctx, uid); err != nil {
 		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("append message failed")
 	}

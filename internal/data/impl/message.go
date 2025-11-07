@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aide-family/magicbox/safety"
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"gorm.io/gorm"
@@ -79,8 +80,8 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 }
 
 type messageTask struct {
-	ctx     context.Context
-	message *do.MessageLog
+	ctx        context.Context
+	messageUID snowflake.ID
 }
 
 type messageBusImpl struct {
@@ -120,7 +121,7 @@ func (m *messageBusImpl) worker(id int) {
 				m.helper.Infow("msg", "message bus worker stopped", "worker", id)
 				return
 			}
-			m.waitProcessMessage(task.ctx, task.message)
+			m.waitProcessMessage(task.ctx, task.messageUID)
 		case <-m.stopChan:
 			m.helper.Infow("msg", "message bus worker stopped", "worker", id)
 			return
@@ -128,9 +129,9 @@ func (m *messageBusImpl) worker(id int) {
 	}
 }
 
-func (m *messageBusImpl) waitProcessMessage(ctx context.Context, message *do.MessageLog) {
+func (m *messageBusImpl) waitProcessMessage(ctx context.Context, messageUID snowflake.ID) {
 	req := &apiv1.SendMessageRequest{
-		Uid: message.UID.Int64(),
+		Uid: messageUID.Int64(),
 	}
 	tr, ok := transport.FromServerContext(ctx)
 	if ok {
@@ -142,17 +143,17 @@ func (m *messageBusImpl) waitProcessMessage(ctx context.Context, message *do.Mes
 	for _, cluster := range m.clusters {
 		reply, err := cluster.SendMessage(ctx, req)
 		if err != nil {
-			m.helper.Errorw("msg", "send message failed", "error", err, "uid", message.UID, "reply", reply)
+			m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID, "reply", reply)
 			continue
 		}
 		return
 	}
-	if err := m.SendMessage(ctx, message); err != nil {
-		m.helper.Errorw("msg", "send message failed", "error", err, "uid", message.UID)
+	if err := m.SendMessage(ctx, messageUID); err != nil {
+		m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID)
 	}
 }
 
-func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog) error {
+func (m *messageBusImpl) SendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	// 使用分布式锁控制并发，同一时间只能有一个服务或者协程能够访问此UID的消息
 	namespace := middler.GetNamespace(ctx)
 	// 在事务中使用 SELECT FOR UPDATE 获取分布式锁
@@ -160,7 +161,7 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog
 	err := m.d.BizDB(ctx, namespace).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		transactionCtx := data.WithBizTransaction(ctx, tx, namespace)
 		// 使用 SELECT FOR UPDATE 获取行锁，确保同一时间只有一个节点能处理该消息
-		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, message.UID)
+		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, messageUID)
 		if err != nil {
 			return err
 		}
@@ -172,7 +173,7 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, message *do.MessageLog
 
 		// 使用 CAS 操作原子性地更新状态为发送中
 		// 只有当前状态为待处理或失败时才更新为发送中
-		result, err := m.messageLogRepo.UpdateMessageLogStatusIf(transactionCtx, message.UID, vobj.MessageStatusPending, vobj.MessageStatusSending)
+		result, err := m.messageLogRepo.UpdateMessageLogStatusIf(transactionCtx, messageUID, vobj.MessageStatusPending, vobj.MessageStatusSending)
 		if err != nil {
 			return err
 		}
@@ -241,14 +242,14 @@ func (m *messageBusImpl) processMessage(ctx context.Context, message *do.Message
 }
 
 // AppendMessage implements repository.MessageBus.
-func (m *messageBusImpl) AppendMessage(ctx context.Context, message *do.MessageLog) error {
+func (m *messageBusImpl) AppendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	// 将消息放入channel异步处理
 	select {
-	case m.messageChan <- &messageTask{ctx: safety.CopyValueCtx(ctx), message: message}:
+	case m.messageChan <- &messageTask{ctx: safety.CopyValueCtx(ctx), messageUID: messageUID}:
 		return nil
 	default:
 		// channel满了,返回错误
-		m.helper.Errorw("msg", "message channel is full", "uid", message.UID)
+		m.helper.Errorw("msg", "message channel is full", "uid", messageUID)
 		return fmt.Errorf("message channel is full")
 	}
 }

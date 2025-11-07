@@ -44,21 +44,21 @@ func (e *Email) AppendEmailMessage(ctx context.Context, req *bo.SendEmailBo) err
 			return merr.ErrorParams("email config not found")
 		}
 		e.helper.Errorw("msg", "get email config failed", "error", err)
-		return merr.ErrorInternal("get email config failed")
+		return merr.ErrorInternal("get email config failed").WithCause(err)
 	}
 	messageLog, err := req.ToMessageLog(emailConfig)
 	if err != nil {
 		e.helper.Errorw("msg", "create message log failed", "error", err)
-		return merr.ErrorInternal("generate message log failed")
+		return merr.ErrorInternal("generate message log failed").WithCause(err)
 	}
 	if err := e.messageLogRepo.CreateMessageLog(ctx, messageLog); err != nil {
 		e.helper.Errorw("msg", "create message log failed", "error", err)
-		return merr.ErrorInternal("create message log failed")
+		return merr.ErrorInternal("create message log failed").WithCause(err)
 	}
 
-	if err := e.messageBus.AppendMessage(ctx, messageLog); err != nil {
-		e.helper.Errorw("msg", "append email message failed", "error", err)
-		return merr.ErrorInternal("append email message failed")
+	if err := e.messageBus.AppendMessage(ctx, messageLog.UID); err != nil {
+		e.helper.Errorw("msg", "append email message failed", "error", err, "uid", messageLog.UID)
+		return merr.ErrorInternal("append email message failed").WithCause(err)
 	}
 
 	return nil
