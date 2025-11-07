@@ -7,8 +7,6 @@ import (
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/p2c"
 	"google.golang.org/protobuf/types/known/durationpb"
-
-	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
 func init() {
@@ -32,9 +30,7 @@ type initConfig struct {
 	protocol    string
 	timeout     time.Duration
 	nodeVersion string
-	secret      string
 	discovery   registry.Discovery
-	claim       *rabbitMiddler.JwtClaims
 }
 
 func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
@@ -43,7 +39,6 @@ func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
 		endpoint: config.GetEndpoint(),
 		protocol: ProtocolGRPC,
 		timeout:  config.GetTimeout().AsDuration(),
-		claim:    &rabbitMiddler.JwtClaims{},
 	}
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
@@ -69,27 +64,9 @@ func WithDiscovery(discovery registry.Discovery) InitOption {
 	}
 }
 
-func WithSecret(secret string) InitOption {
-	return func(cfg *initConfig) error {
-		cfg.secret = secret
-		return nil
-	}
-}
-
 func WithProtocol(protocol string) InitOption {
 	return func(cfg *initConfig) error {
 		cfg.protocol = protocol
-		return nil
-	}
-}
-
-func WithToken(token string) InitOption {
-	return func(cfg *initConfig) error {
-		claims, err := rabbitMiddler.ParseClaimsFromToken(cfg.secret, token)
-		if err != nil {
-			return err
-		}
-		cfg.claim = claims
 		return nil
 	}
 }

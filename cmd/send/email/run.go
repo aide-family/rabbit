@@ -38,14 +38,15 @@ func run(_ *cobra.Command, _ []string) {
 	var discovery connect.Registry
 	switch registryType := bc.GetRegistryType(); registryType {
 	case config.RegistryType_ETCD:
-		if pointer.IsNotNil(bc.GetEtcd()) {
+		etcdConfig := bc.GetEtcd()
+		if pointer.IsNil(etcdConfig) {
 			flags.Helper.Errorw("msg", "etcd config is not found")
 			return
 		}
 		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   bc.GetEtcd().GetEndpoints(),
-			Username:    bc.GetEtcd().GetUsername(),
-			Password:    bc.GetEtcd().GetPassword(),
+			Endpoints:   etcdConfig.GetEndpoints(),
+			Username:    etcdConfig.GetUsername(),
+			Password:    etcdConfig.GetPassword(),
 			DialTimeout: 10 * time.Second,
 		})
 		if err != nil {
@@ -54,20 +55,21 @@ func run(_ *cobra.Command, _ []string) {
 		}
 		discovery = etcd.New(client)
 	case config.RegistryType_KUBERNETES:
-		if pointer.IsNotNil(bc.GetKubernetes()) {
+		kubeConfig := bc.GetKubernetes()
+		if pointer.IsNil(kubeConfig) {
 			flags.Helper.Errorw("msg", "kubernetes config is not found")
 			return
 		}
-		kubeClient, err := connect.NewKubernetesClientSet(bc.GetKubernetes().GetKubeConfig())
+		kubeClient, err := connect.NewKubernetesClientSet(kubeConfig.GetKubeConfig())
 		if err != nil {
 			flags.Helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
 			return
 		}
-		discovery = kuberegistry.NewRegistry(kubeClient, bc.GetKubernetes().GetNamespace())
+		discovery = kuberegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
 	}
 
 	for _, cluster := range bc.GetClusters() {
-		sender, err := NewSender(cluster, discovery, bc.GetJwtToken(), flags.Helper)
+		sender, err := NewSender(cluster, bc.GetJwtToken(), discovery, flags.Helper)
 		if err != nil {
 			continue
 		}
@@ -75,7 +77,7 @@ func run(_ *cobra.Command, _ []string) {
 		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
 			flags.Helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
-			break
+			return
 		}
 
 		flags.Helper.Infow("msg", "send email success", "cluster", name, "protocol", protocol, "reply", reply)
@@ -90,6 +92,7 @@ type Sender interface {
 }
 
 type sender struct {
+	jwtToken string
 	helper   *klog.Helper
 	name     string
 	protocol config.ClusterConfig_Protocol
@@ -101,15 +104,19 @@ type sender struct {
 // SendEmail implements Sender.
 func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
 	defer s.close()
-	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	ctx = metadata.AppendToClientContext(ctx, cnst.MetadataGlobalKeyNamespace, flags.Namespace)
+	ctx = metadata.NewClientContext(ctx, metadata.Metadata{
+		cnst.MetadataGlobalKeyAuthorization: {s.jwtToken},
+		cnst.MetadataGlobalKeyNamespace:     {flags.Namespace},
+	})
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster *config.ClusterConfig, discovery connect.Registry, token string, helper *klog.Helper) (Sender, error) {
-	name, protocol, secret := cluster.GetName(), cluster.GetProtocol(), cluster.GetSecret()
+func NewSender(cluster *config.ClusterConfig, jwtToken string, discovery connect.Registry, helper *klog.Helper) (Sender, error) {
+	name, protocol := cluster.GetName(), cluster.GetProtocol()
 	newSender := &sender{
+		jwtToken: jwtToken,
 		helper:   helper,
 		name:     name,
 		protocol: protocol,
@@ -122,8 +129,6 @@ func NewSender(cluster *config.ClusterConfig, discovery connect.Registry, token 
 	}
 	opts := []connect.InitOption{
 		connect.WithProtocol(newSender.protocol.String()),
-		connect.WithSecret(secret),
-		connect.WithToken(token),
 		connect.WithDiscovery(discovery),
 	}
 	switch newSender.protocol {

@@ -9,6 +9,7 @@ import (
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
+	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/transport"
@@ -21,16 +22,22 @@ import (
 func JwtClient(headers ...string) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
-			tr, ok := transport.FromServerContext(ctx)
+			clientContext, ok := transport.FromClientContext(ctx)
 			if !ok {
 				return handler(ctx, req)
 			}
-
-			if clientContext, ok := transport.FromClientContext(ctx); ok {
+			if tr, ok := transport.FromServerContext(ctx); ok {
+				clientContext.RequestHeader().Set(cnst.HTTPHeaderAuthorization, tr.RequestHeader().Get(cnst.HTTPHeaderAuthorization))
+				clientContext.RequestHeader().Set(cnst.HTTPHeaderXNamespace, tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace))
 				for _, header := range headers {
 					clientContext.RequestHeader().Set(header, tr.RequestHeader().Get(header))
 				}
 			}
+			if md, ok := metadata.FromClientContext(ctx); ok {
+				clientContext.RequestHeader().Set(cnst.HTTPHeaderAuthorization, md.Get(cnst.MetadataGlobalKeyAuthorization))
+				clientContext.RequestHeader().Set(cnst.HTTPHeaderXNamespace, md.Get(cnst.MetadataGlobalKeyNamespace))
+			}
+
 			return handler(ctx, req)
 		}
 	}
@@ -83,8 +90,8 @@ func BindJwtToken() middleware.Middleware {
 			if !ok {
 				return nil, merr.ErrorUnauthorized("wrong context for middleware")
 			}
-			authToken := tr.RequestHeader().Get(cnst.HTTPHeaderAuth)
-			auths := strings.SplitN(tr.RequestHeader().Get(cnst.HTTPHeaderAuth), " ", 2)
+			authToken := tr.RequestHeader().Get(cnst.HTTPHeaderAuthorization)
+			auths := strings.SplitN(tr.RequestHeader().Get(cnst.HTTPHeaderAuthorization), " ", 2)
 			if len(auths) != 2 || !strings.EqualFold(auths[0], cnst.HTTPHeaderBearerPrefix) {
 				return nil, merr.ErrorUnauthorized("token is invalid")
 			}

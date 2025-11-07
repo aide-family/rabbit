@@ -45,7 +45,6 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 	bus.senders.Set(vobj.MessageTypeEmail, sender.NewEmailSender(helper))
 	bus.senders.Set(vobj.MessageTypeWebhook, sender.NewWebhookSender(helper))
 
-	secret := bc.GetJwt().GetSecret()
 	go func() {
 		time.Sleep(5 * time.Second)
 		for _, clusterConfig := range clustersConfig {
@@ -53,7 +52,6 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 			opts := []connect.InitOption{
 				connect.WithProtocol(protocol.String()),
 				connect.WithDiscovery(d.Registry()),
-				connect.WithSecret(secret),
 			}
 			switch protocol {
 			case config.ClusterConfig_GRPC:
