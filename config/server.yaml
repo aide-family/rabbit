@@ -1,6 +1,7 @@
 environment: DEV
 server:
   name: moon.rabbit
+  useRandomID: true
   metadata:
     tag: rabbit
   # http:

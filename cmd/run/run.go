@@ -50,6 +50,9 @@ func runServer(_ *cobra.Command, _ []string) {
 		hello.WithEnv(bc.GetEnvironment().String()),
 		hello.WithMetadata(metadata),
 	}
+	if serverConf.GetUseRandomID() {
+		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
+	}
 	hello.SetEnvWithOption(envOpts...)
 
 	helper := klog.NewHelper(klog.With(flags.Helper.Logger(),
@@ -80,7 +83,6 @@ func newApp(d *data.Data, srvs server.Servers, helper *klog.Helper) (*kratos.App
 		kratos.Server(srvs...),
 		kratos.Version(hello.Version()),
 		kratos.ID(hello.ID()),
-		kratos.ID(strutil.RandomString(10)),
 		kratos.Name(hello.Name()),
 		kratos.Metadata(hello.Metadata()),
 	}

@@ -30,11 +30,11 @@ type BaseModel struct {
 	CreatedAt time.Time      `gorm:"column:created_at;type:datetime;not null;"`
 	UpdatedAt time.Time      `gorm:"column:updated_at;type:datetime;not null;"`
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;type:datetime;index"`
-	Creator   string         `gorm:"column:creator;type:varchar(36);not null;index"`
+	Creator   snowflake.ID   `gorm:"column:creator;type:bigint(20) unsigned;not null;index"`
 }
 
 func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
-	if strutil.IsEmpty(b.Creator) {
+	if b.Creator == 0 {
 		b.WithCreator(tx.Statement.Context)
 	}
 

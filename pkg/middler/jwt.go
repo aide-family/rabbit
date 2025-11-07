@@ -9,6 +9,7 @@ import (
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
+	"github.com/bwmarrin/snowflake"
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
@@ -27,15 +28,30 @@ func JwtClient(headers ...string) middleware.Middleware {
 				return handler(ctx, req)
 			}
 			if tr, ok := transport.FromServerContext(ctx); ok {
-				clientContext.RequestHeader().Set(cnst.HTTPHeaderAuthorization, tr.RequestHeader().Get(cnst.HTTPHeaderAuthorization))
-				clientContext.RequestHeader().Set(cnst.HTTPHeaderXNamespace, tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace))
+				if auth := tr.RequestHeader().Get(cnst.HTTPHeaderAuthorization); strutil.IsNotEmpty(auth) {
+					clientContext.RequestHeader().Set(cnst.HTTPHeaderAuthorization, auth)
+				}
+				if namespace := tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace); strutil.IsNotEmpty(namespace) {
+					clientContext.RequestHeader().Set(cnst.HTTPHeaderXNamespace, namespace)
+				}
 				for _, header := range headers {
-					clientContext.RequestHeader().Set(header, tr.RequestHeader().Get(header))
+					if value := tr.RequestHeader().Get(header); strutil.IsNotEmpty(value) {
+						clientContext.RequestHeader().Set(header, value)
+					}
 				}
 			}
 			if md, ok := metadata.FromClientContext(ctx); ok {
-				clientContext.RequestHeader().Set(cnst.HTTPHeaderAuthorization, md.Get(cnst.MetadataGlobalKeyAuthorization))
-				clientContext.RequestHeader().Set(cnst.HTTPHeaderXNamespace, md.Get(cnst.MetadataGlobalKeyNamespace))
+				if auth := md.Get(cnst.MetadataGlobalKeyAuthorization); strutil.IsNotEmpty(auth) {
+					clientContext.RequestHeader().Set(cnst.HTTPHeaderAuthorization, auth)
+				}
+				if namespace := md.Get(cnst.MetadataGlobalKeyNamespace); strutil.IsNotEmpty(namespace) {
+					clientContext.RequestHeader().Set(cnst.HTTPHeaderXNamespace, namespace)
+				}
+				for _, header := range headers {
+					if value := md.Get(header); strutil.IsNotEmpty(value) {
+						clientContext.RequestHeader().Set(header, value)
+					}
+				}
 			}
 
 			return handler(ctx, req)
@@ -57,8 +73,8 @@ func JwtServe(signKey string) middleware.Middleware {
 
 type (
 	BaseInfo struct {
-		UserID   string `json:"userId"`
-		Username string `json:"username"`
+		UserID   snowflake.ID `json:"userId"`
+		Username string       `json:"username"`
 	}
 
 	JwtClaims struct {

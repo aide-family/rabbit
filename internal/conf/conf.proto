@@ -47,6 +47,7 @@ message Server {
 	map<string, string> metadata = 2;
 	HTTPServer http = 3;
 	GRPCServer grpc = 4;
+	bool useRandomID = 5;
 }
 
 message GlobalEmail {
