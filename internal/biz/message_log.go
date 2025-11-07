@@ -8,12 +8,18 @@ import (
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
+	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
-func NewMessageLog(messageLogRepo repository.MessageLog, helper *klog.Helper) *MessageLog {
+func NewMessageLog(
+	messageLogRepo repository.MessageLog,
+	messageBus repository.MessageBus,
+	helper *klog.Helper,
+) *MessageLog {
 	return &MessageLog{
 		messageLogRepo: messageLogRepo,
+		messageBus:     messageBus,
 		helper:         klog.NewHelper(klog.With(helper.Logger(), "biz", "messageLog")),
 	}
 }
@@ -21,6 +27,7 @@ func NewMessageLog(messageLogRepo repository.MessageLog, helper *klog.Helper) *M
 type MessageLog struct {
 	helper         *klog.Helper
 	messageLogRepo repository.MessageLog
+	messageBus     repository.MessageBus
 }
 
 func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*bo.MessageLogItemBo], error) {
@@ -46,9 +53,38 @@ func (m *MessageLog) GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.M
 }
 
 func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
+	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, uid)
+	if err != nil {
+		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
+		return merr.ErrorInternal("get message log failed")
+	}
+	if messageLog.Status.IsSent() || messageLog.Status.IsSending() || messageLog.Status.IsCancelled() {
+		return nil
+	}
+	if err := m.messageBus.AppendMessage(ctx, messageLog); err != nil {
+		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
+		return merr.ErrorInternal("append message failed")
+	}
 	return nil
 }
 
 func (m *MessageLog) CancelMessage(ctx context.Context, uid snowflake.ID) error {
+	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, uid)
+	if err != nil {
+		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
+		return merr.ErrorInternal("get message log failed")
+	}
+	if messageLog.Status.IsSent() || messageLog.Status.IsCancelled() {
+		return merr.ErrorNotFound("message already sent or cancelled")
+	}
+	success, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, uid, messageLog.Status, vobj.MessageStatusCancelled)
+	if err != nil {
+		m.helper.Errorw("msg", "update message status to cancelled failed", "error", err, "uid", uid)
+		return merr.ErrorInternal("cancel message failed")
+	}
+	if !success {
+		m.helper.Warnw("msg", "message status is not sending, message cancelled failed", "uid", uid)
+		return merr.ErrorNotFound("cancel message failed, the status of this message has changed.")
+	}
 	return nil
 }
