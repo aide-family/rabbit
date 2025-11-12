@@ -9,7 +9,6 @@ import (
 	"github.com/aide-family/magicbox/safety"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/transport"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -130,13 +129,6 @@ func (m *messageBusImpl) worker(id int) {
 func (m *messageBusImpl) waitProcessMessage(ctx context.Context, messageUID snowflake.ID) {
 	req := &apiv1.SendMessageRequest{
 		Uid: messageUID.Int64(),
-	}
-	tr, ok := transport.FromServerContext(ctx)
-	if ok {
-		fmt.Println("================================================")
-		fmt.Println("keys: ", tr.RequestHeader().Keys())
-		fmt.Println("header: ", tr.RequestHeader())
-		fmt.Println("================================================")
 	}
 	for _, cluster := range m.clusters {
 		reply, err := cluster.SendMessage(ctx, req)

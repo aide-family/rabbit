@@ -82,19 +82,22 @@ func (e *emailSender) getSender(emailConfigBytes []byte) (message.Sender, error)
 	}
 	sendHash := strutil.SHA256(string(emailConfigBytes))
 	hash, ok := e.sendHashes.Get(emailConfig.UID.Int64())
-	if !ok || !strings.EqualFold(sendHash, hash) {
-		sender, err := message.NewSender(email.SenderDriver(&emailConfig))
-		if err != nil {
-			e.helper.Errorw("msg", "create email sender failed", "error", err)
-			return nil, merr.ErrorInternal("create email sender failed")
+	if ok && strings.EqualFold(sendHash, hash) {
+		sender, ok := e.senders.Get(emailConfig.UID.Int64())
+		if !ok {
+			e.helper.Errorw("msg", "email sender not found", "uid", emailConfig.UID)
+			return nil, merr.ErrorParams("email sender not found")
 		}
-		e.senders.Set(emailConfig.UID.Int64(), sender)
-		e.sendHashes.Set(emailConfig.UID.Int64(), sendHash)
+		return sender, nil
 	}
-	sender, ok := e.senders.Get(emailConfig.UID.Int64())
-	if !ok {
-		e.helper.Errorw("msg", "email sender not found", "uid", emailConfig.UID)
-		return nil, merr.ErrorParams("email sender not found")
+
+	driver := email.SenderDriver(&emailConfig)
+	sender, err := message.NewSender(driver)
+	if err != nil {
+		e.helper.Errorw("msg", "create email sender failed", "error", err)
+		return nil, merr.ErrorInternal("create email sender failed").WithCause(err)
 	}
+	e.senders.Set(emailConfig.UID.Int64(), sender)
+	e.sendHashes.Set(emailConfig.UID.Int64(), sendHash)
 	return sender, nil
 }

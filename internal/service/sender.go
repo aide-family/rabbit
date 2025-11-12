@@ -9,9 +9,10 @@ import (
 	"github.com/bwmarrin/snowflake"
 )
 
-func NewSenderService(emailBiz *biz.Email, messageBiz *biz.Message) *SenderService {
+func NewSenderService(emailBiz *biz.Email, webhookBiz *biz.Webhook, messageBiz *biz.Message) *SenderService {
 	return &SenderService{
 		emailBiz:   emailBiz,
+		webhookBiz: webhookBiz,
 		messageBiz: messageBiz,
 	}
 }
@@ -20,6 +21,7 @@ type SenderService struct {
 	apiv1.UnimplementedSenderServer
 
 	emailBiz   *biz.Email
+	webhookBiz *biz.Webhook
 	messageBiz *biz.Message
 }
 
@@ -50,9 +52,20 @@ func (s *SenderService) SendEmailWithTemplate(ctx context.Context, req *apiv1.Se
 }
 
 func (s *SenderService) SendWebhook(ctx context.Context, req *apiv1.SendWebhookRequest) (*apiv1.SendReply, error) {
+	sendWebhookBo := bo.NewSendWebhookBo(req)
+	if err := s.webhookBiz.AppendWebhookMessage(ctx, sendWebhookBo); err != nil {
+		return nil, err
+	}
 	return &apiv1.SendReply{}, nil
 }
 
 func (s *SenderService) SendWebhookWithTemplate(ctx context.Context, req *apiv1.SendWebhookWithTemplateRequest) (*apiv1.SendReply, error) {
+	sendWebhookWithTemplateBo, err := bo.NewSendWebhookWithTemplateBo(req)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.webhookBiz.AppendWebhookMessageWithTemplate(ctx, sendWebhookWithTemplateBo); err != nil {
+		return nil, err
+	}
 	return &apiv1.SendReply{}, nil
 }

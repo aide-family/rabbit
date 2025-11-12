@@ -1,9 +1,12 @@
 package bo
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/aide-family/magicbox/message"
 	"github.com/aide-family/magicbox/safety"
+	"github.com/aide-family/magicbox/serialize"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 
@@ -11,6 +14,7 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type CreateWebhookBo struct {
@@ -158,5 +162,125 @@ func ToAPIV1ListWebhookReply(pageResponseBo *PageResponseBo[*WebhookItemBo]) *ap
 		Total:    pageResponseBo.GetTotal(),
 		Page:     pageResponseBo.GetPage(),
 		PageSize: pageResponseBo.GetPageSize(),
+	}
+}
+
+type SendWebhookBo struct {
+	UID  snowflake.ID `json:"uid"`
+	Data string       `json:"data"`
+}
+
+// Message implements message.Message.
+func (b *SendWebhookBo) Message(message.MessageChannel) ([]byte, error) {
+	if !json.Valid([]byte(b.Data)) {
+		return nil, merr.ErrorParams("invalid json data")
+	}
+	return []byte(b.Data), nil
+}
+
+func (b *SendWebhookBo) ToMessageLog(webhookConfig *do.WebhookConfig) (*do.MessageLog, error) {
+	messageBytes, err := serialize.JSONMarshal(b)
+	if err != nil {
+		return nil, err
+	}
+	webhookConfigBytes, err := serialize.JSONMarshal(NewWebhookConfigItemBo(webhookConfig))
+	if err != nil {
+		return nil, err
+	}
+	return &do.MessageLog{
+		SendAt:  time.Now(),
+		Message: strutil.EncryptString(messageBytes),
+		Config:  strutil.EncryptString(webhookConfigBytes),
+		Type:    vobj.MessageTypeWebhook,
+		Status:  vobj.MessageStatusPending,
+	}, nil
+}
+
+func NewSendWebhookBo(req *apiv1.SendWebhookRequest) *SendWebhookBo {
+	return &SendWebhookBo{
+		UID:  snowflake.ParseInt64(req.Uid),
+		Data: req.Data,
+	}
+}
+
+type SendWebhookWithTemplateBo struct {
+	UID         snowflake.ID
+	TemplateUID snowflake.ID
+	JSONData    []byte
+}
+
+func NewSendWebhookWithTemplateBo(req *apiv1.SendWebhookWithTemplateRequest) (*SendWebhookWithTemplateBo, error) {
+	if !json.Valid([]byte(req.JsonData)) {
+		return nil, merr.ErrorParams("invalid json data")
+	}
+	return &SendWebhookWithTemplateBo{
+		UID:         snowflake.ParseInt64(req.Uid),
+		TemplateUID: snowflake.ParseInt64(req.TemplateUID),
+		JSONData:    []byte(req.JsonData),
+	}, nil
+}
+
+func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *do.Template) (*SendWebhookBo, error) {
+	if !templateDo.App.IsWebhookType() {
+		return nil, merr.ErrorParams("invalid template app type, expected webhook type, got %s", templateDo.App)
+	}
+	if !templateDo.Status.IsEnabled() {
+		return nil, merr.ErrorParams("template %s(%s) is disabled", templateDo.Name, templateDo.UID)
+	}
+	webhookTemplateData, err := templateDo.ToWebhookTemplateData()
+	if err != nil {
+		return nil, err
+	}
+	var jsonData map[string]any
+	if err := serialize.JSONUnmarshal(b.JSONData, &jsonData); err != nil {
+		return nil, merr.ErrorInternal("unmarshal json data failed").WithCause(err)
+	}
+
+	bodyData, err := strutil.ExecuteTextTemplate(webhookTemplateData.Body, jsonData)
+	if err != nil {
+		return nil, merr.ErrorParams("execute text template failed").WithCause(err)
+	}
+
+	return &SendWebhookBo{
+		UID:  b.UID,
+		Data: bodyData,
+	}, nil
+}
+
+type WebhookConfigItemBo struct {
+	UID       snowflake.ID      `json:"uid"`
+	App       vobj.WebhookApp   `json:"app"`
+	Name      string            `json:"name"`
+	URL       string            `json:"url"`
+	Method    vobj.HTTPMethod   `json:"method"`
+	Headers   map[string]string `json:"headers"`
+	Secret    string            `json:"secret"`
+	Status    vobj.GlobalStatus `json:"status"`
+	CreatedAt time.Time         `json:"-"`
+	UpdatedAt time.Time         `json:"-"`
+}
+
+// GetSecret implements dingtalk.Config.
+func (w *WebhookConfigItemBo) GetSecret() string {
+	return w.Secret
+}
+
+// GetURL implements dingtalk.Config.
+func (w *WebhookConfigItemBo) GetURL() string {
+	return w.URL
+}
+
+func NewWebhookConfigItemBo(doWebhookConfig *do.WebhookConfig) *WebhookConfigItemBo {
+	return &WebhookConfigItemBo{
+		UID:       doWebhookConfig.UID,
+		App:       doWebhookConfig.App,
+		Name:      doWebhookConfig.Name,
+		URL:       doWebhookConfig.URL,
+		Method:    doWebhookConfig.Method,
+		Headers:   doWebhookConfig.Headers.Map(),
+		Secret:    string(doWebhookConfig.Secret),
+		Status:    doWebhookConfig.Status,
+		CreatedAt: doWebhookConfig.CreatedAt,
+		UpdatedAt: doWebhookConfig.UpdatedAt,
 	}
 }
