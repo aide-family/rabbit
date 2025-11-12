@@ -28,21 +28,12 @@ jobs:
       - name: Install dependencies
         run: make init
 
-      - name: make api
-        run: make api
-
-      - name:  make conf
-        run: make conf
-
-      - name: make wire
-        run: make wire
+      - name: make all
+        run: make all
 
       - name: make build
         run: make build
 
       - name: make test
         run: make test
-
-      - name: make clean
-        run: make clean
 

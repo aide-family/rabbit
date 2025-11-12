@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1
-	github.com/aide-family/magicbox v0.0.1
+	github.com/aide-family/magicbox v0.0.2
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20251015020953-cdff24709025
 	github.com/go-kratos/kratos/contrib/registry/kubernetes/v2 v2.0.0-20251015020953-cdff24709025
@@ -24,7 +24,7 @@ require (
 	k8s.io/client-go v0.24.3
 )
 
-replace github.com/aide-family/magicbox => ../magicbox
+// replace github.com/aide-family/magicbox => ../magicbox
 
 require (
 	buf.build/go/protovalidate v1.0.0 // indirect

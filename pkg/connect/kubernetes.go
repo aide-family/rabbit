@@ -1,10 +1,11 @@
 package connect
 
 import (
-	"github.com/aide-family/magicbox/load"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/aide-family/magicbox/load"
 )
 
 const defaultKubeConfig = "~/.kube/config"
