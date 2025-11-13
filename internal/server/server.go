@@ -31,10 +31,6 @@ func init() {
 
 type Servers []transport.Server
 
-func (s Servers) Append(servers ...transport.Server) Servers {
-	return append(s, servers...)
-}
-
 func (s Servers) BindSwagger(enableSwagger bool, helper *klog.Helper) {
 	if !enableSwagger {
 		return
@@ -109,5 +105,9 @@ var namespaceAllowList = []string{
 	apiv1.OperationNamespaceDeleteNamespace,
 	apiv1.OperationNamespaceGetNamespace,
 	apiv1.OperationNamespaceListNamespace,
+	apiv1.OperationHealthHealthCheck,
+}
+
+var authAllowList = []string{
 	apiv1.OperationHealthHealthCheck,
 }

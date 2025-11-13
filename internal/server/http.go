@@ -38,7 +38,7 @@ func NewHTTPServer(bc *conf.Bootstrap, namespaceService *service.NamespaceServic
 		rabbitMiddler.BindJwtToken(),
 		namespaceMiddleware,
 	}
-	authMiddleware := selector.Server(selectorMustAuthMiddlewares...).Match(middler.AllowListMatcher(jwtConf.GetAllowList()...)).Build()
+	authMiddleware := selector.Server(selectorMustAuthMiddlewares...).Match(middler.AllowListMatcher(authAllowList...)).Build()
 
 	httpMiddlewares := []middleware.Middleware{
 		recovery.Recovery(),

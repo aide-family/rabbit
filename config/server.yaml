@@ -1,7 +1,7 @@
 environment: DEV
 server:
   name: moon.rabbit
-  useRandomID: true
+  useRandomID: false
   metadata:
     tag: rabbit
   # http:
@@ -17,8 +17,6 @@ jwt:
   secret: xxx
   expire: 10m
   issuer: rabbit
-  allowList:
-    - /rabbit.api.v1.Health/HealthCheck
 
 main:
   username: root

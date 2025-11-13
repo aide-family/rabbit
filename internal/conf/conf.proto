@@ -58,9 +58,8 @@ message GlobalEmail {
 
 message JWT {
 	string secret = 1;
-	repeated string allowList = 2;
-	google.protobuf.Duration expire = 3;
-	string issuer = 4;
+	google.protobuf.Duration expire = 2;
+	string issuer = 3;
 }
 
 message EventBus {
