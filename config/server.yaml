@@ -19,13 +19,6 @@ jwt:
   issuer: rabbit
   allowList:
     - /rabbit.api.v1.Health/HealthCheck
-namespaceAllowList:
-  - /rabbit.api.v1.Namespace/CreateNamespace
-  - /rabbit.api.v1.Namespace/UpdateNamespace
-  - /rabbit.api.v1.Namespace/UpdateNamespaceStatus
-  - /rabbit.api.v1.Namespace/DeleteNamespace
-  - /rabbit.api.v1.Namespace/GetNamespace
-  - /rabbit.api.v1.Namespace/ListNamespace
 
 main:
   username: root

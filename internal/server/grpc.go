@@ -26,7 +26,7 @@ func NewGRPCServer(bc *conf.Bootstrap, namespaceService *service.NamespaceServic
 		rabbitMiddler.MustNamespace(),
 		rabbitMiddler.MustNamespaceExist(namespaceService.HasNamespace),
 	}
-	namespaceMiddleware := selector.Server(selectorNamespaceMiddlewares...).Match(middler.AllowListMatcher(bc.GetNamespaceAllowList()...)).Build()
+	namespaceMiddleware := selector.Server(selectorNamespaceMiddlewares...).Match(middler.AllowListMatcher(namespaceAllowList...)).Build()
 	selectorMustAuthMiddlewares := []middleware.Middleware{
 		rabbitMiddler.JwtServe(jwtConf.GetSecret()),
 		rabbitMiddler.MustLogin(),

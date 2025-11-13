@@ -175,7 +175,8 @@ clean:
 	rm -rf internal/biz/do/query
 	rm -rf internal/biz/vobj/*__string.go
 	rm -rf internal/conf/*.pb.go
-	rm -rf pkg/api/*.pb.go
+	rm -rf pkg/api/*/*.pb.go
+	rm -rf pkg/api/*/*.pb.gw.go
 	rm -rf pkg/enum/*.pb.go
 	rm -rf pkg/merr/*.pb.go
 	rm -rf pkg/config/*.pb.go

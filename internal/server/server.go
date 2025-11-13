@@ -101,3 +101,13 @@ func RegisterService(
 	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
 	return Servers{httpSrv, grpcSrv, eventBus}
 }
+
+var namespaceAllowList = []string{
+	apiv1.OperationNamespaceCreateNamespace,
+	apiv1.OperationNamespaceUpdateNamespace,
+	apiv1.OperationNamespaceUpdateNamespaceStatus,
+	apiv1.OperationNamespaceDeleteNamespace,
+	apiv1.OperationNamespaceGetNamespace,
+	apiv1.OperationNamespaceListNamespace,
+	apiv1.OperationHealthHealthCheck,
+}
