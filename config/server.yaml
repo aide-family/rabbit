@@ -4,31 +4,31 @@ server:
   useRandomID: false
   metadata:
     tag: rabbit
-  # http:
-  #   address: 0.0.0.0:8080
-  #   network: tcp
-  #   timeout: 10s
-  # grpc:
-  #   address: 0.0.0.0:9090
-  #   network: tcp
-  #   timeout: 10s
+  http:
+    address: "${MOON_RABBIT_HTTP_ADDRESS:0.0.0.0:8080}"
+    network: "${MOON_RABBIT_HTTP_NETWORK:tcp}"
+    timeout: "${MOON_RABBIT_HTTP_TIMEOUT:10s}"
+  grpc:
+    address: "${MOON_RABBIT_GRPC_ADDRESS:0.0.0.0:9090}"
+    network: "${MOON_RABBIT_GRPC_NETWORK:tcp}"
+    timeout: "${MOON_RABBIT_GRPC_TIMEOUT:10s}"
 
 jwt:
-  secret: xxx
-  expire: 10m
-  issuer: rabbit
+  secret: "${MOON_RABBIT_JWT_SECRET:xxx}"
+  expire: "${MOON_RABBIT_JWT_EXPIRE:600s}"
+  issuer: "${MOON_RABBIT_JWT_ISSUER:rabbit}"
 
 main:
-  username: root
-  password: '123456'
-  host: localhost
-  port: 3306
-  database: rabbit
-  debug: true
-  useSystemLogger: false
+  username: "${MOON_RABBIT_MAIN_USERNAME:root}"
+  password: "${MOON_RABBIT_MAIN_PASSWORD:123456}"
+  host: "${MOON_RABBIT_MAIN_HOST:localhost}"
+  port: ${MOON_RABBIT_MAIN_PORT:3306}
+  database: ${MOON_RABBIT_MAIN_DATABASE:rabbit}
+  debug: false
+  useSystemLogger: true
   parameters:
     charset: utf8mb4
-    parseTime: true
+    parseTime: "true"
     loc: Asia/Shanghai
 
 # biz:

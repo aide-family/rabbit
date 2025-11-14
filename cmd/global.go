@@ -10,13 +10,15 @@ import (
 var hostname, _ = os.Hostname()
 
 type GlobalFlags struct {
-	Helper   *klog.Helper `json:"-" yaml:"-"`
-	Name     string       `json:"name" yaml:"name"`
-	Author   string       `json:"author" yaml:"author"`
-	Github   string       `json:"github" yaml:"github"`
-	Version  string       `json:"version" yaml:"version"`
-	Built    string       `json:"built" yaml:"built"`
-	Hostname string       `json:"-" yaml:"-"`
+	Helper      *klog.Helper `json:"-" yaml:"-"`
+	Name        string       `json:"name" yaml:"name"`
+	Author      string       `json:"author" yaml:"author"`
+	Email       string       `json:"email" yaml:"email"`
+	Repo        string       `json:"repo" yaml:"repo"`
+	Description string       `json:"description" yaml:"description"`
+	Version     string       `json:"version" yaml:"version"`
+	Built       string       `json:"built" yaml:"built"`
+	Hostname    string       `json:"-" yaml:"-"`
 
 	Namespace string `json:"-" yaml:"-"`
 
@@ -31,10 +33,13 @@ func (g *GlobalFlags) addFlags(cmd *cobra.Command) {
 type GlobalOption func(*GlobalFlags)
 
 var globalFlags GlobalFlags = GlobalFlags{
-	Author:   "Aide Family",
-	Github:   "https://github.com/aide-family/rabbit",
-	Hostname: hostname,
-	Helper:   klog.NewHelper(klog.DefaultLogger),
+	Name:        "moon.rabbit",
+	Author:      "",
+	Email:       "",
+	Repo:        "https://github.com/aide-family/rabbit",
+	Description: "",
+	Hostname:    hostname,
+	Helper:      klog.NewHelper(klog.DefaultLogger),
 }
 
 func GetGlobalFlags() GlobalFlags {
@@ -56,6 +61,30 @@ func WithGlobalFlagsVersion(version string) GlobalOption {
 func WithGlobalFlagsBuildTime(buildTime string) GlobalOption {
 	return func(g *GlobalFlags) {
 		g.Built = buildTime
+	}
+}
+
+func WithGlobalFlagsEmail(email string) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Email = email
+	}
+}
+
+func WithGlobalFlagsAuthor(author string) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Author = author
+	}
+}
+
+func WithGlobalFlagsDescription(description string) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Description = description
+	}
+}
+
+func WithGlobalFlagsREPO(repo string) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Repo = repo
 	}
 }
 

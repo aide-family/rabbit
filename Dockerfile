@@ -38,7 +38,7 @@ RUN addgroup -g 1001 -S appgroup && \
 WORKDIR /moon
 
 # 复制二进制文件和配置
-COPY --from=builder /moon/bin/rabbit /moon/bin/rabbit
+COPY --from=builder /moon/bin/ /usr/sbin/
 COPY --from=builder /moon/config /moon/config
 
 # 设置权限
@@ -55,4 +55,4 @@ EXPOSE 8080
 EXPOSE 9090
 
 # 运行应用
-CMD ["./bin/rabbit", "run"]
+CMD ["rabbit", "run", "--metrics"]

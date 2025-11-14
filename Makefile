@@ -1,6 +1,9 @@
 GOHOSTOS:=$(shell go env GOHOSTOS)
 VERSION=$(shell git describe --tags --always)
-BUILD_TIME=$(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
+BUILD_TIME=$(shell date '+%Y-%m-%dT%H:%M:%SZ')
+AUTHOR=$(shell git log -1 --format='%an')
+AUTHOR_EMAIL=$(shell git log -1 --format='%ae')
+REPO=$(shell git config remote.origin.url)
 
 ifeq ($(GOHOSTOS), windows)
 	#the `find.exe` is different from `find` in bash/shell.
@@ -147,13 +150,20 @@ gorm-migrate:
 
 .PHONY: all
 # generate all files
-all: clean errors api conf vobj gorm-gen wire
+all: 
+	@git log -1 --format='%B' > description.txt
+	make clean errors api conf vobj gorm-gen wire
 
 .PHONY: build
 # build the rabbit binary
 build: all
 	@echo "Building rabbit"
-	go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME)" -o bin/rabbit main.go
+	@echo "VERSION: $(VERSION)"
+	@echo "BUILD_TIME: $(BUILD_TIME)"
+	@echo "AUTHOR: $(AUTHOR)"
+	@echo "AUTHOR_EMAIL: $(AUTHOR_EMAIL)"
+	@git log -1 --format='%B' > description.txt
+	go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.Author=$(AUTHOR) -X main.Email=$(AUTHOR_EMAIL) -X main.Repo=$(REPO)" -o bin/rabbit main.go
 
 .PHONY: dev
 # run the rabbit binary in development mode

@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/gormlog"
 	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 	"gorm.io/driver/mysql"
@@ -47,8 +49,17 @@ func initDB() (*gorm.DB, error) {
 	var bc conf.Bootstrap
 	if strutil.IsNotEmpty(flags.configPath) {
 		flags.Helper.Infow("msg", "load config file", "file", flags.configPath)
-		if err := load.Load(flags.configPath, &bc); err != nil {
-			flags.Helper.Errorw("msg", "load config file failed", "error", err)
+		c := config.New(config.WithSource(
+			env.NewSource(),
+			file.NewSource(flags.configPath),
+		))
+		if err := c.Load(); err != nil {
+			flags.Helper.Errorw("msg", "load config failed", "error", err)
+			return nil, err
+		}
+
+		if err := c.Scan(&bc); err != nil {
+			flags.Helper.Errorw("msg", "scan config failed", "error", err)
 			return nil, err
 		}
 	}

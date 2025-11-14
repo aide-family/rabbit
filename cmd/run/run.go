@@ -3,9 +3,11 @@ package run
 
 import (
 	"github.com/aide-family/magicbox/hello"
-	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2"
+	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
@@ -33,10 +35,20 @@ func NewCmd() *cobra.Command {
 func runServer(_ *cobra.Command, _ []string) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc conf.Bootstrap
-	if err := load.Load(flags.configPath, &bc); err != nil {
+	c := config.New(config.WithSource(
+		env.NewSource(),
+		file.NewSource(flags.configPath),
+	))
+	if err := c.Load(); err != nil {
 		flags.Helper.Errorw("msg", "load config failed", "error", err)
 		return
 	}
+
+	if err := c.Scan(&bc); err != nil {
+		flags.Helper.Errorw("msg", "scan config failed", "error", err)
+		return
+	}
+
 	flags.applyToBootstrap(&bc)
 	serverConf := bc.GetServer()
 	metadata := serverConf.GetMetadata()

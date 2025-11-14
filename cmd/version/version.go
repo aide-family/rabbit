@@ -14,9 +14,11 @@ import (
 
 var txtTemplate = `Name:	{{.Name}}
 Author:	{{.Author}}
+Email:	{{.Email}}
 Version:{{.Version}}
-Github:	{{.Github}}
+Repo:	{{.Repo}}
 Built:	{{.Built}}
+Description:	{{.Description}}
 `
 
 func NewCmd() *cobra.Command {

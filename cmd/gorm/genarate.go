@@ -10,7 +10,7 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/do"
 )
 
-var config = gen.Config{
+var genConfig = gen.Config{
 	OutPath: "./internal/biz/do/query",
 	Mode:    gen.WithoutContext | gen.WithDefaultQuery | gen.WithQueryInterface, // generate mode
 	// If you want to generate pointer type properties for nullable fields, set FieldNullable to true
@@ -36,17 +36,17 @@ func newGenCmd() *cobra.Command {
 			generate()
 		},
 	}
-	genCmd.Flags().StringVarP(&config.OutPath, "out", "o", "./internal/biz/do/query", "output directory")
+	genCmd.Flags().StringVarP(&genConfig.OutPath, "out", "o", "./internal/biz/do/query", "output directory")
 	return genCmd
 }
 
 func generate() {
 	if flags.forceGen {
 		flags.Helper.Infow("msg", "remove all files")
-		os.RemoveAll(config.OutPath)
-		flags.Helper.Infow("msg", "remove all files success", "path", config.OutPath)
+		os.RemoveAll(genConfig.OutPath)
+		flags.Helper.Infow("msg", "remove all files success", "path", genConfig.OutPath)
 	}
-	g := gen.NewGenerator(config)
+	g := gen.NewGenerator(genConfig)
 	g.SetLogger(&genLogger{helper: flags.Helper})
 	flags.Helper.Infow("msg", "generate code start")
 	g.ApplyBasic(do.Models()...)

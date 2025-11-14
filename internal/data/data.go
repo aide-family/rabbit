@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/plugin/cache"
+	"github.com/aide-family/magicbox/plugin/cache/mem"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
@@ -56,6 +58,14 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		d.closes["bizDB.["+namespace+"]"] = func() error { return connect.CloseDB(db) }
 	}
 
+	cacheDriver := mem.CacheDriver()
+	cache, err := cache.New(context.Background(), cacheDriver)
+	if err != nil {
+		return nil, d.close, err
+	}
+	d.cache = cache
+	d.closes["cache"] = func() error { return cache.Close() }
+
 	return d, d.close, nil
 }
 
@@ -65,8 +75,8 @@ type Data struct {
 	dbs      *safety.SyncMap[string, *gorm.DB]
 	mainDB   *gorm.DB
 	registry connect.Registry
-
-	closes map[string]func() error
+	cache    cache.Interface
+	closes   map[string]func() error
 }
 
 func (d *Data) AppendClose(name string, close func() error) {

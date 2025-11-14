@@ -30,7 +30,7 @@ type Flags struct {
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
-	c.Flags().StringVarP(&f.configPath, "config", "c", "./config", "config file (default is $HOME/config)")
+	c.Flags().StringVarP(&f.configPath, "config", "c", "./config", "config file (default is ./config)")
 	c.Flags().BoolVarP(&f.enableSwagger, "swagger", "s", false, "enable swagger")
 	c.Flags().BoolVarP(&f.enableMetrics, "metrics", "m", false, "enable metrics")
 	c.Flags().StringVar(&f.httpAddress, "http-address", "0.0.0.0:8080", "http address (default is 0.0.0.0:8080)")

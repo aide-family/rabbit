@@ -39,3 +39,4 @@ go.work.sum
 
 # deploy
 deploy/*/data
+description.txt

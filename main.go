@@ -5,11 +5,12 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
-	"github.com/spf13/cobra"
+	_ "embed"
 
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/stdio"
 	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/cmd/apply"
@@ -21,9 +22,15 @@ import (
 )
 
 var (
-	Version          = "latest"
-	BuildTime string = "2025-10-14T10:00:00Z"
+	Version   = "latest"
+	BuildTime = "now"
+	Author    = "Aide Family"
+	Email     = ""
+	Repo      = "https://github.com/aide-family/rabbit"
 )
+
+//go:embed description.txt
+var Description string
 
 func main() {
 	logger, err := log.NewLogger(stdio.LoggerDriver())
@@ -38,6 +45,10 @@ func main() {
 		cmd.WithGlobalFlagsHelper(helper),
 		cmd.WithGlobalFlagsVersion(Version),
 		cmd.WithGlobalFlagsBuildTime(BuildTime),
+		cmd.WithGlobalFlagsAuthor(Author),
+		cmd.WithGlobalFlagsEmail(Email),
+		cmd.WithGlobalFlagsREPO(Repo),
+		cmd.WithGlobalFlagsDescription(Description),
 	)
 	rootCmd := cmd.NewCmd()
 
