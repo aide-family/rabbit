@@ -1,9 +1,9 @@
-environment: DEV
+environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
 server:
-  name: moon.rabbit
-  useRandomID: false
+  name: ${MOON_RABBIT_NAME:moon.rabbit}
+  useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
   metadata:
-    tag: rabbit
+    tag: ${MOON_RABBIT_METADATA_TAG:rabbit}
   http:
     address: "${MOON_RABBIT_HTTP_ADDRESS:0.0.0.0:8080}"
     network: "${MOON_RABBIT_HTTP_NETWORK:tcp}"
@@ -24,8 +24,8 @@ main:
   host: "${MOON_RABBIT_MAIN_HOST:localhost}"
   port: ${MOON_RABBIT_MAIN_PORT:3306}
   database: ${MOON_RABBIT_MAIN_DATABASE:rabbit}
-  debug: false
-  useSystemLogger: true
+  debug: ${MOON_RABBIT_MAIN_DEBUG:false}
+  useSystemLogger: ${MOON_RABBIT_MAIN_USE_SYSTEM_LOGGER:true}
   parameters:
     charset: utf8mb4
     parseTime: "true"
@@ -55,27 +55,22 @@ main:
 #       loc: Asia/Shanghai
 
 eventBus:
-  workerCount: 1
-  timeout: 10s
+  workerCount: ${MOON_RABBIT_EVENT_BUS_WORKER_COUNT:1}
+  timeout: ${MOON_RABBIT_EVENT_BUS_TIMEOUT:10s}
 
-registryType: ETCD
+registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 
-clusters:
-  - name: rabbit01
-    endpoint: discovery:///moon.rabbit
-    protocol: GRPC
-    timeout: 10s
-  # - name: rabbit02
-  #   endpoint: 127.0.0.1:9090
-  #   protocol: GRPC
-  #   timeout: 10s
+cluster:
+  name: ${MOON_RABBIT_CLUSTER_NAME:rabbit}
+  endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:discovery:///moon.rabbit}
+  protocol: ${MOON_RABBIT_CLUSTER_PROTOCOL:GRPC}
+  timeout: ${MOON_RABBIT_CLUSTER_TIMEOUT:10s}
 
 etcd:
-  endpoints:
-    - http://127.0.0.1:2379
-  username:
-  password:
+  endpoints: ${MOON_RABBIT_ETCD_ENDPOINTS:127.0.0.1:2379}
+  username: ${MOON_RABBIT_ETCD_USERNAME:}
+  password: ${MOON_RABBIT_ETCD_PASSWORD:}
 
-# kubernetes:
-#   kubeConfig: ~/.kube/config
-#   namespace: moon
+kubernetes:
+  kubeConfig: ${MOON_RABBIT_KUBERNETES_KUBECONFIG:~/.kube/config}
+  namespace: ${MOON_RABBIT_KUBERNETES_NAMESPACE:moon}

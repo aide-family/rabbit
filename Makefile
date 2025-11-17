@@ -51,13 +51,14 @@ conf: config
 config:
 	@echo "Generating config files"
 	@if [ "$(GOHOSTOS)" = "windows" ]; then \
-		$(Git_Bash) -c "rm -rf ./pkg/config"; \
+		$(Git_Bash) -c "rm -rf ./pkg/config/*.pb.go"; \
 		if [ ! -d "./pkg/config" ]; then $(MKDIR) ./pkg/config; fi \
 	else \
-		rm -rf ./pkg/config; \
+		rm -rf ./pkg/config/*.pb.go; \
 		if [ ! -d "./pkg/config" ]; then $(MKDIR) ./pkg/config; fi \
 	fi
 	protoc --proto_path=./proto/rabbit/config \
+	       --proto_path=./proto/rabbit \
 	       --proto_path=./proto/third_party \
 	       --go_out=paths=source_relative:./pkg/config \
 	       --experimental_allow_proto3_optional \
@@ -68,10 +69,10 @@ config:
 enum:
 	@echo "Generating enum files"
 	@if [ "$(GOHOSTOS)" = "windows" ]; then \
-		$(Git_Bash) -c "rm -rf ./pkg/enum"; \
+		$(Git_Bash) -c "rm -rf ./pkg/enum/*.pb.go"; \
 		if [ ! -d "./pkg/enum" ]; then $(MKDIR) ./pkg/enum; fi \
 	else \
-		rm -rf ./pkg/enum; \
+		rm -rf ./pkg/enum/*.pb.go; \
 		if [ ! -d "./pkg/enum" ]; then $(MKDIR) ./pkg/enum; fi \
 	fi
 	protoc --proto_path=./proto/rabbit/enum \
@@ -85,10 +86,10 @@ enum:
 api: enum
 	@echo "Generating api files"
 	@if [ "$(GOHOSTOS)" = "windows" ]; then \
-		$(Git_Bash) -c "rm -rf ./pkg/api"; \
+		$(Git_Bash) -c "rm -rf ./pkg/api/*.pb.go"; \
 		if [ ! -d "./pkg/api" ]; then $(MKDIR) ./pkg/api; fi \
 	else \
-		rm -rf ./pkg/api; \
+		rm -rf ./pkg/api/*.pb.go; \
 		if [ ! -d "./pkg/api" ]; then $(MKDIR) ./pkg/api; fi \
 	fi
 	protoc --proto_path=./proto/rabbit/api \
@@ -111,10 +112,10 @@ i18n:
 errors:
 	@echo "Generating errors"
 	@if [ "$(GOHOSTOS)" = "windows" ]; then \
-		$(Git_Bash) -c "rm -rf ./pkg/merr"; \
+		$(Git_Bash) -c "rm -rf ./pkg/merr/*.pb.go"; \
 		if [ ! -d "./pkg/merr" ]; then $(MKDIR) ./pkg/merr; fi \
 	else \
-		rm -rf ./pkg/merr; \
+		rm -rf ./pkg/merr/*.pb.go; \
 		if [ ! -d "./pkg/merr" ]; then $(MKDIR) ./pkg/merr; fi \
 	fi
 	protoc --proto_path=./proto/rabbit/merr \

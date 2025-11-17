@@ -2,6 +2,7 @@ package email
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/aide-family/magicbox/load"
@@ -44,7 +45,7 @@ func run(_ *cobra.Command, _ []string) {
 			return
 		}
 		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   etcdConfig.GetEndpoints(),
+			Endpoints:   strings.Split(etcdConfig.GetEndpoints(), ","),
 			Username:    etcdConfig.GetUsername(),
 			Password:    etcdConfig.GetPassword(),
 			DialTimeout: 10 * time.Second,
@@ -68,19 +69,26 @@ func run(_ *cobra.Command, _ []string) {
 		discovery = kuberegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
 	}
 
-	for _, cluster := range bc.GetClusters() {
-		sender, err := NewSender(cluster, bc.GetJwtToken(), discovery, flags.Helper)
+	clusterConfig := bc.GetCluster()
+	clusterEndpoints := strings.Split(clusterConfig.GetEndpoints(), ",")
+	clusterProtocol := clusterConfig.GetProtocol()
+	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
+	clusterName := clusterConfig.GetName()
+
+	for _, clusterEndpoint := range clusterEndpoints {
+		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
+		sender, err := NewSender(initConfig, clusterProtocol, bc.GetJwtToken(), discovery, flags.Helper)
 		if err != nil {
 			continue
 		}
-		name, protocol := cluster.GetName(), cluster.GetProtocol()
+
 		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
-			flags.Helper.Warnw("msg", "send email failed", "cluster", name, "protocol", protocol, "error", err)
+			flags.Helper.Warnw("msg", "send email failed", "cluster", clusterName, "protocol", clusterProtocol, "error", err)
 			return
 		}
 
-		flags.Helper.Infow("msg", "send email success", "cluster", name, "protocol", protocol, "reply", reply)
+		flags.Helper.Infow("msg", "send email success", "cluster", clusterName, "protocol", clusterProtocol, "reply", reply)
 		return
 	}
 	// 没有可用的节点，退出
@@ -113,8 +121,8 @@ func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*ap
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster *config.ClusterConfig, jwtToken string, discovery connect.Registry, helper *klog.Helper) (Sender, error) {
-	name, protocol := cluster.GetName(), cluster.GetProtocol()
+func NewSender(cluster connect.InitConfig, protocol config.ClusterConfig_Protocol, jwtToken string, discovery connect.Registry, helper *klog.Helper) (Sender, error) {
+	name := cluster.GetName()
 	newSender := &sender{
 		jwtToken: jwtToken,
 		helper:   helper,

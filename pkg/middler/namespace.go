@@ -2,7 +2,6 @@ package middler
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
@@ -31,8 +30,6 @@ func MustNamespace() middleware.Middleware {
 				return handler(ctx, req)
 			}
 
-			fmt.Println(tr.RequestHeader().Keys())
-			fmt.Println(tr.RequestHeader())
 			namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
 			ctx = WithNamespace(ctx, namespace)
 			tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
@@ -42,9 +39,6 @@ func MustNamespace() middleware.Middleware {
 			}
 
 			if md, ok := metadata.FromServerContext(ctx); ok {
-				fmt.Println("================================================")
-				fmt.Println("metadata: ", md)
-				fmt.Println("================================================")
 				namespace = md.Get(cnst.MetadataGlobalKeyNamespace)
 				ctx = WithNamespace(ctx, namespace)
 				tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)

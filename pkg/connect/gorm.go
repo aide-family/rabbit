@@ -22,14 +22,14 @@ func NewGorm(mysqlConf *config.MySQLConfig, logger *klog.Helper) (*gorm.DB, erro
 	gormConfig := &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	}
-	if mysqlConf.UseSystemLogger {
+	if mysqlConf.UseSystemLogger.IsTrue() {
 		gormConfig.Logger = gormlog.New(logger.Logger())
 	}
 	db, err := gorm.Open(mysql.Open(dsn), gormConfig)
 	if err != nil {
 		return nil, fmt.Errorf("open mysql connection failed: %w, dsn: %s", err, dsn)
 	}
-	if mysqlConf.Debug {
+	if mysqlConf.Debug.IsTrue() {
 		db = db.Debug()
 	}
 

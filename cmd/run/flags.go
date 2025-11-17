@@ -10,6 +10,7 @@ import (
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 type Flags struct {
@@ -83,11 +84,11 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 			grpcConf.Timeout = durationpb.New(timeout)
 		}
 	}
-	if bc.Environment == conf.Environment_UNKNOWN {
-		e, ok := conf.Environment_value[f.environment]
-		if !ok {
-			e = int32(conf.Environment_PROD)
+	if bc.Environment.IsUnknown() {
+		env := enum.Environment_PROD
+		if strutil.IsNotEmpty(f.environment) {
+			env = enum.Environment(enum.Environment_value[f.environment])
 		}
-		bc.Environment = conf.Environment(e)
+		bc.Environment = env
 	}
 }

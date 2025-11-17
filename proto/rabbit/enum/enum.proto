@@ -6,6 +6,19 @@ option go_package = "github.com/aide-family/rabbit/pkg/enum;enum";
 option java_multiple_files = true;
 option java_package = "rabbit.enum";
 
+enum Boolean {
+	false = 0;
+	true = 1;
+}
+
+enum Environment {
+	UNKNOWN = 0;
+	DEV = 1;
+	TEST = 2;
+	PREVIEW = 3;
+	PROD = 4;
+}
+
 enum WebhookAPP {
 	WebhookAPP_UNKNOWN = 0;
 	OTHER = 1;

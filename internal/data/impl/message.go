@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,7 +27,11 @@ import (
 
 func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog, helper *klog.Helper) repository.MessageBus {
 	eventBusConf := bc.GetEventBus()
-	clustersConfig := bc.GetClusters()
+	clusterConfig := bc.GetCluster()
+	clusterEndpoints := strings.Split(clusterConfig.GetEndpoints(), ",")
+	clusterProtocol := clusterConfig.GetProtocol()
+	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
+	clusterName := clusterConfig.GetName()
 	bus := &messageBusImpl{
 		d:              d,
 		messageLogRepo: messageLogRepo,
@@ -37,7 +42,7 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 		wg:             sync.WaitGroup{},
 		workerCount:    int(eventBusConf.GetWorkerCount()),
 		timeout:        eventBusConf.GetTimeout().AsDuration(),
-		clusters:       make([]sender.Sender, 0, len(clustersConfig)),
+		clusters:       make([]sender.Sender, 0, len(clusterEndpoints)),
 	}
 
 	// 注册发送器
@@ -46,29 +51,29 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 
 	go func() {
 		time.Sleep(5 * time.Second)
-		for _, clusterConfig := range clustersConfig {
-			protocol := clusterConfig.GetProtocol()
+		for _, clusterEndpoint := range clusterEndpoints {
 			opts := []connect.InitOption{
-				connect.WithProtocol(protocol.String()),
+				connect.WithProtocol(clusterProtocol.String()),
 				connect.WithDiscovery(d.Registry()),
 			}
-			switch protocol {
+			initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
+			switch clusterProtocol {
 			case config.ClusterConfig_GRPC:
-				grpcClient, err := connect.InitGRPCClient(clusterConfig, opts...)
+				grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
 				if err != nil {
-					helper.Errorw("msg", "create GRPC client failed", "error", err)
+					helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
 					continue
 				}
-				d.AppendClose("grpcClient."+clusterConfig.GetName(), func() error { return grpcClient.Close() })
-				bus.clusters = append(bus.clusters, sender.NewClusterSender(grpcClient, nil, protocol))
+				d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
+				bus.clusters = append(bus.clusters, sender.NewClusterSender(grpcClient, nil, clusterProtocol))
 			case config.ClusterConfig_HTTP:
-				httpClient, err := connect.InitHTTPClient(clusterConfig, opts...)
+				httpClient, err := connect.InitHTTPClient(initConfig, opts...)
 				if err != nil {
 					helper.Errorw("msg", "create HTTP client failed", "error", err)
 					continue
 				}
-				d.AppendClose("httpClient."+clusterConfig.GetName(), func() error { return httpClient.Close() })
-				bus.clusters = append(bus.clusters, sender.NewClusterSender(nil, httpClient, protocol))
+				d.AppendClose("httpClient", func() error { return httpClient.Close() })
+				bus.clusters = append(bus.clusters, sender.NewClusterSender(nil, httpClient, clusterProtocol))
 			}
 		}
 	}()

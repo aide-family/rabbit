@@ -4,30 +4,24 @@ package internal.conf;
 
 import "google/protobuf/duration.proto";
 import "config/config.proto";
+import "enum/enum.proto";
 
 option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 
 message Bootstrap {
-	Environment environment = 1;
+	rabbit.enum.Environment environment = 1;
 	Server server = 2;
 	GlobalEmail globalEmail = 3;
 	JWT jwt = 4;
 	map<string, rabbit.config.MySQLConfig> biz = 5;
 	rabbit.config.MySQLConfig main = 6;
 	EventBus eventBus = 7;
-	repeated rabbit.config.ClusterConfig clusters = 8;
+	rabbit.config.ClusterConfig cluster = 8;
 	rabbit.config.RegistryType registryType = 9;
 	rabbit.config.ETCDConfig etcd = 10;
 	rabbit.config.KubernetesConfig kubernetes = 11;
 }
 
-enum Environment {
-	UNKNOWN = 0;
-	DEV = 1;
-	TEST = 2;
-	PREVIEW = 3;
-	PROD = 4;
-}
 
 message Server {
 	message HTTPServer {
@@ -46,7 +40,7 @@ message Server {
 	map<string, string> metadata = 2;
 	HTTPServer http = 3;
 	GRPCServer grpc = 4;
-	bool useRandomID = 5;
+	rabbit.enum.Boolean useRandomID = 5;
 }
 
 message GlobalEmail {

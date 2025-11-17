@@ -147,7 +147,7 @@ func (d *Data) initRegistry() error {
 			return merr.ErrorInternalServer("etcd config is not found")
 		}
 		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   etcdConfig.GetEndpoints(),
+			Endpoints:   strings.Split(etcdConfig.GetEndpoints(), ","),
 			Username:    etcdConfig.GetUsername(),
 			Password:    etcdConfig.GetPassword(),
 			DialTimeout: 5 * time.Second,

@@ -24,6 +24,32 @@ type InitConfig interface {
 	GetTimeout() *durationpb.Duration
 }
 
+type DefaultConfig struct {
+	name     string
+	endpoint string
+	timeout  time.Duration
+}
+
+func NewDefaultConfig(name, endpoint string, timeout time.Duration) InitConfig {
+	return &DefaultConfig{
+		name:     name,
+		endpoint: endpoint,
+		timeout:  timeout,
+	}
+}
+
+func (c *DefaultConfig) GetName() string {
+	return c.name
+}
+
+func (c *DefaultConfig) GetEndpoint() string {
+	return c.endpoint
+}
+
+func (c *DefaultConfig) GetTimeout() *durationpb.Duration {
+	return durationpb.New(c.timeout)
+}
+
 type initConfig struct {
 	name        string
 	endpoint    string
