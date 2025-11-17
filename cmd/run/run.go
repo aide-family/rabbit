@@ -62,7 +62,7 @@ func runServer(_ *cobra.Command, _ []string) {
 		hello.WithEnv(bc.GetEnvironment().String()),
 		hello.WithMetadata(metadata),
 	}
-	if serverConf.GetUseRandomID().IsTrue() {
+	if serverConf.GetUseRandomID() {
 		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
 	}
 	hello.SetEnvWithOption(envOpts...)

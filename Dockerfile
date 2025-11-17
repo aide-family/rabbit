@@ -39,7 +39,7 @@ WORKDIR /moon
 
 # 复制二进制文件和配置
 COPY --from=builder /moon/bin/ /usr/sbin/
-COPY --from=builder /moon/config /moon/config
+COPY --from=builder /moon/config/server.yaml /moon/config/server.yaml
 
 # 设置权限
 RUN chown -R appuser:appgroup /moon

@@ -3,7 +3,6 @@ syntax = "proto3";
 package rabbit.config;
 
 import "google/protobuf/duration.proto";
-import "enum/enum.proto";
 
 option go_package = "github.com/aide-family/rabbit/pkg/config;config";
 
@@ -38,8 +37,8 @@ message MySQLConfig {
 	string host     = 3;
 	int32 port     = 4;
 	string database = 5;
-	rabbit.enum.Boolean debug = 6;
-	rabbit.enum.Boolean useSystemLogger = 7;
+	bool debug = 6;
+	bool useSystemLogger = 7;
 	map<string, string> parameters = 8;
 }
 

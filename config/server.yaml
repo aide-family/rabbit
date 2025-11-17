@@ -1,7 +1,7 @@
 environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
 server:
   name: ${MOON_RABBIT_NAME:moon.rabbit}
-  useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
+  useRandomID: false
   metadata:
     tag: ${MOON_RABBIT_METADATA_TAG:rabbit}
   http:
@@ -24,35 +24,12 @@ main:
   host: "${MOON_RABBIT_MAIN_HOST:localhost}"
   port: ${MOON_RABBIT_MAIN_PORT:3306}
   database: ${MOON_RABBIT_MAIN_DATABASE:rabbit}
-  debug: ${MOON_RABBIT_MAIN_DEBUG:false}
-  useSystemLogger: ${MOON_RABBIT_MAIN_USE_SYSTEM_LOGGER:true}
+  debug: false
+  useSystemLogger: true
   parameters:
     charset: utf8mb4
     parseTime: "true"
     loc: Asia/Shanghai
-
-# biz:
-#   <namespace>,<namespace2>:
-#     username: root
-#     password: '123456'
-#     host: localhost
-#     port: 3306
-#     database: rabbit1
-#     parameters:
-#       charset: utf8mb4
-#       parseTime: true
-#       loc: Asia/Shanghai
-
-#   <namespace3>,<namespace4>:
-#     username: root
-#     password: '123456'
-#     host: localhost
-#     port: 3306
-#     database: rabbit2
-#     parameters:
-#       charset: utf8mb4
-#       parseTime: true
-#       loc: Asia/Shanghai
 
 eventBus:
   workerCount: ${MOON_RABBIT_EVENT_BUS_WORKER_COUNT:1}
@@ -62,7 +39,7 @@ registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 
 cluster:
   name: ${MOON_RABBIT_CLUSTER_NAME:rabbit}
-  endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:discovery:///moon.rabbit}
+  endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:discovery:///moon.rabbit,}
   protocol: ${MOON_RABBIT_CLUSTER_PROTOCOL:GRPC}
   timeout: ${MOON_RABBIT_CLUSTER_TIMEOUT:10s}
 

@@ -1,0 +1,25 @@
+biz:
+  devops,default:
+    username: root
+    password: '123456'
+    host: localhost
+    port: 3306
+    database: rabbit_devops
+    debug: true
+    useSystemLogger: false
+    parameters:
+      charset: utf8mb4
+      parseTime: "true"
+      loc: Asia/Shanghai
+  test:
+    username: root
+    password: '123456'
+    host: localhost
+    port: 3306
+    database: rabbit_test
+    debug: true
+    useSystemLogger: false
+    parameters:
+      charset: utf8mb4
+      parseTime: "true"
+      loc: Asia/Shanghai

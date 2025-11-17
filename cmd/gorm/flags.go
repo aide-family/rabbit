@@ -23,6 +23,7 @@ type Flags struct {
 	port       int32
 	database   string
 	params     []string
+	isBiz      bool
 }
 
 var flags Flags
@@ -37,6 +38,17 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	c.PersistentFlags().Int32Var(&f.port, "port", 3306, "mysql port")
 	c.PersistentFlags().StringVar(&f.database, "database", "rabbit", "mysql database")
 	c.PersistentFlags().StringSliceVar(&f.params, "params", []string{"charset=utf8mb4", "parseTime=true", "loc=Asia/Shanghai"}, "mysql params")
+	c.PersistentFlags().BoolVarP(&f.isBiz, "biz", "b", false, "is biz")
+}
+
+// containsNamespace 检查 namespace 是否在逗号分隔的 namespaces 字符串中
+func containsNamespace(namespaces, target string) bool {
+	for _, ns := range strings.Split(namespaces, ",") {
+		if strings.TrimSpace(ns) == target {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
@@ -44,6 +56,14 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 		return
 	}
 	mysqlConf := bc.GetMain()
+	if f.isBiz {
+		for namespaces, bizConfig := range bc.GetBiz() {
+			if containsNamespace(namespaces, f.Namespace) {
+				mysqlConf = bizConfig
+				break
+			}
+		}
+	}
 	if username := mysqlConf.GetUsername(); strutil.IsNotEmpty(username) {
 		f.username = username
 	}
