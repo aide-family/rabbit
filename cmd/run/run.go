@@ -88,7 +88,7 @@ func runServer(_ *cobra.Command, _ []string) {
 	}
 }
 
-func newApp(d *data.Data, srvs server.Servers, helper *klog.Helper) (*kratos.App, error) {
+func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
 	defer hello.Hello()
 	opts := []kratos.Option{
 		kratos.Logger(helper.Logger()),
@@ -105,5 +105,11 @@ func newApp(d *data.Data, srvs server.Servers, helper *klog.Helper) (*kratos.App
 
 	srvs.BindSwagger(flags.enableSwagger, helper)
 	srvs.BindMetrics(flags.enableMetrics, helper)
+
+	// 生成客户端配置
+	if err := generateClientConfig(bc, srvs, helper); err != nil {
+		helper.Warnw("msg", "generate client config failed", "error", err)
+	}
+
 	return kratos.New(opts...), nil
 }

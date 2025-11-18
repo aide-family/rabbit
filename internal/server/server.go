@@ -4,6 +4,8 @@ package server
 import (
 	nethttp "net/http"
 
+	"buf.build/go/protoyaml"
+	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/encoding/json"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
@@ -11,12 +13,57 @@ import (
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/google/wire"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.yaml.in/yaml/v2"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
+
+type protoYAMLCodec struct {
+	marshalOptions   protoyaml.MarshalOptions
+	unmarshalOptions protoyaml.UnmarshalOptions
+}
+
+func newProtoYAMLCodec() *protoYAMLCodec {
+	return &protoYAMLCodec{
+		marshalOptions: protoyaml.MarshalOptions{
+			UseProtoNames:   true,
+			EmitUnpopulated: false, // 过滤 0 值和空值
+			Indent:          2,
+		},
+		unmarshalOptions: protoyaml.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	}
+}
+
+// Marshal implements encoding.Codec.
+func (c *protoYAMLCodec) Marshal(v any) ([]byte, error) {
+	switch m := v.(type) {
+	case protoreflect.ProtoMessage:
+		return c.marshalOptions.Marshal(m)
+	default:
+		return yaml.Marshal(m)
+	}
+}
+
+// Unmarshal implements encoding.Codec.
+func (c *protoYAMLCodec) Unmarshal(data []byte, v any) error {
+	switch m := v.(type) {
+	case protoreflect.ProtoMessage:
+		return c.unmarshalOptions.Unmarshal(data, m)
+	default:
+		return yaml.Unmarshal(data, m)
+	}
+}
+
+// Name implements encoding.Codec.
+func (c *protoYAMLCodec) Name() string {
+	return "yaml"
+}
 
 var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewEventBus)
 
@@ -27,6 +74,7 @@ func init() {
 		UseProtoNames:   true, // Use the field names defined in the proto file as the output field names.
 		EmitUnpopulated: true, // Emit fields even if they are unset or empty.
 	}
+	encoding.RegisterCodec(newProtoYAMLCodec())
 }
 
 type Servers []transport.Server

@@ -16,8 +16,9 @@ message ClientConfig {
 
 message ClusterConfig {
 	enum Protocol {
-		GRPC = 0;
-		HTTP = 1;
+		PROTOCOL_UNKNOWN = 0;
+		GRPC = 1;
+		HTTP = 2;
 	}
 	string name = 1;
 	string endpoints = 2;

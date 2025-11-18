@@ -15,9 +15,10 @@ import (
 
 type Flags struct {
 	cmd.GlobalFlags
-	configPath    string
-	enableSwagger bool
-	enableMetrics bool
+	configPath             string
+	clientConfigOutputPath string
+	enableSwagger          bool
+	enableMetrics          bool
 
 	httpAddress string
 	httpNetwork string
@@ -32,6 +33,7 @@ var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
 	c.Flags().StringVarP(&f.configPath, "config", "c", "./config", "config file (default is ./config)")
+	c.Flags().StringVarP(&f.clientConfigOutputPath, "client-config-output", "o", "~/.rabbit/config.yaml", "client config output file (default is ~/.rabbit/config.yaml)")
 	c.Flags().BoolVarP(&f.enableSwagger, "swagger", "s", false, "enable swagger")
 	c.Flags().BoolVarP(&f.enableMetrics, "metrics", "m", false, "enable metrics")
 	c.Flags().StringVar(&f.httpAddress, "http-address", "0.0.0.0:8080", "http address (default is 0.0.0.0:8080)")

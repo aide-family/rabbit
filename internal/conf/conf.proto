@@ -20,6 +20,7 @@ message Bootstrap {
 	rabbit.config.RegistryType registryType = 9;
 	rabbit.config.ETCDConfig etcd = 10;
 	rabbit.config.KubernetesConfig kubernetes = 11;
+	bool enableClientConfig = 12;
 }
 
 

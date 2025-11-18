@@ -1,4 +1,5 @@
 environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
+enableClientConfig: true
 server:
   name: ${MOON_RABBIT_NAME:moon.rabbit}
   useRandomID: false
@@ -39,7 +40,7 @@ registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 
 cluster:
   name: ${MOON_RABBIT_CLUSTER_NAME:rabbit}
-  endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:discovery:///moon.rabbit,}
+  endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:localhost:9090}
   protocol: ${MOON_RABBIT_CLUSTER_PROTOCOL:GRPC}
   timeout: ${MOON_RABBIT_CLUSTER_TIMEOUT:10s}
 
