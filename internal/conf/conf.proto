@@ -25,8 +25,9 @@ message Bootstrap {
 	string enableClientConfig = 14;
 	string enableSwagger = 15;
 	string enableMetrics = 16;
+	string useDatabase = 17;
+	repeated string configPaths = 18;
 }
-
 
 message Server {
 	message HTTPServer {
@@ -64,4 +65,63 @@ message JWT {
 message EventBus {
 	int32 workerCount = 1;
 	google.protobuf.Duration timeout = 2;
+}
+
+message Config {
+	message Namespace {
+		uint32 id = 1;
+		int64 uid = 2;
+		string createdAt = 3;
+		string updatedAt = 4;
+		string creator = 5;
+		int64 name = 6;
+		map<string, string> metadata = 7;
+		rabbit.enum.GlobalStatus status = 8;
+	}
+	message Webhook {
+		uint32 id = 1;
+		int64 uid = 2;
+		string createdAt = 3;
+		string updatedAt = 4;
+		int64 creator = 5;
+		string namespace = 6;
+		rabbit.enum.WebhookAPP app = 7;
+		string name = 8;
+		string url = 9;
+		rabbit.enum.HTTPMethod method = 10;
+		map<string, string> headers = 11;
+		string secret = 12;
+		rabbit.enum.GlobalStatus status = 13;
+	}
+	message Email {
+		uint32 id = 1;
+		int64 uid = 2;
+		string createdAt = 3;
+		string updatedAt = 4;
+		int64 creator = 5;
+		string namespace = 6;
+		string name = 7;
+		string host = 8;
+		int32 port = 9;
+		string username = 10;
+		string password = 11;
+		rabbit.enum.GlobalStatus status = 12;
+	}
+	message Template {
+		uint32 id = 1;
+		int64 uid = 2;
+		string createdAt = 3;
+		string updatedAt = 4;
+		int64 creator = 5;
+		string namespace = 6;
+		string name = 7;
+		rabbit.enum.TemplateAPP app = 8;
+		string jsonData = 9;
+		rabbit.enum.GlobalStatus status = 10;
+	}
+
+	repeated Namespace namespaces = 1;
+	repeated Webhook webhooks = 2;
+	repeated Email emails = 3;
+	repeated Template templates = 4;
 }

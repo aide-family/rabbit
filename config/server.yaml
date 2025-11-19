@@ -2,6 +2,8 @@ environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
 enableClientConfig: ${MOON_RABBIT_ENABLE_CLIENT_CONFIG:true}
 enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:true}
 enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:true}
+useDatabase: ${MOON_RABBIT_USE_DATABASE:false}
+
 server:
   name: ${MOON_RABBIT_NAME:moon.rabbit}
   useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
@@ -64,3 +66,6 @@ metricsBasicAuth:
   enabled: ${MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED:true}
   username: ${MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME:moon.rabbit}
   password: ${MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD:rabbit.metrics}
+
+configPaths:
+  - ${MOON_RABBIT_CONFIG_PATHS:./datasource}
