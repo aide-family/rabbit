@@ -1,8 +1,10 @@
 environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
-enableClientConfig: true
+enableClientConfig: ${MOON_RABBIT_ENABLE_CLIENT_CONFIG:true}
+enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:true}
+enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:true}
 server:
   name: ${MOON_RABBIT_NAME:moon.rabbit}
-  useRandomID: false
+  useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
   metadata:
     tag: ${MOON_RABBIT_METADATA_TAG:rabbit}
   http:
@@ -25,8 +27,8 @@ main:
   host: "${MOON_RABBIT_MAIN_HOST:localhost}"
   port: ${MOON_RABBIT_MAIN_PORT:3306}
   database: ${MOON_RABBIT_MAIN_DATABASE:rabbit}
-  debug: false
-  useSystemLogger: true
+  debug: ${MOON_RABBIT_MAIN_DEBUG:false}
+  useSystemLogger: ${MOON_RABBIT_MAIN_USE_SYSTEM_LOGGER:true}
   parameters:
     charset: utf8mb4
     parseTime: "true"
@@ -52,3 +54,13 @@ etcd:
 kubernetes:
   kubeConfig: ${MOON_RABBIT_KUBERNETES_KUBECONFIG:~/.kube/config}
   namespace: ${MOON_RABBIT_KUBERNETES_NAMESPACE:moon}
+
+swaggerBasicAuth:
+  enabled: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED:true}
+  username: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_USERNAME:moon.rabbit}
+  password: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_PASSWORD:rabbit.swagger}
+
+metricsBasicAuth:
+  enabled: ${MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED:true}
+  username: ${MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME:moon.rabbit}
+  password: ${MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD:rabbit.metrics}

@@ -56,4 +56,4 @@ EXPOSE 8080
 EXPOSE 9090
 
 # 运行应用
-CMD ["rabbit", "run", "--metrics"]
+CMD ["rabbit", "run"]

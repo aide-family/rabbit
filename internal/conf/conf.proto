@@ -20,7 +20,11 @@ message Bootstrap {
 	rabbit.config.RegistryType registryType = 9;
 	rabbit.config.ETCDConfig etcd = 10;
 	rabbit.config.KubernetesConfig kubernetes = 11;
-	bool enableClientConfig = 12;
+	rabbit.config.BasicAuthConfig swaggerBasicAuth = 12;
+	rabbit.config.BasicAuthConfig metricsBasicAuth = 13;
+	string enableClientConfig = 14;
+	string enableSwagger = 15;
+	string enableMetrics = 16;
 }
 
 
@@ -41,7 +45,7 @@ message Server {
 	map<string, string> metadata = 2;
 	HTTPServer http = 3;
 	GRPCServer grpc = 4;
-	bool useRandomID = 5;
+	string useRandomID = 5;
 }
 
 message GlobalEmail {

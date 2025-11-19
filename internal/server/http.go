@@ -1,8 +1,6 @@
 package server
 
 import (
-	"embed"
-
 	"github.com/aide-family/magicbox/server/middler"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -17,9 +15,6 @@ import (
 	"github.com/aide-family/rabbit/internal/service"
 	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
-
-//go:embed swagger
-var docFS embed.FS
 
 // NewHTTPServer new an HTTP server.
 func NewHTTPServer(bc *conf.Bootstrap, namespaceService *service.NamespaceService, helper *klog.Helper) *http.Server {

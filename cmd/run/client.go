@@ -33,7 +33,8 @@ func generateClientConfig(
 	srvs server.Servers,
 	helper *klog.Helper,
 ) error {
-	if !bc.GetEnableClientConfig() {
+	if bc.GetEnableClientConfig() != "true" {
+		helper.Debugw("msg", "client config is not enabled")
 		return nil
 	}
 	// 获取服务器 endpoint

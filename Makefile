@@ -170,7 +170,7 @@ build: all
 # run the rabbit binary in development mode
 dev:
 	@echo "Running rabbit in development mode"
-	go run . run --swagger --metrics
+	go run . run
 
 .PHONY: test
 # run the tests

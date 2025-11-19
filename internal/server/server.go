@@ -2,6 +2,7 @@
 package server
 
 import (
+	"embed"
 	nethttp "net/http"
 
 	"buf.build/go/protoyaml"
@@ -20,7 +21,11 @@ import (
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
+	"github.com/aide-family/rabbit/pkg/middler"
 )
+
+//go:embed swagger
+var docFS embed.FS
 
 type protoYAMLCodec struct {
 	marshalOptions   protoyaml.MarshalOptions
@@ -79,8 +84,9 @@ func init() {
 
 type Servers []transport.Server
 
-func (s Servers) BindSwagger(enableSwagger bool, helper *klog.Helper) {
-	if !enableSwagger {
+func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
+	if bc.GetEnableSwagger() != "true" {
+		helper.Debugw("msg", "swagger is not enabled", "enableSwagger", bc.GetEnableSwagger())
 		return
 	}
 
@@ -93,12 +99,20 @@ func (s Servers) BindSwagger(enableSwagger bool, helper *klog.Helper) {
 	if err != nil {
 		return
 	}
-	httSrv.HandlePrefix("/doc/", nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS))))
-	helper.Infof("[Swagger] endpoint: %s/doc/swagger", endpoint)
+
+	// Create file server handler
+	authHandler := nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS)))
+	basicAuth := bc.GetSwaggerBasicAuth()
+	if basicAuth.GetEnabled() == "true" {
+		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
+	}
+	httSrv.HandlePrefix("/doc/", authHandler)
+	helper.Infof("[Swagger] endpoint: %s/doc/swagger (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 }
 
-func (s Servers) BindMetrics(enableMetrics bool, helper *klog.Helper) {
-	if !enableMetrics {
+func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
+	if bc.GetEnableMetrics() != "true" {
+		helper.Debugw("msg", "metrics is not enabled", "enableMetrics", bc.GetEnableMetrics())
 		return
 	}
 	httSrv, ok := s[0].(*http.Server)
@@ -110,8 +124,13 @@ func (s Servers) BindMetrics(enableMetrics bool, helper *klog.Helper) {
 	if err != nil {
 		return
 	}
-	httSrv.Handle("/metrics", promhttp.Handler())
-	helper.Infof("[Metrics] endpoint: %s/metrics", endpoint)
+	basicAuth := bc.GetMetricsBasicAuth()
+	authHandler := promhttp.Handler()
+	if basicAuth.GetEnabled() == "true" {
+		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
+	}
+	httSrv.Handle("/metrics", authHandler)
+	helper.Infof("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 }
 
 // RegisterService registers the service.

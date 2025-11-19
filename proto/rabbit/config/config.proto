@@ -38,8 +38,8 @@ message MySQLConfig {
 	string host     = 3;
 	int32 port     = 4;
 	string database = 5;
-	bool debug = 6;
-	bool useSystemLogger = 7;
+	string debug = 6;
+	string useSystemLogger = 7;
 	map<string, string> parameters = 8;
 }
 
@@ -52,4 +52,10 @@ enum RegistryType {
 	UNKNOWN = 0;
 	ETCD = 1;
 	KUBERNETES = 2;
+}
+
+message BasicAuthConfig {
+	string username = 1;
+	string password = 2;
+	string enabled = 3;
 }

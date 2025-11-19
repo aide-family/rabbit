@@ -62,7 +62,7 @@ func runServer(_ *cobra.Command, _ []string) {
 		hello.WithEnv(bc.GetEnvironment().String()),
 		hello.WithMetadata(metadata),
 	}
-	if serverConf.GetUseRandomID() {
+	if serverConf.GetUseRandomID() == "true" {
 		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
 	}
 	hello.SetEnvWithOption(envOpts...)
@@ -103,8 +103,8 @@ func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.
 		opts = append(opts, kratos.Registrar(registry))
 	}
 
-	srvs.BindSwagger(flags.enableSwagger, helper)
-	srvs.BindMetrics(flags.enableMetrics, helper)
+	srvs.BindSwagger(bc, helper)
+	srvs.BindMetrics(bc, helper)
 
 	// 生成客户端配置
 	if err := generateClientConfig(bc, srvs, helper); err != nil {
