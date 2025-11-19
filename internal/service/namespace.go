@@ -74,6 +74,20 @@ func (s *NamespaceService) ListNamespace(ctx context.Context, req *apiv1.ListNam
 	return bo.ToAPIV1ListNamespaceReply(listNamespacePageResponseBo), nil
 }
 
+func (s *NamespaceService) SelectNamespace(ctx context.Context, req *apiv1.SelectNamespaceRequest) (*apiv1.SelectNamespaceReply, error) {
+	selectBo := bo.NewSelectNamespaceBo(req)
+	result, err := s.namespaceBiz.SelectNamespace(ctx, selectBo)
+	if err != nil {
+		return nil, err
+	}
+	return bo.ToAPIV1SelectNamespaceReply(&bo.SelectNamespaceReplyParams{
+		Items:   result.Items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+		Limit:   req.Limit,
+	}), nil
+}
+
 func (s *NamespaceService) HasNamespace(ctx context.Context) error {
 	ns := middler.GetNamespace(ctx)
 	if strutil.IsEmpty(ns) {

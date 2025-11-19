@@ -69,3 +69,17 @@ func (s *EmailService) ListEmailConfig(ctx context.Context, req *apiv1.ListEmail
 	}
 	return bo.ToAPIV1ListEmailConfigReply(emailConfigListPageResponseBo), nil
 }
+
+func (s *EmailService) SelectEmailConfig(ctx context.Context, req *apiv1.SelectEmailConfigRequest) (*apiv1.SelectEmailConfigReply, error) {
+	selectBo := bo.NewSelectEmailConfigBo(req)
+	result, err := s.emailConfigBiz.SelectEmailConfig(ctx, selectBo)
+	if err != nil {
+		return nil, err
+	}
+	return bo.ToAPIV1SelectEmailConfigReply(&bo.SelectEmailConfigReplyParams{
+		Items:   result.Items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+		Limit:   req.Limit,
+	}), nil
+}

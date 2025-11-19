@@ -108,3 +108,20 @@ func (n *Namespace) ListNamespace(ctx context.Context, req *bo.ListNamespaceBo) 
 	}
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }
+
+func (n *Namespace) SelectNamespace(ctx context.Context, req *bo.SelectNamespaceBo) (*bo.SelectNamespaceBoResult, error) {
+	result, err := n.namespaceRepo.SelectNamespace(ctx, req)
+	if err != nil {
+		n.helper.Errorw("msg", "select namespace failed", "error", err, "req", req)
+		return nil, merr.ErrorInternal("select namespace failed")
+	}
+	items := make([]*bo.NamespaceItemSelectBo, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, bo.NewNamespaceItemSelectBo(item))
+	}
+	return &bo.SelectNamespaceBoResult{
+		Items:   items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+	}, nil
+}

@@ -92,3 +92,20 @@ func (c *EmailConfig) ListEmailConfig(ctx context.Context, req *bo.ListEmailConf
 	}
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }
+
+func (c *EmailConfig) SelectEmailConfig(ctx context.Context, req *bo.SelectEmailConfigBo) (*bo.SelectEmailConfigBoResult, error) {
+	result, err := c.emailConfigRepo.SelectEmailConfig(ctx, req)
+	if err != nil {
+		c.helper.Errorw("msg", "select email config failed", "error", err, "req", req)
+		return nil, merr.ErrorInternal("select email config failed")
+	}
+	items := make([]*bo.EmailConfigItemSelectBo, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, bo.NewEmailConfigItemSelectBo(item))
+	}
+	return &bo.SelectEmailConfigBoResult{
+		Items:   items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+	}, nil
+}

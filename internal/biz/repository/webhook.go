@@ -17,4 +17,5 @@ type WebhookConfig interface {
 	GetWebhookConfig(ctx context.Context, uid snowflake.ID) (*do.WebhookConfig, error)
 	GetWebhookConfigByName(ctx context.Context, name string) (*do.WebhookConfig, error)
 	ListWebhookConfig(ctx context.Context, req *bo.ListWebhookBo) (*bo.PageResponseBo[*do.WebhookConfig], error)
+	SelectWebhookConfig(ctx context.Context, req *bo.SelectWebhookBo) (*bo.SelectWebhookResult, error)
 }

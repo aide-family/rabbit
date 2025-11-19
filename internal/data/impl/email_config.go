@@ -76,6 +76,52 @@ func (e *emailConfigRepositoryImpl) ListEmailConfig(ctx context.Context, req *bo
 	return bo.NewPageResponseBo(req.PageRequestBo, emailConfigs), nil
 }
 
+// SelectEmailConfig implements repository.EmailConfig.
+func (e *emailConfigRepositoryImpl) SelectEmailConfig(ctx context.Context, req *bo.SelectEmailConfigBo) (*bo.SelectEmailConfigResult, error) {
+	namespace := middler.GetNamespace(ctx)
+	emailConfig := e.d.BizQuery(ctx, namespace).EmailConfig
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.Namespace.Eq(namespace))
+
+	if strutil.IsNotEmpty(req.Keyword) {
+		wrappers = wrappers.Where(emailConfig.Name.Like("%" + req.Keyword + "%"))
+	}
+	if req.Status.Exist() && !req.Status.IsUnknown() {
+		wrappers = wrappers.Where(emailConfig.Status.Eq(req.Status.GetValue()))
+	}
+
+	// 获取总数
+	total, err := wrappers.Count()
+	if err != nil {
+		return nil, err
+	}
+
+	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
+	if req.LastUID > 0 {
+		wrappers = wrappers.Where(emailConfig.UID.Lt(req.LastUID.Int64()))
+	}
+
+	// 限制返回数量
+	wrappers = wrappers.Limit(int(req.Limit))
+
+	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
+	emailConfigs, err := wrappers.Order(emailConfig.UID.Desc()).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取最后一个UID，用于下次分页
+	var lastUID snowflake.ID
+	if len(emailConfigs) > 0 {
+		lastUID = emailConfigs[len(emailConfigs)-1].UID
+	}
+
+	return &bo.SelectEmailConfigResult{
+		Items:   emailConfigs,
+		Total:   total,
+		LastUID: lastUID,
+	}, nil
+}
+
 // CreateEmailConfig implements repository.EmailConfig.
 func (e *emailConfigRepositoryImpl) CreateEmailConfig(ctx context.Context, req *do.EmailConfig) error {
 	namespace := middler.GetNamespace(ctx)

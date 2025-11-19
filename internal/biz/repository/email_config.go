@@ -18,4 +18,5 @@ type EmailConfig interface {
 	GetEmailConfig(ctx context.Context, uid snowflake.ID) (*do.EmailConfig, error)
 	GetEmailConfigByName(ctx context.Context, name string) (*do.EmailConfig, error)
 	ListEmailConfig(ctx context.Context, req *bo.ListEmailConfigBo) (*bo.PageResponseBo[*do.EmailConfig], error)
+	SelectEmailConfig(ctx context.Context, req *bo.SelectEmailConfigBo) (*bo.SelectEmailConfigResult, error)
 }

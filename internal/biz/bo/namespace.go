@@ -123,3 +123,98 @@ func ToAPIV1ListNamespaceReply(pageResponseBo *PageResponseBo[*NamespaceItemBo])
 		PageSize: pageResponseBo.GetPageSize(),
 	}
 }
+
+// SelectNamespaceBo 选择Namespace的 BO
+type SelectNamespaceBo struct {
+	Keyword string
+	Limit   int32
+	LastUID snowflake.ID
+	Status  vobj.GlobalStatus
+}
+
+// NewSelectNamespaceBo 从 API 请求创建 BO
+func NewSelectNamespaceBo(req *apiv1.SelectNamespaceRequest) *SelectNamespaceBo {
+	var lastUID snowflake.ID
+	if req.LastUID > 0 {
+		lastUID = snowflake.ParseInt64(req.LastUID)
+	}
+	return &SelectNamespaceBo{
+		Keyword: req.Keyword,
+		Limit:   req.Limit,
+		LastUID: lastUID,
+		Status:  vobj.GlobalStatus(req.Status),
+	}
+}
+
+// NamespaceItemSelectBo Namespace选择项的 BO
+type NamespaceItemSelectBo struct {
+	UID      snowflake.ID
+	Name     string
+	Status   vobj.GlobalStatus
+	Disabled bool
+	Tooltip  string
+}
+
+// NewNamespaceItemSelectBo 从 DO 创建 BO
+func NewNamespaceItemSelectBo(doNamespace *do.Namespace) *NamespaceItemSelectBo {
+	return &NamespaceItemSelectBo{
+		UID:      doNamespace.UID,
+		Name:     doNamespace.Name,
+		Status:   doNamespace.Status,
+		Disabled: doNamespace.Status != vobj.GlobalStatusEnabled,
+		Tooltip:  "",
+	}
+}
+
+// ToAPIV1NamespaceItemSelect 转换为 API 响应
+func (b *NamespaceItemSelectBo) ToAPIV1NamespaceItemSelect() *apiv1.NamespaceItemSelect {
+	return &apiv1.NamespaceItemSelect{
+		Value:    b.UID.Int64(),
+		Label:    b.Name,
+		Disabled: b.Disabled,
+		Tooltip:  b.Tooltip,
+	}
+}
+
+// SelectNamespaceResult Repository层返回结果
+type SelectNamespaceResult struct {
+	Items   []*do.Namespace
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectNamespaceBoResult Biz层返回结果
+type SelectNamespaceBoResult struct {
+	Items   []*NamespaceItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectNamespaceReplyParams 转换为API响应的参数
+type SelectNamespaceReplyParams struct {
+	Items   []*NamespaceItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+	Limit   int32
+}
+
+// ToAPIV1SelectNamespaceReply 转换为 API 响应
+func ToAPIV1SelectNamespaceReply(params *SelectNamespaceReplyParams) *apiv1.SelectNamespaceReply {
+	selectItems := make([]*apiv1.NamespaceItemSelect, 0, len(params.Items))
+	for _, item := range params.Items {
+		selectItems = append(selectItems, item.ToAPIV1NamespaceItemSelect())
+	}
+	var lastUIDInt64 int64
+	if params.LastUID > 0 {
+		lastUIDInt64 = params.LastUID.Int64()
+	}
+	// hasMore: 如果返回的记录数等于limit，说明可能还有更多记录
+	// 如果返回的记录数小于limit，说明已经查询完了
+	hasMore := int32(len(params.Items)) == params.Limit
+	return &apiv1.SelectNamespaceReply{
+		Items:   selectItems,
+		Total:   params.Total,
+		LastUID: lastUIDInt64,
+		HasMore: hasMore,
+	}
+}

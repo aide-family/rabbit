@@ -92,3 +92,20 @@ func (w *WebhookConfig) ListWebhook(ctx context.Context, req *bo.ListWebhookBo) 
 	}
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }
+
+func (w *WebhookConfig) SelectWebhook(ctx context.Context, req *bo.SelectWebhookBo) (*bo.SelectWebhookBoResult, error) {
+	result, err := w.webhookConfigRepo.SelectWebhookConfig(ctx, req)
+	if err != nil {
+		w.helper.Errorw("msg", "select webhook config failed", "error", err, "req", req)
+		return nil, merr.ErrorInternal("select webhook config failed")
+	}
+	items := make([]*bo.WebhookItemSelectBo, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, bo.NewWebhookItemSelectBo(item))
+	}
+	return &bo.SelectWebhookBoResult{
+		Items:   items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+	}, nil
+}

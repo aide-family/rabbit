@@ -44,6 +44,11 @@ service Namespace {
 			get: "/v1/namespaces"
 		};
 	}
+	rpc SelectNamespace (SelectNamespaceRequest) returns (SelectNamespaceReply) {
+		option (google.api.http) = {
+			get: "/v1/namespaces/select"
+		};
+	}
 }
 
 message CreateNamespaceRequest {
@@ -115,4 +120,30 @@ message NamespaceItem {
 	string createdAt = 4;
 	string updatedAt = 5;
 	rabbit.enum.GlobalStatus status = 6;
+}
+
+message NamespaceItemSelect {
+	int64 value = 1;
+	string label = 2;
+	bool disabled = 3;
+	string tooltip = 4;
+}
+
+message SelectNamespaceRequest {
+	string keyword = 1 [(buf.validate.field).cel = {
+		expression: "this.size() <= 200",
+		message: "keyword must be less than or equal to 200",
+	}];
+	int32 limit = 2 [(buf.validate.field).required = true, (buf.validate.field).cel = {
+		expression: "this >= 1 && this <= 100",
+		message: "limit must be greater than or equal to 1 and less than or equal to 100",
+	}];
+	int64 lastUID = 3;
+	rabbit.enum.GlobalStatus status = 4;
+}
+message SelectNamespaceReply {
+	repeated NamespaceItemSelect items = 1;
+	int64 total = 2;
+	int64 lastUID = 3;
+	bool hasMore = 4;
 }

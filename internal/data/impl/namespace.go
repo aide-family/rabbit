@@ -86,6 +86,51 @@ func (n *namespaceRepositoryImpl) ListNamespace(ctx context.Context, req *bo.Lis
 	return bo.NewPageResponseBo(req.PageRequestBo, namespaces), nil
 }
 
+// SelectNamespace implements repository.Namespace.
+func (n *namespaceRepositoryImpl) SelectNamespace(ctx context.Context, req *bo.SelectNamespaceBo) (*bo.SelectNamespaceResult, error) {
+	namespaceDO := n.d.MainQuery(ctx).Namespace
+	wrappers := namespaceDO.WithContext(ctx)
+
+	if strutil.IsNotEmpty(req.Keyword) {
+		wrappers = wrappers.Where(namespaceDO.Name.Like("%" + req.Keyword + "%"))
+	}
+	if req.Status.Exist() && !req.Status.IsUnknown() {
+		wrappers = wrappers.Where(namespaceDO.Status.Eq(req.Status.GetValue()))
+	}
+
+	// 获取总数
+	total, err := wrappers.Count()
+	if err != nil {
+		return nil, err
+	}
+
+	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
+	if req.LastUID > 0 {
+		wrappers = wrappers.Where(namespaceDO.UID.Lt(req.LastUID.Int64()))
+	}
+
+	// 限制返回数量
+	wrappers = wrappers.Limit(int(req.Limit))
+
+	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
+	namespaces, err := wrappers.Order(namespaceDO.UID.Desc()).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取最后一个UID，用于下次分页
+	var lastUID snowflake.ID
+	if len(namespaces) > 0 {
+		lastUID = namespaces[len(namespaces)-1].UID
+	}
+
+	return &bo.SelectNamespaceResult{
+		Items:   namespaces,
+		Total:   total,
+		LastUID: lastUID,
+	}, nil
+}
+
 // GetNamespaceByName implements repository.Namespace.
 func (n *namespaceRepositoryImpl) GetNamespaceByName(ctx context.Context, name string) (*do.Namespace, error) {
 	namespaceDO := n.d.MainQuery(ctx).Namespace

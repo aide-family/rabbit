@@ -68,3 +68,17 @@ func (s *WebhookService) ListWebhook(ctx context.Context, req *apiv1.ListWebhook
 	}
 	return bo.ToAPIV1ListWebhookReply(pageResponseBo), nil
 }
+
+func (s *WebhookService) SelectWebhook(ctx context.Context, req *apiv1.SelectWebhookRequest) (*apiv1.SelectWebhookReply, error) {
+	selectBo := bo.NewSelectWebhookBo(req)
+	result, err := s.webhookConfigBiz.SelectWebhook(ctx, selectBo)
+	if err != nil {
+		return nil, err
+	}
+	return bo.ToAPIV1SelectWebhookReply(&bo.SelectWebhookReplyParams{
+		Items:   result.Items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+		Limit:   req.Limit,
+	}), nil
+}

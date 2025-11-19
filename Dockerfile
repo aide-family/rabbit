@@ -49,6 +49,7 @@ USER appuser
 
 # 设置卷
 VOLUME /moon/config
+VOLUME ~/.rabbit
 
 # 暴露端口
 EXPOSE 8080

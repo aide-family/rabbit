@@ -218,6 +218,101 @@ func ToAPIV1ListEmailConfigReply(pageResponseBo *PageResponseBo[*EmailConfigItem
 	}
 }
 
+// SelectEmailConfigBo 选择Email配置的 BO
+type SelectEmailConfigBo struct {
+	Keyword string
+	Limit   int32
+	LastUID snowflake.ID
+	Status  vobj.GlobalStatus
+}
+
+// NewSelectEmailConfigBo 从 API 请求创建 BO
+func NewSelectEmailConfigBo(req *apiv1.SelectEmailConfigRequest) *SelectEmailConfigBo {
+	var lastUID snowflake.ID
+	if req.LastUID > 0 {
+		lastUID = snowflake.ParseInt64(req.LastUID)
+	}
+	return &SelectEmailConfigBo{
+		Keyword: req.Keyword,
+		Limit:   req.Limit,
+		LastUID: lastUID,
+		Status:  vobj.GlobalStatus(req.Status),
+	}
+}
+
+// EmailConfigItemSelectBo Email配置选择项的 BO
+type EmailConfigItemSelectBo struct {
+	UID      snowflake.ID
+	Name     string
+	Status   vobj.GlobalStatus
+	Disabled bool
+	Tooltip  string
+}
+
+// NewEmailConfigItemSelectBo 从 DO 创建 BO
+func NewEmailConfigItemSelectBo(doEmailConfig *do.EmailConfig) *EmailConfigItemSelectBo {
+	return &EmailConfigItemSelectBo{
+		UID:      doEmailConfig.UID,
+		Name:     doEmailConfig.Name,
+		Status:   doEmailConfig.Status,
+		Disabled: doEmailConfig.Status != vobj.GlobalStatusEnabled,
+		Tooltip:  "",
+	}
+}
+
+// ToAPIV1EmailConfigItemSelect 转换为 API 响应
+func (b *EmailConfigItemSelectBo) ToAPIV1EmailConfigItemSelect() *apiv1.EmailConfigItemSelect {
+	return &apiv1.EmailConfigItemSelect{
+		Value:    b.UID.Int64(),
+		Label:    b.Name,
+		Disabled: b.Disabled,
+		Tooltip:  b.Tooltip,
+	}
+}
+
+// SelectEmailConfigResult Repository层返回结果
+type SelectEmailConfigResult struct {
+	Items   []*do.EmailConfig
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectEmailConfigBoResult Biz层返回结果
+type SelectEmailConfigBoResult struct {
+	Items   []*EmailConfigItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectEmailConfigReplyParams 转换为API响应的参数
+type SelectEmailConfigReplyParams struct {
+	Items   []*EmailConfigItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+	Limit   int32
+}
+
+// ToAPIV1SelectEmailConfigReply 转换为 API 响应
+func ToAPIV1SelectEmailConfigReply(params *SelectEmailConfigReplyParams) *apiv1.SelectEmailConfigReply {
+	selectItems := make([]*apiv1.EmailConfigItemSelect, 0, len(params.Items))
+	for _, item := range params.Items {
+		selectItems = append(selectItems, item.ToAPIV1EmailConfigItemSelect())
+	}
+	var lastUIDInt64 int64
+	if params.LastUID > 0 {
+		lastUIDInt64 = params.LastUID.Int64()
+	}
+	// hasMore: 如果返回的记录数等于limit，说明可能还有更多记录
+	// 如果返回的记录数小于limit，说明已经查询完了
+	hasMore := int32(len(params.Items)) == params.Limit
+	return &apiv1.SelectEmailConfigReply{
+		Items:   selectItems,
+		Total:   params.Total,
+		LastUID: lastUIDInt64,
+		HasMore: hasMore,
+	}
+}
+
 type EmailConfigItemBo struct {
 	UID       snowflake.ID      `json:"uid"`
 	Name      string            `json:"name"`

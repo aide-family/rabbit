@@ -97,3 +97,52 @@ func (w *webhookConfigRepositoryImpl) ListWebhookConfig(ctx context.Context, req
 	}
 	return bo.NewPageResponseBo(req.PageRequestBo, webhookConfigs), nil
 }
+
+// SelectWebhookConfig implements repository.WebhookConfig.
+func (w *webhookConfigRepositoryImpl) SelectWebhookConfig(ctx context.Context, req *bo.SelectWebhookBo) (*bo.SelectWebhookResult, error) {
+	namespace := middler.GetNamespace(ctx)
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace))
+
+	if strutil.IsNotEmpty(req.Keyword) {
+		wrappers = wrappers.Where(webhookConfig.Name.Like("%" + req.Keyword + "%"))
+	}
+	if req.Status.Exist() && !req.Status.IsUnknown() {
+		wrappers = wrappers.Where(webhookConfig.Status.Eq(req.Status.GetValue()))
+	}
+	if req.App.Exist() && !req.App.IsUnknown() {
+		wrappers = wrappers.Where(webhookConfig.App.Eq(req.App.GetValue()))
+	}
+
+	// 获取总数
+	total, err := wrappers.Count()
+	if err != nil {
+		return nil, err
+	}
+
+	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
+	if req.LastUID > 0 {
+		wrappers = wrappers.Where(webhookConfig.UID.Lt(req.LastUID.Int64()))
+	}
+
+	// 限制返回数量
+	wrappers = wrappers.Limit(int(req.Limit))
+
+	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
+	webhookConfigs, err := wrappers.Order(webhookConfig.UID.Desc()).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取最后一个UID，用于下次分页
+	var lastUID snowflake.ID
+	if len(webhookConfigs) > 0 {
+		lastUID = webhookConfigs[len(webhookConfigs)-1].UID
+	}
+
+	return &bo.SelectWebhookResult{
+		Items:   webhookConfigs,
+		Total:   total,
+		LastUID: lastUID,
+	}, nil
+}

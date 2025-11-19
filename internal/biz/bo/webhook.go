@@ -165,6 +165,103 @@ func ToAPIV1ListWebhookReply(pageResponseBo *PageResponseBo[*WebhookItemBo]) *ap
 	}
 }
 
+// SelectWebhookBo 选择Webhook的 BO
+type SelectWebhookBo struct {
+	App     vobj.WebhookApp
+	Keyword string
+	Limit   int32
+	LastUID snowflake.ID
+	Status  vobj.GlobalStatus
+}
+
+// NewSelectWebhookBo 从 API 请求创建 BO
+func NewSelectWebhookBo(req *apiv1.SelectWebhookRequest) *SelectWebhookBo {
+	var lastUID snowflake.ID
+	if req.LastUID > 0 {
+		lastUID = snowflake.ParseInt64(req.LastUID)
+	}
+	return &SelectWebhookBo{
+		App:     vobj.WebhookApp(req.App),
+		Keyword: req.Keyword,
+		Limit:   req.Limit,
+		LastUID: lastUID,
+		Status:  vobj.GlobalStatus(req.Status),
+	}
+}
+
+// WebhookItemSelectBo Webhook选择项的 BO
+type WebhookItemSelectBo struct {
+	UID      snowflake.ID
+	Name     string
+	Status   vobj.GlobalStatus
+	Disabled bool
+	Tooltip  string
+}
+
+// NewWebhookItemSelectBo 从 DO 创建 BO
+func NewWebhookItemSelectBo(doWebhook *do.WebhookConfig) *WebhookItemSelectBo {
+	return &WebhookItemSelectBo{
+		UID:      doWebhook.UID,
+		Name:     doWebhook.Name,
+		Status:   doWebhook.Status,
+		Disabled: doWebhook.Status != vobj.GlobalStatusEnabled,
+		Tooltip:  "",
+	}
+}
+
+// ToAPIV1WebhookItemSelect 转换为 API 响应
+func (b *WebhookItemSelectBo) ToAPIV1WebhookItemSelect() *apiv1.WebhookItemSelect {
+	return &apiv1.WebhookItemSelect{
+		Value:    b.UID.Int64(),
+		Label:    b.Name,
+		Disabled: b.Disabled,
+		Tooltip:  b.Tooltip,
+	}
+}
+
+// SelectWebhookResult Repository层返回结果
+type SelectWebhookResult struct {
+	Items   []*do.WebhookConfig
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectWebhookBoResult Biz层返回结果
+type SelectWebhookBoResult struct {
+	Items   []*WebhookItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectWebhookReplyParams 转换为API响应的参数
+type SelectWebhookReplyParams struct {
+	Items   []*WebhookItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+	Limit   int32
+}
+
+// ToAPIV1SelectWebhookReply 转换为 API 响应
+func ToAPIV1SelectWebhookReply(params *SelectWebhookReplyParams) *apiv1.SelectWebhookReply {
+	selectItems := make([]*apiv1.WebhookItemSelect, 0, len(params.Items))
+	for _, item := range params.Items {
+		selectItems = append(selectItems, item.ToAPIV1WebhookItemSelect())
+	}
+	var lastUIDInt64 int64
+	if params.LastUID > 0 {
+		lastUIDInt64 = params.LastUID.Int64()
+	}
+	// hasMore: 如果返回的记录数等于limit，说明可能还有更多记录
+	// 如果返回的记录数小于limit，说明已经查询完了
+	hasMore := int32(len(params.Items)) == params.Limit
+	return &apiv1.SelectWebhookReply{
+		Items:   selectItems,
+		Total:   params.Total,
+		LastUID: lastUIDInt64,
+		HasMore: hasMore,
+	}
+}
+
 type SendWebhookBo struct {
 	UID  snowflake.ID `json:"uid"`
 	Data string       `json:"data"`
