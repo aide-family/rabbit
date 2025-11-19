@@ -58,9 +58,7 @@ type SMSTemplateData struct {
 }
 
 // WebhookTemplateData Webhook 模板的数据结构
-type WebhookTemplateData struct {
-	Body string `json:"body"`
-}
+type WebhookTemplateData string
 
 // ToEmailTemplateData 将 JSONData 转换为 EmailTemplateData
 func (t *Template) ToEmailTemplateData() (*EmailTemplateData, error) {
@@ -84,12 +82,8 @@ func (t *Template) ToSMSTemplateData() (*SMSTemplateData, error) {
 }
 
 // ToWebhookTemplateData 将 JSONData 转换为 WebhookTemplateData
-func (t *Template) ToWebhookTemplateData() (*WebhookTemplateData, error) {
-	var data WebhookTemplateData
-	if err := json.Unmarshal(t.JSONData, &data); err != nil {
-		return nil, err
-	}
-	return &data, nil
+func (t *Template) ToWebhookTemplateData() (WebhookTemplateData, error) {
+	return WebhookTemplateData(t.JSONData), nil
 }
 
 // SetEmailTemplateData 设置 Email 模板数据

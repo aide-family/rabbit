@@ -333,7 +333,7 @@ func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *do.Template) (*S
 		return nil, merr.ErrorInternal("unmarshal json data failed").WithCause(err)
 	}
 
-	bodyData, err := strutil.ExecuteTextTemplate(webhookTemplateData.Body, jsonData)
+	bodyData, err := strutil.ExecuteTextTemplate(string(webhookTemplateData), jsonData)
 	if err != nil {
 		return nil, merr.ErrorParams("execute text template failed").WithCause(err)
 	}

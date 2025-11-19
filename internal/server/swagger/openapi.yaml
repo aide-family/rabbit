@@ -958,6 +958,26 @@ components:
                     format: enum
                 jsonData:
                     type: string
+                    description: |-
+                        邮件模板数据结构:
+                         {
+                         	"subject": "string",
+                         	"body": "string",
+                         	"content_type": "string",
+                         	"headers": {
+                         		"key": ["value1", "value2"]
+                         	}
+                         }
+                         SMS模板数据结构:
+                         {
+                         	"content": "string",
+                         	"params": {
+                         		"key": "value"
+                         	}
+                         }
+                         Webhook模板数据结构:
+                         {
+                         }
         rabbit.api.v1.CreateWebhookReply:
             type: object
             properties: {}
@@ -1395,6 +1415,26 @@ components:
                     format: enum
                 jsonData:
                     type: string
+                    description: |-
+                        邮件模板数据结构:
+                         {
+                         	"subject": "string",
+                         	"body": "string",
+                         	"content_type": "string",
+                         	"headers": {
+                         		"key": ["value1", "value2"]
+                         	}
+                         }
+                         SMS模板数据结构:
+                         {
+                         	"content": "string",
+                         	"params": {
+                         		"key": "value"
+                         	}
+                         }
+                         Webhook模板数据结构:
+                         {
+                         }
         rabbit.api.v1.UpdateTemplateStatusReply:
             type: object
             properties: {}
