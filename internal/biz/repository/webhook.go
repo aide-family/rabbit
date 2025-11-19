@@ -11,7 +11,8 @@ import (
 )
 
 type WebhookConfig interface {
-	SaveWebhookConfig(ctx context.Context, req *do.WebhookConfig) error
+	CreateWebhookConfig(ctx context.Context, req *do.WebhookConfig) error
+	UpdateWebhookConfig(ctx context.Context, req *do.WebhookConfig) error
 	UpdateWebhookStatus(ctx context.Context, uid snowflake.ID, status vobj.GlobalStatus) error
 	DeleteWebhookConfig(ctx context.Context, uid snowflake.ID) error
 	GetWebhookConfig(ctx context.Context, uid snowflake.ID) (*do.WebhookConfig, error)

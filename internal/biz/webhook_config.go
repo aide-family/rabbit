@@ -36,7 +36,7 @@ func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhook
 		w.helper.Errorw("msg", "check webhook config exists failed", "error", err, "name", doWebhookConfig.Name)
 		return merr.ErrorInternal("create webhook config %s failed", doWebhookConfig.Name)
 	}
-	if err := w.webhookConfigRepo.SaveWebhookConfig(ctx, doWebhookConfig); err != nil {
+	if err := w.webhookConfigRepo.CreateWebhookConfig(ctx, doWebhookConfig); err != nil {
 		w.helper.Errorw("msg", "create webhook config failed", "error", err, "name", doWebhookConfig.Name)
 		return merr.ErrorInternal("create webhook config %s failed", doWebhookConfig.Name)
 	}
@@ -45,7 +45,7 @@ func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhook
 
 func (w *WebhookConfig) UpdateWebhook(ctx context.Context, req *bo.UpdateWebhookBo) error {
 	doWebhookConfig := req.ToDoWebhookConfig()
-	if err := w.webhookConfigRepo.SaveWebhookConfig(ctx, doWebhookConfig); err != nil {
+	if err := w.webhookConfigRepo.UpdateWebhookConfig(ctx, doWebhookConfig); err != nil {
 		w.helper.Errorw("msg", "update webhook config failed", "error", err, "uid", doWebhookConfig.UID)
 		return merr.ErrorInternal("update webhook config %s failed", doWebhookConfig.UID)
 	}

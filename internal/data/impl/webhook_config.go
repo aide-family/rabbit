@@ -25,17 +25,20 @@ type webhookConfigRepositoryImpl struct {
 	d *data.Data
 }
 
-// SaveWebhookConfig implements repository.Webhook.
-func (w *webhookConfigRepositoryImpl) SaveWebhookConfig(ctx context.Context, req *do.WebhookConfig) error {
+// CreateWebhookConfig implements repository.Webhook.
+func (w *webhookConfigRepositoryImpl) CreateWebhookConfig(ctx context.Context, req *do.WebhookConfig) error {
 	namespace := middler.GetNamespace(ctx)
 	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx)
-	if strutil.IsNotEmpty(req.UID.String()) {
-		wrappers = wrappers.Where(webhookConfig.UID.Eq(req.UID.Int64()), webhookConfig.Namespace.Eq(namespace))
-		_, err := wrappers.Updates(req)
-		return err
-	}
-	return wrappers.Create(req)
+	return webhookConfig.WithContext(ctx).Create(req)
+}
+
+// UpdateWebhookConfig implements repository.Webhook.
+func (w *webhookConfigRepositoryImpl) UpdateWebhookConfig(ctx context.Context, req *do.WebhookConfig) error {
+	namespace := middler.GetNamespace(ctx)
+	webhookConfig := w.d.BizQuery(ctx, namespace).WebhookConfig
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.Namespace.Eq(namespace), webhookConfig.UID.Eq(req.UID.Int64()))
+	_, err := wrappers.Updates(req)
+	return err
 }
 
 // UpdateWebhookStatus implements repository.Webhook.
