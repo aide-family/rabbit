@@ -14,6 +14,7 @@ import (
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/cmd/apply"
+	"github.com/aide-family/rabbit/cmd/config"
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
 	"github.com/aide-family/rabbit/cmd/run"
@@ -31,6 +32,9 @@ var (
 
 //go:embed description.txt
 var Description string
+
+//go:embed config/server.yaml
+var defaultServerConfig []byte
 
 func main() {
 	logger, err := log.NewLogger(stdio.LoggerDriver())
@@ -54,6 +58,7 @@ func main() {
 
 	children := []*cobra.Command{
 		apply.NewCmd(),
+		config.NewCmd(defaultServerConfig),
 		delete.NewCmd(),
 		get.NewCmd(),
 		run.NewCmd(),
