@@ -18,4 +18,5 @@ type Template interface {
 	GetTemplate(ctx context.Context, uid snowflake.ID) (*do.Template, error)
 	GetTemplateByName(ctx context.Context, name string) (*do.Template, error)
 	ListTemplate(ctx context.Context, req *bo.ListTemplateBo) (*bo.PageResponseBo[*do.Template], error)
+	SelectTemplate(ctx context.Context, req *bo.SelectTemplateBo) (*bo.SelectTemplateResult, error)
 }

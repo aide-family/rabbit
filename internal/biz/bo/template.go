@@ -155,3 +155,100 @@ func ToAPIV1ListTemplateReply(pageResponseBo *PageResponseBo[*TemplateItemBo]) *
 		PageSize: pageResponseBo.GetPageSize(),
 	}
 }
+
+// SelectTemplateBo 选择模板的 BO
+type SelectTemplateBo struct {
+	App     vobj.TemplateApp
+	Keyword string
+	Limit   int32
+	LastUID snowflake.ID
+	Status  vobj.GlobalStatus
+}
+
+// NewSelectTemplateBo 从 API 请求创建 BO
+func NewSelectTemplateBo(req *apiv1.SelectTemplateRequest) *SelectTemplateBo {
+	var lastUID snowflake.ID
+	if req.LastUID > 0 {
+		lastUID = snowflake.ParseInt64(req.LastUID)
+	}
+	return &SelectTemplateBo{
+		App:     vobj.TemplateApp(req.App),
+		Keyword: req.Keyword,
+		Limit:   req.Limit,
+		LastUID: lastUID,
+		Status:  vobj.GlobalStatus(req.Status),
+	}
+}
+
+// TemplateItemSelectBo 模板选择项的 BO
+type TemplateItemSelectBo struct {
+	UID      snowflake.ID
+	Name     string
+	Status   vobj.GlobalStatus
+	Disabled bool
+	Tooltip  string
+}
+
+// NewTemplateItemSelectBo 从 DO 创建 BO
+func NewTemplateItemSelectBo(doTemplate *do.Template) *TemplateItemSelectBo {
+	return &TemplateItemSelectBo{
+		UID:      doTemplate.UID,
+		Name:     doTemplate.Name,
+		Status:   doTemplate.Status,
+		Disabled: doTemplate.Status != vobj.GlobalStatusEnabled,
+		Tooltip:  "",
+	}
+}
+
+// ToAPIV1TemplateItemSelect 转换为 API 响应
+func (b *TemplateItemSelectBo) ToAPIV1TemplateItemSelect() *apiv1.TemplateItemSelect {
+	return &apiv1.TemplateItemSelect{
+		Value:    b.UID.Int64(),
+		Label:    b.Name,
+		Disabled: b.Disabled,
+		Tooltip:  b.Tooltip,
+	}
+}
+
+// SelectTemplateResult Repository层返回结果
+type SelectTemplateResult struct {
+	Items   []*do.Template
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectTemplateBoResult Biz层返回结果
+type SelectTemplateBoResult struct {
+	Items   []*TemplateItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+}
+
+// SelectTemplateReplyParams 转换为API响应的参数
+type SelectTemplateReplyParams struct {
+	Items   []*TemplateItemSelectBo
+	Total   int64
+	LastUID snowflake.ID
+	Limit   int32
+}
+
+// ToAPIV1SelectTemplateReply 转换为 API 响应
+func ToAPIV1SelectTemplateReply(params *SelectTemplateReplyParams) *apiv1.SelectTemplateReply {
+	selectItems := make([]*apiv1.TemplateItemSelect, 0, len(params.Items))
+	for _, item := range params.Items {
+		selectItems = append(selectItems, item.ToAPIV1TemplateItemSelect())
+	}
+	var lastUIDInt64 int64
+	if params.LastUID > 0 {
+		lastUIDInt64 = params.LastUID.Int64()
+	}
+	// hasMore: 如果返回的记录数等于limit，说明可能还有更多记录
+	// 如果返回的记录数小于limit，说明已经查询完了
+	hasMore := int32(len(params.Items)) == params.Limit
+	return &apiv1.SelectTemplateReply{
+		Items:   selectItems,
+		Total:   params.Total,
+		LastUID: lastUIDInt64,
+		HasMore: hasMore,
+	}
+}

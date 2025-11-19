@@ -74,3 +74,17 @@ func (s *TemplateService) ListTemplate(ctx context.Context, req *apiv1.ListTempl
 	}
 	return bo.ToAPIV1ListTemplateReply(pageResponseBo), nil
 }
+
+func (s *TemplateService) SelectTemplate(ctx context.Context, req *apiv1.SelectTemplateRequest) (*apiv1.SelectTemplateReply, error) {
+	selectBo := bo.NewSelectTemplateBo(req)
+	result, err := s.templateBiz.SelectTemplate(ctx, selectBo)
+	if err != nil {
+		return nil, err
+	}
+	return bo.ToAPIV1SelectTemplateReply(&bo.SelectTemplateReplyParams{
+		Items:   result.Items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+		Limit:   req.Limit,
+	}), nil
+}

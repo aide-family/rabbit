@@ -102,3 +102,52 @@ func (t *templateRepositoryImpl) ListTemplate(ctx context.Context, req *bo.ListT
 	}
 	return bo.NewPageResponseBo(req.PageRequestBo, templates), nil
 }
+
+// SelectTemplate implements repository.Template.
+func (t *templateRepositoryImpl) SelectTemplate(ctx context.Context, req *bo.SelectTemplateBo) (*bo.SelectTemplateResult, error) {
+	namespace := middler.GetNamespace(ctx)
+	template := t.d.BizQuery(ctx, namespace).Template
+	wrappers := template.WithContext(ctx).Where(template.Namespace.Eq(namespace))
+
+	if strutil.IsNotEmpty(req.Keyword) {
+		wrappers = wrappers.Where(template.Name.Like("%" + req.Keyword + "%"))
+	}
+	if req.Status.Exist() && !req.Status.IsUnknown() {
+		wrappers = wrappers.Where(template.Status.Eq(req.Status.GetValue()))
+	}
+	if req.App.Exist() && !req.App.IsUnknown() {
+		wrappers = wrappers.Where(template.App.Eq(req.App.GetValue()))
+	}
+
+	// 获取总数
+	total, err := wrappers.Count()
+	if err != nil {
+		return nil, err
+	}
+
+	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
+	if req.LastUID > 0 {
+		wrappers = wrappers.Where(template.UID.Lt(req.LastUID.Int64()))
+	}
+
+	// 限制返回数量
+	wrappers = wrappers.Limit(int(req.Limit))
+
+	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
+	templates, err := wrappers.Order(template.UID.Desc()).Find()
+	if err != nil {
+		return nil, err
+	}
+
+	// 获取最后一个UID，用于下次分页
+	var lastUID snowflake.ID
+	if len(templates) > 0 {
+		lastUID = templates[len(templates)-1].UID
+	}
+
+	return &bo.SelectTemplateResult{
+		Items:   templates,
+		Total:   total,
+		LastUID: lastUID,
+	}, nil
+}

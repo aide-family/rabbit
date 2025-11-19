@@ -99,3 +99,20 @@ func (t *Template) ListTemplate(ctx context.Context, req *bo.ListTemplateBo) (*b
 	}
 	return bo.NewPageResponseBo(pageResponseBo.PageRequestBo, items), nil
 }
+
+func (t *Template) SelectTemplate(ctx context.Context, req *bo.SelectTemplateBo) (*bo.SelectTemplateBoResult, error) {
+	result, err := t.templateRepo.SelectTemplate(ctx, req)
+	if err != nil {
+		t.helper.Errorw("msg", "select template failed", "error", err, "req", req)
+		return nil, merr.ErrorInternal("select template failed")
+	}
+	items := make([]*bo.TemplateItemSelectBo, 0, len(result.Items))
+	for _, item := range result.Items {
+		items = append(items, bo.NewTemplateItemSelectBo(item))
+	}
+	return &bo.SelectTemplateBoResult{
+		Items:   items,
+		Total:   result.Total,
+		LastUID: result.LastUID,
+	}, nil
+}
