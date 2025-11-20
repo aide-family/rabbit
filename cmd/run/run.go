@@ -18,7 +18,7 @@ import (
 	"github.com/aide-family/rabbit/internal/server"
 )
 
-func NewCmd() *cobra.Command {
+func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run the Rabbit service",
@@ -28,39 +28,53 @@ func NewCmd() *cobra.Command {
 		},
 		Run: runServer,
 	}
-	flags.addFlags(runCmd)
+	var bc conf.Bootstrap
+	c := config.New(config.WithSource(
+		env.NewSource(),
+		conf.NewBytesSource(defaultServerConfigBytes),
+	))
+	if err := c.Load(); err != nil {
+		flags.Helper.Errorw("msg", "load config failed", "error", err)
+		panic(err)
+	}
+
+	if err := c.Scan(&bc); err != nil {
+		flags.Helper.Errorw("msg", "scan config failed", "error", err)
+		panic(err)
+	}
+
+	flags.addFlags(runCmd, &bc)
 	return runCmd
 }
 
 func runServer(_ *cobra.Command, _ []string) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc conf.Bootstrap
-	c := config.New(config.WithSource(
-		env.NewSource(),
-		file.NewSource(flags.configPath),
-	))
-	if err := c.Load(); err != nil {
-		flags.Helper.Errorw("msg", "load config failed", "error", err)
-		return
+	if strutil.IsNotEmpty(flags.configPath) {
+		c := config.New(config.WithSource(
+			env.NewSource(),
+			file.NewSource(flags.configPath),
+		))
+		if err := c.Load(); err != nil {
+			flags.Helper.Errorw("msg", "load config failed", "error", err)
+			return
+		}
+
+		if err := c.Scan(&bc); err != nil {
+			flags.Helper.Errorw("msg", "scan config failed", "error", err)
+			return
+		}
+		flags.Bootstrap = &bc
 	}
 
-	if err := c.Scan(&bc); err != nil {
-		flags.Helper.Errorw("msg", "scan config failed", "error", err)
-		return
-	}
-
-	flags.applyToBootstrap(&bc)
-	serverConf := bc.GetServer()
-	metadata := serverConf.GetMetadata()
-	metadata["repository"] = "https://github.com/aide-family/rabbit"
-	metadata["author"] = "Aide Family"
-	metadata["email"] = "1058165620@qq.com"
+	flags.applyToBootstrap()
+	serverConf := flags.GetServer()
 	envOpts := []hello.Option{
 		hello.WithVersion(flags.Version),
 		hello.WithID(flags.Hostname),
 		hello.WithName(serverConf.GetName()),
-		hello.WithEnv(bc.GetEnvironment().String()),
-		hello.WithMetadata(metadata),
+		hello.WithEnv(flags.Environment.String()),
+		hello.WithMetadata(serverConf.GetMetadata()),
 	}
 	if serverConf.GetUseRandomID() == "true" {
 		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
@@ -76,7 +90,7 @@ func runServer(_ *cobra.Command, _ []string) {
 		"span.id", tracing.SpanID()),
 	)
 
-	app, cleanup, err := wireApp(&bc, helper)
+	app, cleanup, err := wireApp(flags.Bootstrap, helper)
 	if err != nil {
 		flags.Helper.Errorw("msg", "wireApp failed", "error", err)
 		return
