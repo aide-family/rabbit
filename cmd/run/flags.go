@@ -10,7 +10,6 @@ import (
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/enum"
 )
 
@@ -31,10 +30,9 @@ type Flags struct {
 
 var flags Flags
 
-func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
-	f.Bootstrap = bc
-	c.Flags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
-	c.Flags().BoolVar(&f.useEnv, "use-env", false, `Example: --use-env or --use-env=true`)
+func (f *Flags) addFlags(c *cobra.Command) {
+	c.Flags().StringVarP(&f.configPath, "config", "c", "./config", "config file (default is ./config)")
+	c.Flags().StringVarP(&f.clientConfigOutputPath, "client-config-output", "o", "~/.rabbit/config.yaml", "client config output file (default is ~/.rabbit/config.yaml)")
 
 	c.Flags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
 	c.Flags().StringVar(&f.Server.Http.Address, "http-address", f.Server.Http.Address, `Example: --http-address="0.0.0.0:8080", --http-address=":8080"`)
@@ -101,19 +99,10 @@ func (f *Flags) applyToBootstrap() {
 			f.Server.EventBus.Timeout = durationpb.New(timeout)
 		}
 	}
-
-	if strutil.IsNotEmpty(f.environment) {
-		f.Environment = enum.Environment(enum.Environment_value[f.environment])
-	}
-
-	if strutil.IsNotEmpty(f.jwtExpire) {
-		if expire, err := time.ParseDuration(f.jwtExpire); pointer.IsNil(err) {
-			f.Jwt.Expire = durationpb.New(expire)
-		}
-	}
-	if strutil.IsNotEmpty(f.eventBusCoreTimeout) {
-		if timeout, err := time.ParseDuration(f.eventBusCoreTimeout); pointer.IsNil(err) {
-			f.EventBusCore.Timeout = durationpb.New(timeout)
+	if bc.Environment.IsUnknown() {
+		env := enum.Environment_PROD
+		if strutil.IsNotEmpty(f.environment) {
+			env = enum.Environment(enum.Environment_value[f.environment])
 		}
 	}
 
