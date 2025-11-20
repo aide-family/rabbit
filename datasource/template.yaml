@@ -1,0 +1,99 @@
+templates:
+  - id: 1
+    uid: 1986338680076115968
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115968
+    namespace: default
+    name: default
+    app: TEMPLATE_APP_EMAIL
+    jsonData: |
+      {
+        "subject": "Hello, World!",
+        "body": "This is a test email.",
+        "content_type": "text/html",
+        "headers": {
+          "X-Custom-Header": ["value1"]
+        }
+      }
+    status: ENABLED
+  - id: 2
+    uid: 1986338680076115969
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115969
+    namespace: default
+    name: default
+    app: TEMPLATE_APP_SMS
+    jsonData: |
+      {
+        "content": "This is a test SMS.",
+        "params": {
+          "key": "value"
+        }
+      }
+    status: ENABLED
+  - id: 3
+    uid: 1986338680076115970
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115970
+    namespace: default
+    name: default
+    app: TEMPLATE_APP_WEBHOOK_OTHER
+    jsonData: |
+      {
+        "content": "This is a test webhook.",
+        "params": {
+          "key": "value"
+        }
+      }
+    status: ENABLED
+  - id: 4
+    uid: 1986338680076115971
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115971
+    namespace: default
+    name: default
+    app: TEMPLATE_APP_WEBHOOK_DINGTALK
+    jsonData: |
+      {
+        "content": "This is a test webhook.",
+        "params": {
+          "key": "value"
+        }
+      }
+    status: ENABLED
+  - id: 5
+    uid: 1986338680076115972
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115972
+    namespace: default
+    name: default
+    app: TEMPLATE_APP_WEBHOOK_WECHAT
+    jsonData: |
+      {
+        "content": "This is a test webhook.",
+        "params": {
+          "key": "value"
+        }
+      }
+    status: ENABLED
+  - id: 6
+    uid: 1986338680076115973
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115973
+    namespace: default
+    name: default
+    app: TEMPLATE_APP_WEBHOOK_FEISHU
+    jsonData: |
+      {
+        "content": "This is a test webhook.",
+        "params": {
+          "key": "value"
+        }
+      }
+    status: ENABLED

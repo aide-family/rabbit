@@ -73,8 +73,8 @@ message Config {
 		int64 uid = 2;
 		string createdAt = 3;
 		string updatedAt = 4;
-		string creator = 5;
-		int64 name = 6;
+		int64 creator = 5;
+		string name = 6;
 		map<string, string> metadata = 7;
 		rabbit.enum.GlobalStatus status = 8;
 	}

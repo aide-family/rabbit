@@ -1,0 +1,14 @@
+webhooks:
+  - id: 1
+    uid: 1986338680076115968
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115968
+    namespace: default
+    name: default
+    url: https://example.com
+    method: POST
+    headers:
+      key: value
+    secret: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    status: ENABLED
