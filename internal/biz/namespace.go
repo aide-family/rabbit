@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -24,6 +25,27 @@ func NewNamespace(
 	namespaceRepo repository.Namespace,
 	helper *klog.Helper,
 ) *Namespace {
+	n := &Namespace{
+		useDatabase:   bc.GetUseDatabase() == "true",
+		namespaceRepo: namespaceRepo,
+		helper:        klog.NewHelper(klog.With(helper.Logger(), "biz", "namespace")),
+	}
+	n.namespaces = n.initNamespaces()
+	conf.RegisterReloadFunc(conf.KeyNamespaces, func() {
+		n.helper.Infow("msg", "namespaces changed, reloading namespaces")
+		n.namespaces = n.initNamespaces()
+	})
+	return n
+}
+
+type Namespace struct {
+	helper        *klog.Helper
+	useDatabase   bool
+	namespaceRepo repository.Namespace
+	namespaces    *safety.SyncMap[snowflake.ID, *bo.NamespaceItemBo]
+}
+
+func (n *Namespace) initNamespaces() *safety.SyncMap[snowflake.ID, *bo.NamespaceItemBo] {
 	namespaces := safety.NewSyncMap(make(map[snowflake.ID]*bo.NamespaceItemBo))
 	for _, namespace := range conf.GetFileConfig().GetNamespaces() {
 		uid := snowflake.ParseInt64(namespace.GetUid())
@@ -40,19 +62,7 @@ func NewNamespace(
 			UpdatedAt: updatedAt,
 		})
 	}
-	return &Namespace{
-		useDatabase:   bc.GetUseDatabase() == "true",
-		namespaceRepo: namespaceRepo,
-		namespaces:    namespaces,
-		helper:        klog.NewHelper(klog.With(helper.Logger(), "biz", "namespace")),
-	}
-}
-
-type Namespace struct {
-	helper        *klog.Helper
-	useDatabase   bool
-	namespaceRepo repository.Namespace
-	namespaces    *safety.SyncMap[snowflake.ID, *bo.NamespaceItemBo]
+	return namespaces
 }
 
 func (n *Namespace) CreateNamespace(ctx context.Context, req *bo.CreateNamespaceBo) error {
@@ -176,6 +186,9 @@ func (n *Namespace) getNamespaceByFileConfig(ctx context.Context, req *bo.ListNa
 	pageRequestBo := bo.NewPageRequestBo(req.Page, req.PageSize)
 	pageRequestBo.WithTotal(total)
 	req.PageRequestBo = pageRequestBo
+	sort.Slice(namespaces, func(i, j int) bool {
+		return namespaces[i].UID < namespaces[j].UID
+	})
 	return namespaces, nil
 }
 
@@ -219,6 +232,9 @@ func (n *Namespace) getSelectNamespaceByFileConfig(ctx context.Context, req *bo.
 	total := int64(len(namespaces))
 	req.Limit = int32(total)
 	req.LastUID = 0
+	sort.Slice(namespaces, func(i, j int) bool {
+		return namespaces[i].UID < namespaces[j].UID
+	})
 	return namespaces, nil
 }
 

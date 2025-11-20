@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -25,6 +26,27 @@ func NewTemplate(
 	templateRepo repository.Template,
 	helper *klog.Helper,
 ) *Template {
+	t := &Template{
+		useDatabase:  bc.GetUseDatabase() == "true",
+		templateRepo: templateRepo,
+		helper:       klog.NewHelper(klog.With(helper.Logger(), "biz", "template")),
+	}
+	t.templates = t.initTemplates()
+	conf.RegisterReloadFunc(conf.KeyTemplates, func() {
+		t.helper.Infow("msg", "templates changed, reloading templates")
+		t.templates = t.initTemplates()
+	})
+	return t
+}
+
+type Template struct {
+	helper       *klog.Helper
+	useDatabase  bool
+	templateRepo repository.Template
+	templates    *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.TemplateItemBo]]
+}
+
+func (t *Template) initTemplates() *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.TemplateItemBo]] {
 	templates := safety.NewSyncMap(make(map[string]*safety.SyncMap[snowflake.ID, *bo.TemplateItemBo]))
 	for _, template := range conf.GetFileConfig().GetTemplates() {
 		namespace := template.GetNamespace()
@@ -48,19 +70,7 @@ func NewTemplate(
 			UpdatedAt: updatedAt,
 		})
 	}
-	return &Template{
-		useDatabase:  bc.GetUseDatabase() == "true",
-		templateRepo: templateRepo,
-		templates:    templates,
-		helper:       klog.NewHelper(klog.With(helper.Logger(), "biz", "template")),
-	}
-}
-
-type Template struct {
-	helper       *klog.Helper
-	useDatabase  bool
-	templateRepo repository.Template
-	templates    *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.TemplateItemBo]]
+	return templates
 }
 
 func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) error {
@@ -172,6 +182,9 @@ func (t *Template) getTemplateByFileConfigWithNamespace(ctx context.Context, req
 	pageRequestBo := bo.NewPageRequestBo(req.Page, req.PageSize)
 	pageRequestBo.WithTotal(total)
 	req.PageRequestBo = pageRequestBo
+	sort.Slice(templates, func(i, j int) bool {
+		return templates[i].UID < templates[j].UID
+	})
 	return templates, nil
 }
 
@@ -223,6 +236,9 @@ func (t *Template) getSelectTemplateByFileConfig(ctx context.Context, req *bo.Se
 	total := int64(len(templates))
 	req.Limit = int32(total)
 	req.LastUID = 0
+	sort.Slice(templates, func(i, j int) bool {
+		return templates[i].UID < templates[j].UID
+	})
 	return templates, nil
 }
 

@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -25,6 +26,27 @@ func NewWebhookConfig(
 	webhookConfigRepo repository.WebhookConfig,
 	helper *klog.Helper,
 ) *WebhookConfig {
+	w := &WebhookConfig{
+		useDatabase:       bc.GetUseDatabase() == "true",
+		webhookConfigRepo: webhookConfigRepo,
+		helper:            klog.NewHelper(klog.With(helper.Logger(), "biz", "webhookConfig")),
+	}
+	w.webhookConfigs = w.initWebhookConfigs()
+	conf.RegisterReloadFunc(conf.KeyWebhooks, func() {
+		w.helper.Infow("msg", "webhooks changed, reloading webhooks")
+		w.webhookConfigs = w.initWebhookConfigs()
+	})
+	return w
+}
+
+type WebhookConfig struct {
+	helper            *klog.Helper
+	useDatabase       bool
+	webhookConfigRepo repository.WebhookConfig
+	webhookConfigs    *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.WebhookItemBo]]
+}
+
+func (w *WebhookConfig) initWebhookConfigs() *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.WebhookItemBo]] {
 	webhookConfigs := safety.NewSyncMap(make(map[string]*safety.SyncMap[snowflake.ID, *bo.WebhookItemBo]))
 	for _, webhookConfig := range conf.GetFileConfig().GetWebhooks() {
 		namespace := webhookConfig.GetNamespace()
@@ -51,19 +73,7 @@ func NewWebhookConfig(
 			UpdatedAt: updatedAt,
 		})
 	}
-	return &WebhookConfig{
-		useDatabase:     bc.GetUseDatabase() == "true",
-		webhookConfigRepo: webhookConfigRepo,
-		webhookConfigs:    webhookConfigs,
-		helper:            klog.NewHelper(klog.With(helper.Logger(), "biz", "webhookConfig")),
-	}
-}
-
-type WebhookConfig struct {
-	helper            *klog.Helper
-	useDatabase       bool
-	webhookConfigRepo repository.WebhookConfig
-	webhookConfigs    *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.WebhookItemBo]]
+	return webhookConfigs
 }
 
 func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhookBo) error {
@@ -165,6 +175,9 @@ func (w *WebhookConfig) getWebhookByFileConfigWithNamespace(ctx context.Context,
 	pageRequestBo := bo.NewPageRequestBo(req.Page, req.PageSize)
 	pageRequestBo.WithTotal(total)
 	req.PageRequestBo = pageRequestBo
+	sort.Slice(webhookConfigs, func(i, j int) bool {
+		return webhookConfigs[i].UID < webhookConfigs[j].UID
+	})
 	return webhookConfigs, nil
 }
 
@@ -216,6 +229,9 @@ func (w *WebhookConfig) getSelectWebhookByFileConfig(ctx context.Context, req *b
 	total := int64(len(webhookConfigs))
 	req.Limit = int32(total)
 	req.LastUID = 0
+	sort.Slice(webhookConfigs, func(i, j int) bool {
+		return webhookConfigs[i].UID < webhookConfigs[j].UID
+	})
 	return webhookConfigs, nil
 }
 

@@ -5,7 +5,7 @@ templates:
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115968
     namespace: default
-    name: default
+    name: template1
     app: TEMPLATE_APP_EMAIL
     jsonData: |
       {
@@ -23,7 +23,7 @@ templates:
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115969
     namespace: default
-    name: default
+    name: template2
     app: TEMPLATE_APP_SMS
     jsonData: |
       {
@@ -39,7 +39,7 @@ templates:
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115970
     namespace: default
-    name: default
+    name: template3
     app: TEMPLATE_APP_WEBHOOK_OTHER
     jsonData: |
       {
@@ -55,7 +55,7 @@ templates:
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115971
     namespace: default
-    name: default
+    name: template4
     app: TEMPLATE_APP_WEBHOOK_DINGTALK
     jsonData: |
       {
@@ -71,7 +71,7 @@ templates:
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115972
     namespace: default
-    name: default
+    name: template5
     app: TEMPLATE_APP_WEBHOOK_WECHAT
     jsonData: |
       {
@@ -87,7 +87,7 @@ templates:
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115973
     namespace: default
-    name: default
+    name: template6
     app: TEMPLATE_APP_WEBHOOK_FEISHU
     jsonData: |
       {
