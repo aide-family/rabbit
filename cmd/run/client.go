@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/server"
@@ -70,7 +71,7 @@ func generateClientConfig(
 		clientConfig.Kubernetes = bc.GetKubernetes()
 	}
 
-	if clusterConfig != nil {
+	if clusterConfig != nil && strutil.IsNotEmpty(clusterConfig.GetEndpoints()) {
 		clientConfig.Cluster = clusterConfig
 	} else {
 		// 如果没有配置，使用默认值

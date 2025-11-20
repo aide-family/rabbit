@@ -11,7 +11,7 @@ option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 message Bootstrap {
 	rabbit.enum.Environment environment = 1;
 	Server server = 2;
-	GlobalEmail globalEmail = 3;
+	// GlobalEmail globalEmail = 3;
 	JWT jwt = 4;
 	map<string, rabbit.config.MySQLConfig> biz = 5;
 	rabbit.config.MySQLConfig main = 6;

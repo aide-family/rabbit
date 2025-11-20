@@ -61,7 +61,7 @@ func main() {
 		config.NewCmd(defaultServerConfig),
 		delete.NewCmd(),
 		get.NewCmd(),
-		run.NewCmd(),
+		run.NewCmd(defaultServerConfig),
 		send.NewCmd(),
 		version.NewCmd(),
 	}
