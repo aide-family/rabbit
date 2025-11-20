@@ -3,6 +3,7 @@ package biz
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 
@@ -25,6 +26,27 @@ func NewEmailConfig(
 	emailConfigRepo repository.EmailConfig,
 	helper *klog.Helper,
 ) *EmailConfig {
+	e := &EmailConfig{
+		useDatabase:     bc.GetUseDatabase() == "true",
+		emailConfigRepo: emailConfigRepo,
+		helper:          klog.NewHelper(klog.With(helper.Logger(), "biz", "email_config")),
+	}
+	e.emailConfigs = e.initEmailConfigs()
+	conf.RegisterReloadFunc(conf.KeyEmails, func() {
+		e.helper.Infow("msg", "emails changed, reloading emails")
+		e.emailConfigs = e.initEmailConfigs()
+	})
+	return e
+}
+
+type EmailConfig struct {
+	helper          *klog.Helper
+	useDatabase     bool
+	emailConfigRepo repository.EmailConfig
+	emailConfigs    *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.EmailConfigItemBo]]
+}
+
+func (c *EmailConfig) initEmailConfigs() *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.EmailConfigItemBo]] {
 	emailConfigs := safety.NewSyncMap(make(map[string]*safety.SyncMap[snowflake.ID, *bo.EmailConfigItemBo]))
 	for _, emailConfig := range conf.GetFileConfig().GetEmails() {
 		namespace := emailConfig.GetNamespace()
@@ -50,19 +72,7 @@ func NewEmailConfig(
 			UpdatedAt: updatedAt,
 		})
 	}
-	return &EmailConfig{
-		useDatabase:     bc.GetUseDatabase() == "true",
-		emailConfigRepo: emailConfigRepo,
-		emailConfigs:    emailConfigs,
-		helper:          klog.NewHelper(klog.With(helper.Logger(), "biz", "email_config")),
-	}
-}
-
-type EmailConfig struct {
-	helper          *klog.Helper
-	useDatabase     bool
-	emailConfigRepo repository.EmailConfig
-	emailConfigs    *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *bo.EmailConfigItemBo]]
+	return emailConfigs
 }
 
 func (c *EmailConfig) CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) error {
@@ -164,6 +174,9 @@ func (c *EmailConfig) getEmailConfigByFileConfigWithNamespace(ctx context.Contex
 	pageRequestBo := bo.NewPageRequestBo(req.Page, req.PageSize)
 	pageRequestBo.WithTotal(total)
 	req.PageRequestBo = pageRequestBo
+	sort.Slice(emailConfigs, func(i, j int) bool {
+		return emailConfigs[i].UID < emailConfigs[j].UID
+	})
 	return emailConfigs, nil
 }
 
@@ -212,6 +225,9 @@ func (c *EmailConfig) getSelectEmailConfigByFileConfig(ctx context.Context, req 
 	total := int64(len(emailConfigs))
 	req.Limit = int32(total)
 	req.LastUID = 0
+	sort.Slice(emailConfigs, func(i, j int) bool {
+		return emailConfigs[i].UID < emailConfigs[j].UID
+	})
 	return emailConfigs, nil
 }
 
