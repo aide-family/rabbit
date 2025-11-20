@@ -10,6 +10,7 @@ import (
 	"github.com/aide-family/magicbox/plugin/cache/mem"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -30,32 +31,41 @@ var ProviderSetData = wire.NewSet(New)
 // New a data and returns.
 func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 	d := &Data{
-		helper: helper,
-		c:      c,
-		dbs:    safety.NewSyncMap(make(map[string]*gorm.DB)),
-		closes: make(map[string]func() error),
+		helper:      helper,
+		c:           c,
+		dbs:         safety.NewSyncMap(make(map[string]*gorm.DB)),
+		closes:      make(map[string]func() error),
+		useDatabase: strutil.IsNotEmpty(c.GetUseDatabase()) && c.GetUseDatabase() == "true",
 	}
+
 	if err := d.initRegistry(); err != nil {
 		return nil, d.close, err
 	}
-	mainDB, err := connect.NewGorm(d.c.GetMain(), d.helper)
-	if err != nil {
-		return nil, d.close, err
-	}
-	d.mainDB = mainDB
-	d.closes["mainDB"] = func() error { return connect.CloseDB(mainDB) }
-
-	for namespace, biz := range d.c.GetBiz() {
-		db, err := connect.NewGorm(biz, d.helper)
+	if d.useDatabase {
+		mainDB, err := connect.NewGorm(d.c.GetMain(), d.helper)
 		if err != nil {
 			return nil, d.close, err
 		}
+		d.mainDB = mainDB
+		d.closes["mainDB"] = func() error { return connect.CloseDB(mainDB) }
 
-		for _, ns := range strings.Split(namespace, ",") {
-			d.dbs.Set(strings.TrimSpace(ns), db)
+		for namespace, biz := range d.c.GetBiz() {
+			db, err := connect.NewGorm(biz, d.helper)
+			if err != nil {
+				return nil, d.close, err
+			}
+
+			for _, ns := range strings.Split(namespace, ",") {
+				d.dbs.Set(strings.TrimSpace(ns), db)
+			}
+
+			d.closes["bizDB.["+namespace+"]"] = func() error { return connect.CloseDB(db) }
 		}
-
-		d.closes["bizDB.["+namespace+"]"] = func() error { return connect.CloseDB(db) }
+	} else {
+		if err := conf.LoadFileConfig(d.c, d.helper); err != nil {
+			return nil, d.close, err
+		}
+		d.helper.Infow("msg", "file config mode enabled, database connections disabled")
 	}
 
 	cacheDriver := mem.CacheDriver()
@@ -70,13 +80,14 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 }
 
 type Data struct {
-	helper   *klog.Helper
-	c        *conf.Bootstrap
-	dbs      *safety.SyncMap[string, *gorm.DB]
-	mainDB   *gorm.DB
-	registry connect.Registry
-	cache    cache.Interface
-	closes   map[string]func() error
+	helper      *klog.Helper
+	c           *conf.Bootstrap
+	dbs         *safety.SyncMap[string, *gorm.DB]
+	mainDB      *gorm.DB
+	registry    connect.Registry
+	cache       cache.Interface
+	closes      map[string]func() error
+	useDatabase bool
 }
 
 func (d *Data) AppendClose(name string, close func() error) {
@@ -94,6 +105,9 @@ func (d *Data) close() {
 }
 
 func (d *Data) MainDB(ctx context.Context) *gorm.DB {
+	if !d.useDatabase {
+		panic(merr.ErrorInternalServer("database mode is not enabled, please check the config"))
+	}
 	if tx, ok := GetMainTransaction(ctx); ok {
 		return tx.DB.WithContext(ctx)
 	}
@@ -113,6 +127,9 @@ func (d *Data) BizQueryWithTable(ctx context.Context, namespace string, tableNam
 }
 
 func (d *Data) BizDB(ctx context.Context, namespace string) *gorm.DB {
+	if !d.useDatabase {
+		panic(merr.ErrorInternalServer("database mode is not enabled, please check the config"))
+	}
 	if tx, ok := GetBizTransaction(ctx, namespace); ok {
 		return tx.DB.WithContext(ctx)
 	}

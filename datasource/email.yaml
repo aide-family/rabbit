@@ -1,0 +1,13 @@
+emails:
+  - id: 1
+    uid: 1986338680076115968
+    createdAt: 2021-01-01 00:00:00
+    updatedAt: 2021-01-01 00:00:00
+    creator: 1986338680076115968
+    namespace: default
+    name: default
+    host: smtp.example.com
+    port: 587
+    username: user@example.com
+    password: password
+    status: ENABLED
