@@ -72,6 +72,12 @@ func (c *protoYAMLCodec) Name() string {
 
 var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewEventBus)
 
+// ProviderSetServerOnly provides only HTTP and gRPC servers without EventBus
+var ProviderSetServerOnly = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterServiceOnly)
+
+// ProviderSetJob provides only EventBus for job workers
+var ProviderSetJob = wire.NewSet(NewEventBus)
+
 // init initializes the json.MarshalOptions.
 func init() {
 	json.MarshalOptions = protojson.MarshalOptions{
@@ -129,7 +135,7 @@ func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
 	}
 	basicAuth := bc.GetMetricsBasicAuth()
 	authHandler := promhttp.Handler()
-	if basicAuth.GetEnabled() == "true" {
+	if basicAuth != nil && basicAuth.GetEnabled() == "true" {
 		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
 		helper.Debugf("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 	} else {
@@ -171,6 +177,37 @@ func RegisterService(
 
 	eventBusSrv.RegisterHandler(eventBusService)
 	return Servers{httpSrv, grpcSrv, eventBusSrv}
+}
+
+// RegisterServiceOnly registers only HTTP and gRPC services without EventBus.
+func RegisterServiceOnly(
+	c *conf.Bootstrap,
+	httpSrv *http.Server,
+	grpcSrv *grpc.Server,
+	healthService *service.HealthService,
+	emailService *service.EmailService,
+	webhookService *service.WebhookService,
+	senderService *service.SenderService,
+	namespaceService *service.NamespaceService,
+	messageLogService *service.MessageLogService,
+	templateService *service.TemplateService,
+) Servers {
+	apiv1.RegisterHealthServer(grpcSrv, healthService)
+	apiv1.RegisterEmailServer(grpcSrv, emailService)
+	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
+	apiv1.RegisterSenderServer(grpcSrv, senderService)
+	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
+	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
+	apiv1.RegisterTemplateServer(grpcSrv, templateService)
+
+	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
+	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
+	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
+	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
+	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
+	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
+	return Servers{httpSrv, grpcSrv}
 }
 
 var namespaceAllowList = []string{

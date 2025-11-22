@@ -7,6 +7,9 @@ package main
 import (
 	_ "embed"
 
+	"github.com/aide-family/magicbox/log"
+	"github.com/aide-family/magicbox/log/stdio"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -14,8 +17,10 @@ import (
 	"github.com/aide-family/rabbit/cmd/config"
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
+	"github.com/aide-family/rabbit/cmd/job"
 	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/cmd/send"
+	"github.com/aide-family/rabbit/cmd/server"
 	"github.com/aide-family/rabbit/cmd/version"
 )
 
@@ -34,7 +39,16 @@ var Description string
 var defaultServerConfig []byte
 
 func main() {
+	logger, err := log.NewLogger(stdio.LoggerDriver())
+	if err != nil {
+		panic(err)
+	}
+	logger = klog.With(logger,
+		"ts", klog.DefaultTimestamp,
+	)
+	helper := klog.NewHelper(logger)
 	cmd.SetGlobalFlags(
+		cmd.WithGlobalFlagsHelper(helper),
 		cmd.WithGlobalFlagsVersion(Version),
 		cmd.WithGlobalFlagsBuildTime(BuildTime),
 		cmd.WithGlobalFlagsAuthor(Author),
@@ -49,8 +63,10 @@ func main() {
 		config.NewCmd(defaultServerConfig),
 		delete.NewCmd(),
 		get.NewCmd(),
-		run.NewCmd(defaultServerConfig),
+		job.NewCmd(),
+		run.NewCmd(),
 		send.NewCmd(),
+		server.NewCmd(),
 		version.NewCmd(),
 	}
 	cmd.Execute(rootCmd, children...)
