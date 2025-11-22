@@ -17,8 +17,10 @@ import (
 	"github.com/aide-family/rabbit/cmd/config"
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
+	"github.com/aide-family/rabbit/cmd/job"
 	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/cmd/send"
+	"github.com/aide-family/rabbit/cmd/server"
 	"github.com/aide-family/rabbit/cmd/version"
 )
 
@@ -61,8 +63,10 @@ func main() {
 		config.NewCmd(defaultServerConfig),
 		delete.NewCmd(),
 		get.NewCmd(),
+		job.NewCmd(),
 		run.NewCmd(),
 		send.NewCmd(),
+		server.NewCmd(),
 		version.NewCmd(),
 	}
 	cmd.Execute(rootCmd, children...)
