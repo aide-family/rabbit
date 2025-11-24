@@ -10,33 +10,37 @@ import (
 	"github.com/aide-family/rabbit/cmd/send/sms"
 )
 
+const cmdLong = `Send messages to specified channels, supporting multiple message types and delivery methods.
+
+The send command provides direct message sending capabilities, supporting multiple message
+channels such as email, SMS, Feishu, etc. It enables quick single message delivery or
+batch sending using templates.
+
+Key Features:
+  • Multi-channel support: Support for email, SMS, Webhook, Feishu, and other message channels
+  • Direct delivery: Bypass the queue for immediate message sending, suitable for urgent or testing scenarios
+  • Template support: Support for sending messages using pre-configured templates
+  • Parameter validation: Automatically validate message parameters and channel configuration validity before sending
+
+Subcommands:
+  • email   Send email messages, supporting both HTML and plain text formats
+  • sms     Send SMS messages, supporting multiple SMS service providers
+  • feishu  Send Feishu messages, supporting text and rich text formats
+
+Use Cases:
+  • Quick testing: Test whether message channel configurations are correct
+  • Urgent notifications: Send important notifications that require immediate delivery
+  • Single message delivery: Send individual messages without going through the queue
+
+Messages sent through this command are processed immediately, making it suitable for
+testing and urgent scenarios. For bulk message sending, it is recommended to use the
+apply command to submit messages to the queue for asynchronous processing.`
+
 func NewCmd() *cobra.Command {
 	sendCmd := &cobra.Command{
 		Use:   "send",
-		Short: "Send a message to the queue",
-		Long: `发送消息到指定通道，支持多种消息类型和发送方式。
-
-send 命令提供直接发送消息的能力，支持邮件、短信、飞书等多种消息
-通道，可以快速发送单条消息或使用模板批量发送。
-
-主要功能：
-  • 多通道支持：支持邮件、短信、Webhook、飞书等多种消息通道
-  • 直接发送：绕过队列直接发送消息，适合紧急或测试场景
-  • 模板支持：支持使用预配置的模板进行消息发送
-  • 参数验证：发送前自动验证消息参数和通道配置的有效性
-
-子命令：
-  • email   发送邮件消息，支持 HTML 和纯文本格式
-  • sms     发送短信消息，支持多种短信服务商
-  • feishu  发送飞书消息，支持文本和富文本格式
-
-使用场景：
-  • 快速测试：测试消息通道配置是否正确
-  • 紧急通知：需要立即发送的重要通知
-  • 单条发送：发送单条消息，无需通过队列
-
-发送的消息会立即处理，适合测试和紧急场景。对于批量消息发送，
-建议使用 apply 命令提交到队列进行异步处理。`,
+		Short: "Send messages to specified channels",
+		Long:  cmdLong,
 		Annotations: map[string]string{
 			"group": cmd.MessageCommands,
 		},

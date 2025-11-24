@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"gorm.io/gen"
 
+	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/biz/do"
 )
 
@@ -27,11 +28,39 @@ var genConfig = gen.Config{
 	// WithUnitTest: true,
 }
 
+const cmdGenLong = `Generate GORM query code for models and repositories.
+
+The gen command automatically generates type-safe query code, repository interfaces,
+and helper methods based on GORM model definitions. This eliminates the need for
+manual query code writing and ensures type safety.
+
+Key Features:
+  • Type-safe queries: Generate type-safe query methods for all model operations
+  • Repository generation: Automatically generate repository interfaces and implementations
+  • Query builder: Generate query builder methods for complex database operations
+  • Code customization: Support for custom query methods and field configurations
+
+Configuration:
+  • Output path: Specify the output directory for generated code (default: ./internal/biz/do/query)
+  • Generation mode: Configure generation options (WithDefaultQuery, WithQueryInterface, etc.)
+  • Field options: Control nullable fields, default values, and type tags
+
+Use Cases:
+  • Initial code generation: Generate query code for all models at once
+  • Model updates: Regenerate code when models are modified
+  • Development efficiency: Reduce boilerplate code and improve development speed
+
+The generated code includes query methods, repository interfaces, and type-safe
+database operations that can be used throughout the application.`
+
 func newGenCmd() *cobra.Command {
 	genCmd := &cobra.Command{
 		Use:   "gen",
-		Short: "gorm gen",
-		Long:  "gorm generate",
+		Short: "Generate GORM query code for models and repositories",
+		Long:  cmdGenLong,
+		Annotations: map[string]string{
+			"group": cmd.CodeCommands,
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			generate()
 		},

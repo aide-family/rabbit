@@ -40,9 +40,10 @@ main:
     loc: Asia/Shanghai
 
 eventBus:
-  workerCount: ${MOON_RABBIT_EVENT_BUS_WORKER_COUNT:1}
+  workerCount: ${MOON_RABBIT_EVENT_BUS_WORKER_COUNT:10}
   timeout: ${MOON_RABBIT_EVENT_BUS_TIMEOUT:10s}
-
+  bufferSize: ${MOON_RABBIT_EVENT_BUS_BUFFER_SIZE:1000}
+  
 registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 
 cluster:

@@ -184,13 +184,17 @@ clean:
 	@echo "Cleaning up"
 	rm -rf bin
 	rm -rf internal/biz/do/query
-	rm -rf internal/biz/vobj/*__string.go
-	rm -rf internal/conf/*.pb.go
-	rm -rf pkg/api/*/*.pb.go
-	rm -rf pkg/api/*/*.pb.gw.go
-	rm -rf pkg/enum/*.pb.go
-	rm -rf pkg/merr/*.pb.go
-	rm -rf pkg/config/*.pb.go
+ifeq ($(GOHOSTOS), windows)
+	@echo "Cleaning generated files (Windows)"
+	$(Git_Bash) -c "find . -name '*__string.go' -type f -delete"
+	$(Git_Bash) -c "find . -name '*.pb.go' -type f -delete"
+	$(Git_Bash) -c "find . -name '*.pb.gw.go' -type f -delete"
+else
+	@echo "Cleaning generated files"
+	find . -name '*__string.go' -type f -delete
+	find . -name '*.pb.go' -type f -delete
+	find . -name '*.pb.gw.go' -type f -delete
+endif
 
 # show help
 help:

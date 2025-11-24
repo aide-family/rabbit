@@ -11,26 +11,28 @@ import (
 func NewCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "sms",
-		Short: "Send a SMS message",
-		Long: `发送短信消息，支持多种短信服务商和模板发送。
+		Short: "Send SMS messages",
+		Long: `Send SMS messages, supporting multiple SMS service providers and template-based delivery.
 
-sms 命令用于直接发送短信消息，支持指定短信服务商配置、接收号码、
-消息内容等参数，可以快速发送单条短信或使用模板发送。
+The sms command enables direct SMS message sending, supporting configuration of SMS service
+providers, recipient phone numbers, message content, and other parameters. It allows quick
+single message delivery or template-based sending.
 
-主要功能：
-  • 短信发送：通过配置的短信服务商发送短信消息
-  • 多服务商：支持阿里云、腾讯云、华为云等主流短信服务商
-  • 模板发送：支持使用服务商提供的短信模板进行发送
-  • 参数替换：支持在模板中使用动态参数进行内容替换
-  • 批量发送：支持向多个号码批量发送短信
+Key Features:
+  • SMS delivery: Send SMS messages through configured SMS service providers
+  • Multi-provider support: Support for major SMS providers (Alibaba Cloud, Tencent Cloud, Huawei Cloud, etc.)
+  • Template-based sending: Support for using provider-provided SMS templates
+  • Parameter substitution: Support for dynamic parameter replacement in templates
+  • Batch sending: Support for sending SMS messages to multiple phone numbers in batch
 
-使用场景：
-  • 测试短信：测试短信服务商配置是否正确
-  • 验证码发送：发送验证码、通知等短信消息
-  • 紧急通知：需要立即发送的重要短信通知
+Use Cases:
+  • SMS testing: Test whether SMS service provider configurations are correct
+  • Verification code delivery: Send verification codes, notifications, and other SMS messages
+  • Urgent notifications: Send important SMS notifications that require immediate delivery
 
-短信发送需要先配置短信服务商（API Key、Secret 等），可通过配置
-文件或 API 进行配置。发送的短信会立即处理，适合测试和紧急场景。`,
+SMS sending requires prior configuration of SMS service providers (API Key, Secret, etc.),
+which can be configured through configuration files or API. Sent SMS messages are processed
+immediately, making it suitable for testing and urgent scenarios.`,
 		Annotations: map[string]string{
 			"group": cmd.MessageCommands,
 		},
