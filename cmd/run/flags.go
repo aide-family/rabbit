@@ -16,8 +16,7 @@ import (
 
 type Flags struct {
 	cmd.GlobalFlags
-	configPath             string
-	clientConfigOutputPath string
+	configPath string
 
 	*conf.Bootstrap
 	environment     string
@@ -33,7 +32,6 @@ var flags Flags
 func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	f.Bootstrap = bc
 	c.Flags().StringVarP(&f.configPath, "config", "c", "", `Example: -c=./config/, --config="./config/"`)
-	c.Flags().StringVarP(&f.clientConfigOutputPath, "client-config-output", "o", "~/.rabbit/", `Example: -o=./client/, --client-config-output="~/.rabbit/"`)
 
 	c.Flags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
 	c.Flags().StringVar(&f.Server.Http.Address, "http-address", f.Server.Http.Address, `Example: --http-address="0.0.0.0:8080", --http-address=":8080"`)

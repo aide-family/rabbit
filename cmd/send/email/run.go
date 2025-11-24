@@ -2,14 +2,16 @@ package email
 
 import (
 	"context"
-	"strings"
 	"time"
 
-	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/pointer"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
-	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
+	kubeRegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
+	kConfig "github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/spf13/cobra"
@@ -25,8 +27,17 @@ import (
 func run(_ *cobra.Command, _ []string) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc config.ClientConfig
-	if err := load.Load(load.ExpandHomeDir(flags.RabbitConfigPath), &bc); err != nil {
-		panic(err)
+	c := kConfig.New(kConfig.WithSource(
+		env.NewSource(),
+		file.NewSource(flags.RabbitConfigPath),
+	))
+	if err := c.Load(); err != nil {
+		flags.Helper.Errorw("msg", "load config failed", "error", err)
+		return
+	}
+	if err := c.Scan(&bc); err != nil {
+		flags.Helper.Errorw("msg", "scan config failed", "error", err)
+		return
 	}
 
 	flags.applyToBootstrap(&bc)
@@ -45,7 +56,7 @@ func run(_ *cobra.Command, _ []string) {
 			return
 		}
 		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   strings.Split(etcdConfig.GetEndpoints(), ","),
+			Endpoints:   strutil.SplitSkipEmpty(etcdConfig.GetEndpoints(), ","),
 			Username:    etcdConfig.GetUsername(),
 			Password:    etcdConfig.GetPassword(),
 			DialTimeout: 10 * time.Second,
@@ -66,11 +77,11 @@ func run(_ *cobra.Command, _ []string) {
 			flags.Helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
 			return
 		}
-		discovery = kuberegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
+		discovery = kubeRegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
 	}
 
 	clusterConfig := bc.GetCluster()
-	clusterEndpoints := strings.Split(clusterConfig.GetEndpoints(), ",")
+	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 	clusterProtocol := clusterConfig.GetProtocol()
 	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 	clusterName := clusterConfig.GetName()

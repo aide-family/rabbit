@@ -3,7 +3,6 @@ package data
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/aide-family/magicbox/plugin/cache"
@@ -36,6 +35,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		dbs:         safety.NewSyncMap(make(map[string]*gorm.DB)),
 		closes:      make(map[string]func() error),
 		useDatabase: strutil.IsNotEmpty(c.GetUseDatabase()) && c.GetUseDatabase() == "true",
+		reloadFuncs: safety.NewSyncMap(make(map[string]func())),
 	}
 
 	if err := d.initRegistry(); err != nil {
@@ -55,14 +55,14 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 				return nil, d.close, err
 			}
 
-			for _, ns := range strings.Split(namespace, ",") {
-				d.dbs.Set(strings.TrimSpace(ns), db)
+			for _, ns := range strutil.SplitSkipEmpty(namespace, ",") {
+				d.dbs.Set(ns, db)
 			}
 
 			d.closes["bizDB.["+namespace+"]"] = func() error { return connect.CloseDB(db) }
 		}
 	} else {
-		if err := conf.LoadFileConfig(d.c, d.helper); err != nil {
+		if err := d.LoadFileConfig(d.c, d.helper); err != nil {
 			return nil, d.close, err
 		}
 		d.helper.Infow("msg", "file config mode enabled, database connections disabled")
@@ -88,6 +88,8 @@ type Data struct {
 	cache       cache.Interface
 	closes      map[string]func() error
 	useDatabase bool
+	fileConfig  conf.Config
+	reloadFuncs *safety.SyncMap[string, func()]
 }
 
 func (d *Data) AppendClose(name string, close func() error) {
@@ -104,8 +106,12 @@ func (d *Data) close() {
 	}
 }
 
+func (d *Data) UseDatabase() bool {
+	return d.useDatabase
+}
+
 func (d *Data) MainDB(ctx context.Context) *gorm.DB {
-	if !d.useDatabase {
+	if !d.UseDatabase() {
 		panic(merr.ErrorInternalServer("database mode is not enabled, please check the config"))
 	}
 	if tx, ok := GetMainTransaction(ctx); ok {
@@ -127,7 +133,7 @@ func (d *Data) BizQueryWithTable(ctx context.Context, namespace string, tableNam
 }
 
 func (d *Data) BizDB(ctx context.Context, namespace string) *gorm.DB {
-	if !d.useDatabase {
+	if !d.UseDatabase() {
 		panic(merr.ErrorInternalServer("database mode is not enabled, please check the config"))
 	}
 	if tx, ok := GetBizTransaction(ctx, namespace); ok {
@@ -164,7 +170,7 @@ func (d *Data) initRegistry() error {
 			return merr.ErrorInternalServer("etcd config is not found")
 		}
 		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   strings.Split(etcdConfig.GetEndpoints(), ","),
+			Endpoints:   strutil.SplitSkipEmpty(etcdConfig.GetEndpoints(), ","),
 			Username:    etcdConfig.GetUsername(),
 			Password:    etcdConfig.GetPassword(),
 			DialTimeout: 5 * time.Second,

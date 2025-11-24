@@ -49,11 +49,11 @@ USER appuser
 
 # 设置卷
 VOLUME /moon/config
-VOLUME ~/.rabbit
+VOLUME /moon/.rabbit
 
 # 暴露端口
 EXPOSE 8080
 EXPOSE 9090
 
 # 运行应用
-CMD ["rabbit", "run", "-c", "/moon/config", "-o", "~/.rabbit"]
+CMD ["rabbit", "run", "-c", "/moon/config/", "--rabbit-config", "/moon/.rabbit/"]

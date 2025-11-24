@@ -30,12 +30,12 @@ type SendEmailBo struct {
 	Headers     http.Header  `json:"headers"`
 }
 
-func (b *SendEmailBo) ToMessageLog(emailConfig *do.EmailConfig) (*do.MessageLog, error) {
+func (b *SendEmailBo) ToMessageLog(emailConfig *EmailConfigItemBo) (*do.MessageLog, error) {
 	messageBytes, err := serialize.JSONMarshal(b)
 	if err != nil {
 		return nil, err
 	}
-	emailConfigBytes, err := serialize.JSONMarshal(NewEmailConfigItemBo(emailConfig))
+	emailConfigBytes, err := serialize.JSONMarshal(emailConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -85,14 +85,14 @@ func NewSendEmailWithTemplateBo(req *apiv1.SendEmailWithTemplateRequest) (*SendE
 	}, nil
 }
 
-func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateDo *do.Template) (*SendEmailBo, error) {
-	if !templateDo.App.IsEmailType() {
-		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppEmail, templateDo.App)
+func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateBo *TemplateItemBo) (*SendEmailBo, error) {
+	if !templateBo.App.IsEmailType() {
+		return nil, merr.ErrorParams("invalid template app type, expected %s, got %s", vobj.TemplateAppEmail, templateBo.App)
 	}
-	if !templateDo.Status.IsEnabled() {
-		return nil, merr.ErrorParams("template %s(%s) is disabled", templateDo.Name, templateDo.UID)
+	if !templateBo.Status.IsEnabled() {
+		return nil, merr.ErrorParams("template %s(%s) is disabled", templateBo.Name, templateBo.UID)
 	}
-	emailTemplateData, err := templateDo.ToEmailTemplateData()
+	emailTemplateData, err := templateBo.ToEmailTemplateData()
 	if err != nil {
 		return nil, err
 	}

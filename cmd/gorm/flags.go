@@ -43,7 +43,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 
 // containsNamespace 检查 namespace 是否在逗号分隔的 namespaces 字符串中
 func containsNamespace(namespaces, target string) bool {
-	for _, ns := range strings.Split(namespaces, ",") {
+	for _, ns := range strutil.SplitSkipEmpty(namespaces, ",") {
 		if strings.TrimSpace(ns) == target {
 			return true
 		}

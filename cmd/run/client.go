@@ -82,6 +82,7 @@ func generateClientConfig(
 			endpoint = strings.Join([]string{"discovery://", serverName}, "/")
 			protocol = config.ClusterConfig_GRPC
 		} else {
+			protocol = config.ClusterConfig_GRPC
 			endpoint = normalizeAddress(grpcEndpoint)
 			if endpoint == "" {
 				endpoint = normalizeAddress(httpEndpoint)
@@ -110,13 +111,13 @@ func generateClientConfig(
 		}
 	}
 
-	// 写入配置文件到当前目录的 .rabbit/config.yaml
-	configDir := filepath.Dir(load.ExpandHomeDir(flags.clientConfigOutputPath))
+	// 写入配置文件到当前目录的 .rabbit/client_config.yaml
+	configDir := filepath.Dir(load.ExpandHomeDir(flags.RabbitConfigPath))
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		return fmt.Errorf("create config directory failed: %w", err)
 	}
 
-	configFile := filepath.Join(configDir, "config.yaml")
+	configFile := filepath.Join(configDir, "client_config.yaml")
 
 	// 转换为 YAML 格式
 	yamlData, err := clientConfigToYAML(clientConfig)
@@ -133,10 +134,22 @@ func generateClientConfig(
 	return nil
 }
 
-// normalizeAddress 将地址中的 0.0.0.0 转换为 localhost
+// normalizeAddress 将地址中的 0.0.0.0 转换为 localhost，并移除协议前缀
 func normalizeAddress(addr string) string {
+	if addr == "" {
+		return addr
+	}
+	// 移除协议前缀
+	protocols := []string{"https://", "http://", "grpcs://", "grpc://"}
+	for _, protocol := range protocols {
+		if strings.HasPrefix(addr, protocol) {
+			addr = strings.TrimPrefix(addr, protocol)
+			break
+		}
+	}
+	// 将 0.0.0.0 转换为 localhost
 	if strings.HasPrefix(addr, "0.0.0.0:") {
-		return strings.Replace(addr, "0.0.0.0:", "localhost:", 1)
+		addr = strings.Replace(addr, "0.0.0.0:", "localhost:", 1)
 	}
 	return addr
 }

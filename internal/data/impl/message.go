@@ -3,11 +3,11 @@ package impl
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/aide-family/magicbox/safety"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
@@ -28,7 +28,7 @@ import (
 func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog, helper *klog.Helper) repository.MessageBus {
 	eventBusConf := bc.GetEventBus()
 	clusterConfig := bc.GetCluster()
-	clusterEndpoints := strings.Split(clusterConfig.GetEndpoints(), ",")
+	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 	clusterProtocol := clusterConfig.GetProtocol()
 	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 	clusterName := clusterConfig.GetName()
