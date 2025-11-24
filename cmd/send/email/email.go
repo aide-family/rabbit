@@ -7,29 +7,33 @@ import (
 	"github.com/aide-family/rabbit/cmd"
 )
 
+const cmdLong = `Send email messages, supporting both HTML and plain text formats with configurable mail servers.
+
+The email command enables direct email message sending, supporting configuration of email
+config ID, recipients, subject, content, and other parameters. It allows quick single
+email delivery or template-based sending.
+
+Key Features:
+  • Email delivery: Send email messages through configured mail servers
+  • Format support: Support for both HTML and plain text email formats
+  • Template-based sending: Support for sending emails using pre-configured templates
+  • Attachment support: Support for adding email attachments (if needed)
+  • Email headers: Support for setting recipients, CC, BCC, and other email headers
+
+Use Cases:
+  • Email testing: Test whether mail server configurations are correct
+  • Urgent notifications: Send important email notifications that require immediate delivery
+  • Single email delivery: Send individual emails without going through the queue
+
+Email sending requires prior configuration of mail servers (SMTP), which can be configured
+through configuration files or API. Sent emails are processed immediately, making it
+suitable for testing and urgent scenarios.`
+
 func NewCmd() *cobra.Command {
 	emailCmd := &cobra.Command{
 		Use:   "email",
-		Short: "Send an email message",
-		Long: `发送邮件消息，支持 HTML 和纯文本格式，可配置邮件服务器。
-
-email 命令用于直接发送邮件消息，支持指定邮件配置 ID、收件人、主题、
-内容等参数，可以快速发送单封邮件或使用模板发送。
-
-主要功能：
-  • 邮件发送：通过配置的邮件服务器发送邮件消息
-  • 格式支持：支持 HTML 和纯文本两种邮件格式
-  • 模板发送：支持使用预配置的邮件模板进行发送
-  • 附件支持：支持添加邮件附件（如需要）
-  • 抄送密送：支持设置收件人、抄送、密送等邮件头
-
-使用场景：
-  • 测试邮件：测试邮件服务器配置是否正确
-  • 紧急通知：需要立即发送的重要邮件通知
-  • 单封发送：发送单封邮件，无需通过队列
-
-邮件发送需要先配置邮件服务器（SMTP），可通过配置文件或 API 进行
-配置。发送的邮件会立即处理，适合测试和紧急场景。`,
+		Short: "Send email messages",
+		Long:  cmdLong,
 		Annotations: map[string]string{
 			"group": cmd.MessageCommands,
 		},

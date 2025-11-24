@@ -22,11 +22,36 @@ import (
 	"github.com/aide-family/rabbit/internal/conf"
 )
 
+const cmdLong = `GORM code generation and database migration tools for Rabbit service.
+
+The gorm command provides database-related utilities for the Rabbit service, including
+automatic code generation for data models and repositories, as well as database schema
+migration capabilities.
+
+Key Features:
+  • Code generation: Automatically generate GORM query code, models, and repository interfaces
+  • Database migration: Automatically migrate database schemas based on model definitions
+  • Database management: Support for database creation and connection management
+  • Type-safe queries: Generate type-safe query methods for database operations
+
+Subcommands:
+  • gen      Generate GORM query code for models and repositories
+  • migrate  Migrate database tables based on model definitions
+
+Use Cases:
+  • Initial setup: Generate database models and perform initial schema migration
+  • Schema updates: Migrate database when model definitions change
+  • Code generation: Automatically generate type-safe query code from database models
+  • Development workflow: Streamline database operations during development
+
+Use 'rabbit gorm gen' to generate model and repository code, and 'rabbit gorm migrate'
+to migrate the database schema.`
+
 func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "gorm",
-		Short: "gorm generate and migrate",
-		Long:  "gorm generate and migrate, you can use 'rabbit gorm gen' to generate the model and repository, and 'rabbit gorm migrate' to migrate the database",
+		Short: "GORM code generation and database migration tools",
+		Long:  cmdLong,
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},

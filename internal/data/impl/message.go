@@ -36,7 +36,7 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 		d:              d,
 		messageLogRepo: messageLogRepo,
 		helper:         klog.NewHelper(klog.With(helper.Logger(), "component", "message_bus")),
-		messageChan:    make(chan *messageTask, 1000), // 缓冲区大小
+		messageChan:    make(chan *messageTask, eventBusConf.GetBufferSize()),
 		senders:        safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
 		stopChan:       make(chan struct{}),
 		wg:             sync.WaitGroup{},
@@ -101,31 +101,37 @@ type messageBusImpl struct {
 }
 
 // start 启动后台处理goroutine
-func (m *messageBusImpl) Start() {
+func (m *messageBusImpl) Start(ctx context.Context) {
 	if m.workerCount <= 0 {
 		m.workerCount = 1
 	}
-	m.wg.Add(m.workerCount)
+
 	// 启动多个worker goroutine
 	for i := 0; i < m.workerCount; i++ {
-		go m.worker(i)
+		m.wg.Add(1)
+		safety.Go(ctx, fmt.Sprintf("message_bus_worker_%d", i), func(ctx context.Context) error {
+			defer m.wg.Done()
+			m.worker(ctx, i)
+			return nil
+		}, m.helper.Logger())
 	}
 }
 
 // worker 处理消息的工作协程
-func (m *messageBusImpl) worker(id int) {
-	defer m.wg.Done()
-
+func (m *messageBusImpl) worker(ctx context.Context, id int) {
 	for {
 		select {
 		case task, ok := <-m.messageChan:
 			if !ok {
-				m.helper.Infow("msg", "message bus worker stopped", "worker", id)
+				m.helper.Infow("msg", "message bus worker stopped by message channel closed", "worker", id)
 				return
 			}
 			m.waitProcessMessage(task.ctx, task.messageUID)
 		case <-m.stopChan:
-			m.helper.Infow("msg", "message bus worker stopped", "worker", id)
+			m.helper.Infow("msg", "message bus worker stopped by stop channel", "worker", id)
+			return
+		case <-ctx.Done():
+			m.helper.Infow("msg", "message bus worker stopped by context done", "worker", id)
 			return
 		}
 	}
@@ -158,7 +164,10 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, messageUID snowflake.I
 		// 使用 SELECT FOR UPDATE 获取行锁，确保同一时间只有一个节点能处理该消息
 		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, messageUID)
 		if err != nil {
-			return err
+			if merr.IsNotFound(err) {
+				return nil
+			}
+			return merr.ErrorInternal("get message log with lock failed").WithCause(err)
 		}
 
 		// 如果消息已经发送或正在发送，直接返回
@@ -170,7 +179,7 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, messageUID snowflake.I
 		// 只有当前状态为待处理或失败时才更新为发送中
 		result, err := m.messageLogRepo.UpdateMessageLogStatusIf(transactionCtx, messageUID, vobj.MessageStatusPending, vobj.MessageStatusSending)
 		if err != nil {
-			return err
+			return merr.ErrorInternal("update message status to sending failed").WithCause(err)
 		}
 		if !result {
 			return nil
@@ -245,13 +254,20 @@ func (m *messageBusImpl) AppendMessage(ctx context.Context, messageUID snowflake
 	default:
 		// channel满了,返回错误
 		m.helper.Errorw("msg", "message channel is full", "uid", messageUID)
-		return fmt.Errorf("message channel is full")
+		return merr.ErrorInternal("message channel is full")
 	}
 }
 
 // Stop 停止事件总线
-func (m *messageBusImpl) Stop() {
-	close(m.stopChan)
-	m.wg.Wait()
-	close(m.messageChan)
+func (m *messageBusImpl) Stop(ctx context.Context) {
+	select {
+	case <-ctx.Done():
+		m.helper.Warnw("msg", "message bus stopped by context done")
+		return
+	default:
+		close(m.stopChan)
+		m.wg.Wait()
+		close(m.messageChan)
+		m.helper.Infow("msg", "message bus stopped")
+	}
 }

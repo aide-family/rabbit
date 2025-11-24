@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/internal/data"
+	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/aide-family/rabbit/pkg/middler"
 )
 
@@ -149,7 +151,14 @@ func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid snowfl
 		messageLogTable.Namespace.Eq(namespace),
 	}
 	wrappers = wrappers.Where(wheres...)
-	return wrappers.First()
+	messageLogDo, err := wrappers.First()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, merr.ErrorNotFound("message log %d not found", uid.Int64())
+		}
+		return nil, err
+	}
+	return messageLogDo, nil
 }
 
 // GetMessageLogWithLock implements repository.MessageLog.
@@ -169,7 +178,14 @@ func (m *messageLogRepositoryImpl) GetMessageLogWithLock(ctx context.Context, ui
 		messageLogTable.Namespace.Eq(namespace),
 	}
 	wrappers = wrappers.Where(wheres...).Clauses(clause.Locking{Strength: "UPDATE"})
-	return wrappers.First()
+	messageLogDo, err := wrappers.First()
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, merr.ErrorNotFound("message log %d not found", uid.Int64())
+		}
+		return nil, err
+	}
+	return messageLogDo, nil
 }
 
 // UpdateMessageLogStatusIf implements repository.MessageLog.

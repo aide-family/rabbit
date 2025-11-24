@@ -22,25 +22,27 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
 		Short: "Run the Rabbit service",
-		Long: `启动 Rabbit 消息服务，提供统一的消息发送和管理能力。
+		Long: `Start the Rabbit messaging service, providing unified message delivery and management capabilities.
 
-Rabbit 是一个基于 Kratos 框架构建的分布式消息服务平台，支持多种消息通道
-（邮件、Webhook、短信等）的统一管理和发送。通过命名空间（Namespace）实现
-多租户隔离，支持配置文件和数据库两种存储模式，满足不同场景的部署需求。
+Rabbit is a distributed messaging platform built on the Kratos framework, supporting unified
+management and delivery of multiple message channels (email, Webhook, SMS, etc.). It implements
+multi-tenant isolation through namespaces and supports both file-based and database storage modes
+to meet different deployment requirements.
 
-主要功能：
-  • 多通道消息发送：支持邮件、Webhook、短信等多种消息通道的统一管理
-  • 模板化发送：支持消息模板配置，实现消息内容的动态渲染和复用
-  • 异步消息处理：基于消息队列实现异步发送，提升系统吞吐量和可靠性
-  • 配置管理：支持邮件服务器、Webhook 端点等通道配置的集中管理
-  • 多租户隔离：通过命名空间实现不同业务或租户的配置和数据隔离
+Key Features:
+  • Multi-channel messaging: Unified management of email, Webhook, SMS, and other message channels
+  • Template-based delivery: Support for message template configuration with dynamic content rendering and reuse
+  • Asynchronous processing: Queue-based asynchronous message delivery for improved throughput and reliability
+  • Configuration management: Centralized management of channel configurations (email servers, Webhook endpoints, etc.)
+  • Multi-tenant isolation: Namespace-based isolation of configurations and data for different businesses or tenants
 
-使用场景：
-  • 企业级通知系统：统一管理各类业务通知（订单、告警、系统消息等）
-  • 微服务消息中心：为微服务架构提供统一的消息发送能力
-  • 多渠道推送平台：集成多种消息通道，实现消息的统一发送和管理
+Use Cases:
+  • Enterprise notification system: Unified management of business notifications (orders, alerts, system messages, etc.)
+  • Microservices message center: Provide unified messaging capabilities for microservices architecture
+  • Multi-channel push platform: Integrate multiple message channels for unified message delivery and management
 
-启动服务后，Rabbit 将监听配置的端口，提供 HTTP/gRPC API 接口供客户端调用。`,
+After starting the service, Rabbit will listen on the configured ports and provide HTTP/gRPC API
+interfaces for client access.`,
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},

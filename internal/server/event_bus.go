@@ -24,15 +24,15 @@ type EventBus struct {
 }
 
 // Start implements transport.Server.
-func (e *EventBus) Start(context.Context) error {
-	e.messageBusRepo.Start()
+func (e *EventBus) Start(ctx context.Context) error {
+	e.messageBusRepo.Start(ctx)
 	e.helper.Infow("msg", "[EventBus] started")
 	return nil
 }
 
 // Stop implements transport.Server.
-func (e *EventBus) Stop(context.Context) error {
-	e.messageBusRepo.Stop()
+func (e *EventBus) Stop(ctx context.Context) error {
+	e.messageBusRepo.Stop(ctx)
 	e.helper.Infow("msg", "[EventBus] stopped")
 	return nil
 }
