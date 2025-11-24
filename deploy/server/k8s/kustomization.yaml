@@ -1,0 +1,41 @@
+# Kustomize 配置文件
+# 用于统一管理和部署所有资源
+# 使用方式: kubectl apply -k deploy/server/k8s/
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: rabbit
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - serviceaccount.yaml
+  - rbac.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+# 如果需要使用 Secret，请先创建 Secret，然后取消下面的注释
+# resources:
+#   - secret.yaml
+
+# 可以在这里添加通用标签和注解
+commonLabels:
+  app: rabbit
+  managed-by: kustomize
+
+# 可以在这里添加通用注解
+# commonAnnotations:
+#   description: "Rabbit messaging service"
+
+# 镜像替换（用于不同环境）
+# images:
+# - name: ghcr.io/aide-family/rabbit
+#   newTag: v0.0.2
+
+# 副本数替换（用于不同环境）
+# replicas:
+# - name: rabbit
+#   count: 3
+

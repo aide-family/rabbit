@@ -4,6 +4,7 @@ import (
 	sync "sync"
 
 	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
@@ -55,7 +56,7 @@ func (d *Data) LoadFileConfig(bc *conf.Bootstrap, helper *klog.Helper) error {
 		// Collect all file paths
 		fileSources := make([]config.Source, 0, len(configPaths))
 		fileSources = append(fileSources, env.NewSource())
-		for _, configPath := range configPaths {
+		for _, configPath := range strutil.SplitSkipEmpty(configPaths, ",") {
 			fileSources = append(fileSources, file.NewSource(load.ExpandHomeDir(configPath)))
 		}
 

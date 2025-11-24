@@ -70,5 +70,4 @@ metricsBasicAuth:
   username: ${MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME:moon.rabbit}
   password: ${MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD:rabbit.metrics}
 
-configPaths:
-  - ${MOON_RABBIT_CONFIG_PATHS:./datasource}
+configPaths: ${MOON_RABBIT_CONFIG_PATHS:./datasource}

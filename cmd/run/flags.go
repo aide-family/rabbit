@@ -66,7 +66,7 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.EnableSwagger, "enable-swagger", f.EnableSwagger, `Example: --enable-swagger="true"`)
 	c.Flags().StringVar(&f.EnableMetrics, "enable-metrics", f.EnableMetrics, `Example: --enable-metrics="true"`)
 	c.Flags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
-	c.Flags().StringSliceVar(&f.ConfigPaths, "config-paths", f.ConfigPaths, `Example: --config-paths="./datasource"`)
+	c.Flags().StringVar(&f.ConfigPaths, "config-paths", f.ConfigPaths, `Example: --config-paths="./datasource" --config-paths="./config,./datasource"`)
 }
 
 func (f *Flags) applyToBootstrap() {

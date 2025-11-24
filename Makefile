@@ -30,7 +30,7 @@ init:
 	go install github.com/go-kratos/kratos/cmd/protoc-gen-go-errors/v2@latest
 	go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest
 	go install github.com/google/wire/cmd/wire@latest
-	go install github.com/moon-monitor/stringer@latest
+	go install github.com/aide-family/stringer@v1.1.3
 	go install github.com/protoc-gen/i18n-gen@latest
 	go install golang.org/x/tools/gopls@latest
 	go install github.com/go-kratos/kratos/cmd/kratos/v2@latest

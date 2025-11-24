@@ -1,3 +1,25 @@
+# ============================================
+# 注意：此文件已按资源类型拆分为多个文件
+# 建议使用拆分后的文件进行部署
+# 
+# 文件结构：
+#   - namespace.yaml
+#   - configmap.yaml
+#   - secret.yaml.example
+#   - serviceaccount.yaml
+#   - rbac.yaml
+#   - deployment.yaml
+#   - service.yaml
+#   - ingress.yaml
+#   - kustomization.yaml
+#
+# 快速部署：
+#   ./deploy.sh
+#   或
+#   kubectl apply -k .
+#
+# 详细说明请查看 README.md
+# ============================================
 ---
 apiVersion: v1
 kind: Namespace
