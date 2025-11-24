@@ -9,7 +9,6 @@ import (
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	kubeRegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
-	kConfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
 	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -18,6 +17,7 @@ import (
 	clientV3 "go.etcd.io/etcd/client/v3"
 
 	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/internal/conf"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
@@ -27,16 +27,8 @@ import (
 func run(_ *cobra.Command, _ []string) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc config.ClientConfig
-	c := kConfig.New(kConfig.WithSource(
-		env.NewSource(),
-		file.NewSource(flags.RabbitConfigPath),
-	))
-	if err := c.Load(); err != nil {
+	if err := conf.Load(&bc, env.NewSource(), file.NewSource(flags.RabbitConfigPath)); err != nil {
 		flags.Helper.Errorw("msg", "load config failed", "error", err)
-		return
-	}
-	if err := c.Scan(&bc); err != nil {
-		flags.Helper.Errorw("msg", "scan config failed", "error", err)
 		return
 	}
 

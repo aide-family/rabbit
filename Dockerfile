@@ -31,29 +31,19 @@ RUN apk add --no-cache \
     tzdata \
     && rm -rf /var/cache/apk/*
 
-# 创建非 root 用户
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
-
 WORKDIR /moon
 
-# 复制二进制文件和配置
-COPY --from=builder /moon/bin/ /usr/sbin/
-COPY --from=builder /moon/config/server.yaml /moon/config/server.yaml
+# 复制二进制文件
+COPY --from=builder /moon/bin/rabbit /usr/local/bin/rabbit
 
-# 设置权限
-RUN chown -R appuser:appgroup /moon
+# 设置可执行权限
+RUN chmod +x /usr/local/bin/rabbit
 
-# 切换到非 root 用户
-USER appuser
+RUN mkdir -p /moon/datasource
 
-# 设置卷
-VOLUME /moon/config
-VOLUME /moon/.rabbit
-
-# 暴露端口
-EXPOSE 8080
-EXPOSE 9090
+# 暴露端口（根据实际配置调整）
+EXPOSE 8080 9090
 
 # 运行应用
-CMD ["rabbit", "run", "-c", "/moon/config/", "--rabbit-config", "/moon/.rabbit/"]
+ENTRYPOINT ["/usr/local/bin/rabbit"]
+CMD ["run"]

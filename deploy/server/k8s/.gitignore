@@ -1,0 +1,8 @@
+# 忽略 Secret 文件（包含敏感信息）
+secret.yaml
+
+# 忽略临时文件
+*.tmp
+*.bak
+*~
+

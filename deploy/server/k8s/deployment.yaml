@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbit
+  namespace: rabbit
+  labels:
+    app: rabbit
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rabbit
+  template:
+    metadata:
+      labels:
+        app: rabbit
+    spec:
+      serviceAccountName: rabbit-service-account
+      containers:
+      - name: rabbit
+        image: ghcr.io/aide-family/rabbit:v0.0.1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: grpc
+          containerPort: 9090
+          protocol: TCP
+        env:
+        # 服务配置
+        - name: MOON_RABBIT_HTTP_ADDRESS
+          value: "0.0.0.0:8080"
+        - name: MOON_RABBIT_GRPC_ADDRESS
+          value: "0.0.0.0:9090"
+        - name: MOON_RABBIT_ENVIRONMENT
+          value: "PROD"
+        - name: MOON_RABBIT_ENABLE_CLIENT_CONFIG
+          value: "true"
+        - name: MOON_RABBIT_ENABLE_SWAGGER
+          value: "true"
+        - name: MOON_RABBIT_ENABLE_METRICS
+          value: "true"
+        - name: MOON_RABBIT_USE_DATABASE
+          value: "false"
+        
+        # JWT 配置（从 Secret 读取）
+        - name: MOON_RABBIT_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: rabbit-secrets
+              key: jwt-secret
+              optional: true
+        - name: MOON_RABBIT_JWT_EXPIRE
+          value: "600s"
+        - name: MOON_RABBIT_JWT_ISSUER
+          value: "rabbit"
+        
+        # 数据库配置（从 Secret 读取）
+        - name: MOON_RABBIT_MAIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: rabbit-secrets
+              key: mysql-username
+              optional: true
+        - name: MOON_RABBIT_MAIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rabbit-secrets
+              key: mysql-password
+              optional: true
+        - name: MOON_RABBIT_MAIN_HOST
+          value: "mysql-service"
+        - name: MOON_RABBIT_MAIN_PORT
+          value: "3306"
+        - name: MOON_RABBIT_MAIN_DATABASE
+          value: "rabbit"
+        
+        # Kubernetes 注册配置
+        - name: MOON_RABBIT_KUBERNETES_NAMESPACE
+          value: "rabbit"
+        - name: MOON_RABBIT_KUBERNETES_KUBECONFIG
+          value: ""
+        
+        # 配置文件路径
+        - name: MOON_RABBIT_CONFIG_PATHS
+          value: "./datasource"
+        
+        volumeMounts:
+        - name: config
+          mountPath: /moon/config
+          readOnly: true
+        - name: datasource
+          mountPath: /moon/datasource
+          readOnly: true
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+      
+      volumes:
+      - name: config
+        configMap:
+          name: rabbit-config
+      - name: datasource
+        emptyDir: {}
+

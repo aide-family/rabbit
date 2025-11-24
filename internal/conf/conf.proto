@@ -26,7 +26,7 @@ message Bootstrap {
 	string enableSwagger = 15;
 	string enableMetrics = 16;
 	string useDatabase = 17;
-	repeated string configPaths = 18;
+	string configPaths = 18;
 }
 
 message Server {

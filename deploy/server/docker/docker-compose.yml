@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # Rabbit 消息服务
+  rabbit:
+    image: rabbit-local:latest
+    container_name: rabbit
+    ports:
+      - "${RABBIT_HTTP_PORT:-8080}:8080" # HTTP 端口
+      - "${RABBIT_GRPC_PORT:-9090}:9090" # gRPC 端口
+    environment:
+      # 基础配置
+      - MOON_RABBIT_ENVIRONMENT=${MOON_RABBIT_ENVIRONMENT:-PROD}
+      - MOON_RABBIT_ENABLE_SWAGGER=${MOON_RABBIT_ENABLE_SWAGGER:-true}
+      - MOON_RABBIT_ENABLE_METRICS=${MOON_RABBIT_ENABLE_METRICS:-true}
+
+      # JWT 配置
+      - MOON_RABBIT_JWT_SECRET=${MOON_RABBIT_JWT_SECRET:-moon.rabbit.jwt.secret}
+      - MOON_RABBIT_JWT_EXPIRE=${MOON_RABBIT_JWT_EXPIRE:-600s}
+      - MOON_RABBIT_JWT_ISSUER=${MOON_RABBIT_JWT_ISSUER:-rabbit}
+
+      # 配置文件路径
+      - MOON_RABBIT_CONFIG_PATHS=${MOON_RABBIT_CONFIG_PATHS:-./datasource}
+
+      # Swagger 认证
+      - MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED=${MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED:-true}
+      - MOON_RABBIT_SWAGGER_BASIC_AUTH_USERNAME=${MOON_RABBIT_SWAGGER_BASIC_AUTH_USERNAME:-moon.rabbit}
+      - MOON_RABBIT_SWAGGER_BASIC_AUTH_PASSWORD=${MOON_RABBIT_SWAGGER_BASIC_AUTH_PASSWORD:-rabbit.swagger}
+
+      # Metrics 认证
+      - MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED=${MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED:-true}
+      - MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME=${MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME:-moon.rabbit}
+      - MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD=${MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD:-rabbit.metrics}
+    volumes:
+      # 挂载配置文件目录
+      - ./datasource:/moon/datasource:ro
+    networks:
+      - rabbit_network
+    # 自定义启动命令 - 可以通过 command 覆盖默认的 CMD
+    # 默认启动服务: command: ["run"]
+    # 其他命令示例:
+    # command: [ "version" ]
+    # command: ["config", "--path", "/moon/config"]
+    # command: ["run", "--config", "/moon/config/server.yaml"]
+    # command: ["run", "--use-database", "true", "--main-host", "mysql"]
+    command: [ "run" ]
+    healthcheck:
+      test: [ "CMD", "/usr/local/bin/rabbit", "version" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  rabbit_network:
+    driver: bridge
+    name: rabbit_network
+
+volumes:
+  rabbit_data:
+    name: rabbit_data

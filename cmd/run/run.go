@@ -70,17 +70,8 @@ func runServer(_ *cobra.Command, _ []string) {
 	flags.applyToBootstrap()
 	var bc conf.Bootstrap
 	if strutil.IsNotEmpty(flags.configPath) {
-		c := config.New(config.WithSource(
-			env.NewSource(),
-			file.NewSource(flags.configPath),
-		))
-		if err := c.Load(); err != nil {
+		if err := conf.Load(&bc, env.NewSource(), file.NewSource(flags.configPath)); err != nil {
 			flags.Helper.Errorw("msg", "load config failed", "error", err)
-			return
-		}
-
-		if err := c.Scan(&bc); err != nil {
-			flags.Helper.Errorw("msg", "scan config failed", "error", err)
 			return
 		}
 		flags.Bootstrap = &bc

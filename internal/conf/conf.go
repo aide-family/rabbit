@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/config"
+
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 var (
@@ -69,5 +71,16 @@ func (w *noOpWatcher) Next() ([]*config.KeyValue, error) {
 // Stop implements config.Watcher.
 func (w *noOpWatcher) Stop() error {
 	w.cancel()
+	return nil
+}
+
+func Load(bc any, sources ...config.Source) error {
+	c := config.New(config.WithSource(sources...))
+	if err := c.Load(); err != nil {
+		return merr.ErrorInternal("load config failed").WithCause(err)
+	}
+	if err := c.Scan(bc); err != nil {
+		return merr.ErrorInternal("scan config failed").WithCause(err)
+	}
 	return nil
 }
