@@ -1,12 +1,12 @@
-// Package conf provides configuration for the application.
-package conf
+package data
 
 import (
 	sync "sync"
 
 	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/safety"
+	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/env"
 	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
 )
@@ -18,29 +18,25 @@ const (
 	KeyTemplates  = "templates"
 )
 
-var (
-	fileConfig     Config
-	fileConfigOnce sync.Once
-	reloadFuncs    = safety.NewSyncMap(make(map[string]func()))
-)
+var fileConfigOnce sync.Once
 
 // GetFileConfig returns the file-based configuration
-func GetFileConfig() *Config {
-	return &fileConfig
+func (d *Data) GetFileConfig() *conf.Config {
+	return &d.fileConfig
 }
 
-func RegisterReloadFunc(key string, fn func()) {
-	reloadFuncs.Set(key, fn)
+func (d *Data) RegisterReloadFunc(key string, fn func()) {
+	d.reloadFuncs.Set(key, fn)
 }
 
 // LoadFileConfig loads configuration from configPaths directories using kratos config system
-func LoadFileConfig(bc *Bootstrap, helper *klog.Helper) error {
+func (d *Data) LoadFileConfig(bc *conf.Bootstrap, helper *klog.Helper) error {
 	reloadFunc := func(c config.Config, key string) {
-		if err := c.Scan(&fileConfig); err != nil {
+		if err := c.Scan(&d.fileConfig); err != nil {
 			helper.Errorw("msg", "scan config failed", "error", err)
 			return
 		}
-		if reloadFunc, ok := reloadFuncs.Get(key); ok {
+		if reloadFunc, ok := d.reloadFuncs.Get(key); ok {
 			reloadFunc()
 		}
 	}
@@ -57,7 +53,8 @@ func LoadFileConfig(bc *Bootstrap, helper *klog.Helper) error {
 		}
 
 		// Collect all file paths
-		var fileSources []config.Source
+		fileSources := make([]config.Source, 0, len(configPaths))
+		fileSources = append(fileSources, env.NewSource())
 		for _, configPath := range configPaths {
 			fileSources = append(fileSources, file.NewSource(load.ExpandHomeDir(configPath)))
 		}
@@ -73,7 +70,7 @@ func LoadFileConfig(bc *Bootstrap, helper *klog.Helper) error {
 			return
 		}
 
-		if err = c.Scan(&fileConfig); err != nil {
+		if err = c.Scan(&d.fileConfig); err != nil {
 			helper.Errorw("msg", "scan config failed", "error", err)
 			return
 		}

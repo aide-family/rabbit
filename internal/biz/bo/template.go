@@ -2,6 +2,7 @@ package bo
 
 import (
 	"encoding/json"
+	"net/http"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -87,6 +88,23 @@ func NewUpdateTemplateStatusBo(req *apiv1.UpdateTemplateStatusRequest) *UpdateTe
 	}
 }
 
+// EmailTemplateData Email 模板的数据结构
+type EmailTemplateData struct {
+	Subject     string      `json:"subject"`
+	Body        string      `json:"body"`
+	ContentType string      `json:"content_type"`
+	Headers     http.Header `json:"headers,omitempty"`
+}
+
+// WebhookTemplateData Webhook 模板的数据结构
+type WebhookTemplateData string
+
+// SMSTemplateData SMS 模板的数据结构
+type SMSTemplateData struct {
+	Content string            `json:"content"`
+	Params  map[string]string `json:"params,omitempty"`
+}
+
 // TemplateItemBo 模板项的 BO
 type TemplateItemBo struct {
 	UID       snowflake.ID
@@ -96,6 +114,45 @@ type TemplateItemBo struct {
 	Status    vobj.GlobalStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+// ToEmailTemplateData 将 JSONData 转换为 EmailTemplateData
+func (t *TemplateItemBo) ToEmailTemplateData() (*EmailTemplateData, error) {
+	var data EmailTemplateData
+	if err := json.Unmarshal([]byte(t.JSONData), &data); err != nil {
+		return nil, err
+	}
+	if data.ContentType == "" {
+		data.ContentType = "text/html"
+	}
+	return &data, nil
+}
+
+// ToWebhookTemplateData 将 JSONData 转换为 WebhookTemplateData
+func (t *TemplateItemBo) ToWebhookTemplateData() (WebhookTemplateData, error) {
+	return WebhookTemplateData(t.JSONData), nil
+}
+
+// ToSMSTemplateData 将 JSONData 转换为 SMSTemplateData
+func (t *TemplateItemBo) ToSMSTemplateData() (*SMSTemplateData, error) {
+	var data SMSTemplateData
+	if err := json.Unmarshal([]byte(t.JSONData), &data); err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
+
+// ToAPIV1TemplateItem 转换为 API 响应
+func (t *TemplateItemBo) ToAPIV1TemplateItem() *apiv1.TemplateItem {
+	return &apiv1.TemplateItem{
+		Uid:       t.UID.Int64(),
+		Name:      t.Name,
+		App:       enum.TemplateAPP(t.App),
+		JsonData:  t.JSONData,
+		Status:    enum.GlobalStatus(t.Status),
+		CreatedAt: t.CreatedAt.Format(time.DateTime),
+		UpdatedAt: t.UpdatedAt.Format(time.DateTime),
+	}
 }
 
 // NewTemplateItemBo 从 DO 创建 BO
@@ -108,19 +165,6 @@ func NewTemplateItemBo(doTemplate *do.Template) *TemplateItemBo {
 		Status:    doTemplate.Status,
 		CreatedAt: doTemplate.CreatedAt,
 		UpdatedAt: doTemplate.UpdatedAt,
-	}
-}
-
-// ToAPIV1TemplateItem 转换为 API 响应
-func (b *TemplateItemBo) ToAPIV1TemplateItem() *apiv1.TemplateItem {
-	return &apiv1.TemplateItem{
-		Uid:       b.UID.Int64(),
-		Name:      b.Name,
-		App:       enum.TemplateAPP(b.App),
-		JsonData:  b.JSONData,
-		Status:    enum.GlobalStatus(b.Status),
-		CreatedAt: b.CreatedAt.Format(time.DateTime),
-		UpdatedAt: b.UpdatedAt.Format(time.DateTime),
 	}
 }
 

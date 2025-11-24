@@ -8,37 +8,36 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
-	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewWebhook(
-	webhookConfigRepo repository.WebhookConfig,
-	messageLogRepo repository.MessageLog,
-	messageBus repository.MessageBus,
-	templateRepo repository.Template,
+	webhookConfigBiz *WebhookConfig,
+	messageLogBiz *MessageLog,
+	messageBusBiz *MessageBus,
+	templateBiz *Template,
 	helper *klog.Helper,
 ) *Webhook {
 	return &Webhook{
-		webhookConfigRepo: webhookConfigRepo,
-		messageLogRepo:    messageLogRepo,
-		messageBus:        messageBus,
-		templateRepo:      templateRepo,
-		helper:            klog.NewHelper(klog.With(helper.Logger(), "biz", "webhook")),
+		webhookConfigBiz: webhookConfigBiz,
+		messageLogBiz:    messageLogBiz,
+		messageBusBiz:    messageBusBiz,
+		templateBiz:      templateBiz,
+		helper:           klog.NewHelper(klog.With(helper.Logger(), "biz", "webhook")),
 	}
 }
 
 type Webhook struct {
-	webhookConfigRepo repository.WebhookConfig
-	messageLogRepo    repository.MessageLog
-	messageBus        repository.MessageBus
-	templateRepo      repository.Template
-	helper            *klog.Helper
+	webhookConfigBiz *WebhookConfig
+	messageLogBiz    *MessageLog
+	messageBusBiz    *MessageBus
+	templateBiz      *Template
+	helper           *klog.Helper
 }
 
 func (w *Webhook) AppendWebhookMessage(ctx context.Context, req *bo.SendWebhookBo) error {
 	// 获取webhook配置
-	webhookConfig, err := w.webhookConfigRepo.GetWebhookConfig(ctx, req.UID)
+	webhookConfig, err := w.webhookConfigBiz.GetWebhook(ctx, req.UID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return merr.ErrorParams("webhook config not found")
@@ -51,12 +50,12 @@ func (w *Webhook) AppendWebhookMessage(ctx context.Context, req *bo.SendWebhookB
 		w.helper.Errorw("msg", "create message log failed", "error", err)
 		return merr.ErrorInternal("generate message log failed").WithCause(err)
 	}
-	if err := w.messageLogRepo.CreateMessageLog(ctx, messageLog); err != nil {
+	if err := w.messageLogBiz.createMessageLog(ctx, messageLog); err != nil {
 		w.helper.Errorw("msg", "create message log failed", "error", err)
 		return merr.ErrorInternal("create message log failed").WithCause(err)
 	}
 
-	if err := w.messageBus.AppendMessage(ctx, messageLog.UID); err != nil {
+	if err := w.messageBusBiz.appendMessage(ctx, messageLog.UID); err != nil {
 		w.helper.Errorw("msg", "append webhook message failed", "error", err, "uid", messageLog.UID)
 		return merr.ErrorInternal("append webhook message failed").WithCause(err)
 	}
@@ -66,7 +65,7 @@ func (w *Webhook) AppendWebhookMessage(ctx context.Context, req *bo.SendWebhookB
 
 func (w *Webhook) AppendWebhookMessageWithTemplate(ctx context.Context, req *bo.SendWebhookWithTemplateBo) error {
 	// 获取模板
-	templateDo, err := w.templateRepo.GetTemplate(ctx, req.TemplateUID)
+	templateDo, err := w.templateBiz.GetTemplate(ctx, req.TemplateUID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return merr.ErrorParams("template not found")

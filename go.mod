@@ -26,7 +26,7 @@ require (
 	k8s.io/client-go v0.24.3
 )
 
-// replace github.com/aide-family/magicbox => ../magicbox
+replace github.com/aide-family/magicbox => ../magicbox
 
 require (
 	buf.build/go/protovalidate v1.0.0 // indirect

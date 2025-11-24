@@ -44,7 +44,10 @@ func main() {
 	logger = klog.With(logger,
 		"ts", klog.DefaultTimestamp,
 	)
-	helper := klog.NewHelper(logger)
+	filterLogger := klog.NewFilter(logger, klog.FilterLevel(klog.LevelInfo))
+	helper := klog.NewHelper(filterLogger)
+	klog.SetLogger(helper.Logger())
+
 	cmd.SetGlobalFlags(
 		cmd.WithGlobalFlagsHelper(helper),
 		cmd.WithGlobalFlagsVersion(Version),

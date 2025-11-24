@@ -9,6 +9,9 @@ server:
   useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
   metadata:
     tag: ${MOON_RABBIT_METADATA_TAG:rabbit}
+    repository: ${MOON_RABBIT_METADATA_REPOSITORY:https://github.com/aide-family/rabbit}
+    author: ${MOON_RABBIT_METADATA_AUTHOR:Aide Family}
+    email: ${MOON_RABBIT_METADATA_EMAIL:aidecloud@163.com}
   http:
     address: "${MOON_RABBIT_HTTP_ADDRESS:0.0.0.0:8080}"
     network: "${MOON_RABBIT_HTTP_NETWORK:tcp}"

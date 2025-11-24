@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aide-family/magicbox/message"
+	"github.com/aide-family/magicbox/message/hook"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/serialize"
 	"github.com/aide-family/magicbox/strutil"
@@ -95,17 +96,29 @@ func NewUpdateWebhookStatusBo(req *apiv1.UpdateWebhookStatusRequest) *UpdateWebh
 	}
 }
 
+var _ hook.Config = (*WebhookItemBo)(nil)
+
 type WebhookItemBo struct {
-	UID       snowflake.ID
-	App       vobj.WebhookApp
-	Name      string
-	URL       string
-	Method    vobj.HTTPMethod
-	Headers   map[string]string
-	Secret    string
-	Status    vobj.GlobalStatus
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	UID       snowflake.ID      `json:"uid"`
+	App       vobj.WebhookApp   `json:"app"`
+	Name      string            `json:"name"`
+	URL       string            `json:"url"`
+	Method    vobj.HTTPMethod   `json:"method"`
+	Headers   map[string]string `json:"headers"`
+	Secret    string            `json:"secret"`
+	Status    vobj.GlobalStatus `json:"status"`
+	CreatedAt time.Time         `json:"-"`
+	UpdatedAt time.Time         `json:"-"`
+}
+
+// GetSecret implements hook.Config.
+func (b *WebhookItemBo) GetSecret() string {
+	return b.Secret
+}
+
+// GetURL implements hook.Config.
+func (b *WebhookItemBo) GetURL() string {
+	return b.URL
 }
 
 func NewWebhookItemBo(doWebhook *do.WebhookConfig) *WebhookItemBo {
@@ -275,12 +288,12 @@ func (b *SendWebhookBo) Message(message.MessageChannel) ([]byte, error) {
 	return []byte(b.Data), nil
 }
 
-func (b *SendWebhookBo) ToMessageLog(webhookConfig *do.WebhookConfig) (*do.MessageLog, error) {
+func (b *SendWebhookBo) ToMessageLog(webhookConfig *WebhookItemBo) (*do.MessageLog, error) {
 	messageBytes, err := serialize.JSONMarshal(b)
 	if err != nil {
 		return nil, err
 	}
-	webhookConfigBytes, err := serialize.JSONMarshal(NewWebhookConfigItemBo(webhookConfig))
+	webhookConfigBytes, err := serialize.JSONMarshal(webhookConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +330,7 @@ func NewSendWebhookWithTemplateBo(req *apiv1.SendWebhookWithTemplateRequest) (*S
 	}, nil
 }
 
-func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *do.Template) (*SendWebhookBo, error) {
+func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *TemplateItemBo) (*SendWebhookBo, error) {
 	if !templateDo.App.IsWebhookType() {
 		return nil, merr.ErrorParams("invalid template app type, expected webhook type, got %s", templateDo.App)
 	}
@@ -342,42 +355,4 @@ func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *do.Template) (*S
 		UID:  b.UID,
 		Data: bodyData,
 	}, nil
-}
-
-type WebhookConfigItemBo struct {
-	UID       snowflake.ID      `json:"uid"`
-	App       vobj.WebhookApp   `json:"app"`
-	Name      string            `json:"name"`
-	URL       string            `json:"url"`
-	Method    vobj.HTTPMethod   `json:"method"`
-	Headers   map[string]string `json:"headers"`
-	Secret    string            `json:"secret"`
-	Status    vobj.GlobalStatus `json:"status"`
-	CreatedAt time.Time         `json:"-"`
-	UpdatedAt time.Time         `json:"-"`
-}
-
-// GetSecret implements dingtalk.Config.
-func (w *WebhookConfigItemBo) GetSecret() string {
-	return w.Secret
-}
-
-// GetURL implements dingtalk.Config.
-func (w *WebhookConfigItemBo) GetURL() string {
-	return w.URL
-}
-
-func NewWebhookConfigItemBo(doWebhookConfig *do.WebhookConfig) *WebhookConfigItemBo {
-	return &WebhookConfigItemBo{
-		UID:       doWebhookConfig.UID,
-		App:       doWebhookConfig.App,
-		Name:      doWebhookConfig.Name,
-		URL:       doWebhookConfig.URL,
-		Method:    doWebhookConfig.Method,
-		Headers:   doWebhookConfig.Headers.Map(),
-		Secret:    string(doWebhookConfig.Secret),
-		Status:    doWebhookConfig.Status,
-		CreatedAt: doWebhookConfig.CreatedAt,
-		UpdatedAt: doWebhookConfig.UpdatedAt,
-	}
 }

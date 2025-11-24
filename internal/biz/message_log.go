@@ -7,6 +7,7 @@ import (
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
+	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/pkg/merr"
@@ -14,12 +15,12 @@ import (
 
 func NewMessageLog(
 	messageLogRepo repository.MessageLog,
-	messageBus repository.MessageBus,
+	messageBusBiz *MessageBus,
 	helper *klog.Helper,
 ) *MessageLog {
 	return &MessageLog{
 		messageLogRepo: messageLogRepo,
-		messageBus:     messageBus,
+		messageBusBiz:  messageBusBiz,
 		helper:         klog.NewHelper(klog.With(helper.Logger(), "biz", "messageLog")),
 	}
 }
@@ -27,7 +28,7 @@ func NewMessageLog(
 type MessageLog struct {
 	helper         *klog.Helper
 	messageLogRepo repository.MessageLog
-	messageBus     repository.MessageBus
+	messageBusBiz  *MessageBus
 }
 
 func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*bo.MessageLogItemBo], error) {
@@ -61,7 +62,7 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	if messageLog.Status.IsSent() || messageLog.Status.IsSending() || messageLog.Status.IsCancelled() {
 		return nil
 	}
-	if err := m.messageBus.AppendMessage(ctx, uid); err != nil {
+	if err := m.messageBusBiz.appendMessage(ctx, uid); err != nil {
 		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("append message failed")
 	}
@@ -87,4 +88,9 @@ func (m *MessageLog) CancelMessage(ctx context.Context, uid snowflake.ID) error 
 		return merr.ErrorNotFound("cancel message failed, the status of this message has changed.")
 	}
 	return nil
+}
+
+func (m *MessageLog) createMessageLog(ctx context.Context, messageLog *do.MessageLog) error {
+	// TODO 区分数据存储实现， 如果未启用数据库，则使用文件存储
+	return m.messageLogRepo.CreateMessageLog(ctx, messageLog)
 }

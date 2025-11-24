@@ -76,7 +76,7 @@ func (w *webhookSender) buildWebhookMessage(messageBytes []byte) (message.Messag
 }
 
 func (w *webhookSender) getSender(configBytes []byte) (message.Sender, error) {
-	var webhookConfig bo.WebhookConfigItemBo
+	var webhookConfig bo.WebhookItemBo
 	if err := serialize.JSONUnmarshal(configBytes, &webhookConfig); err != nil {
 		return nil, merr.ErrorInternal("unmarshal webhook config failed").WithCause(err)
 	}
