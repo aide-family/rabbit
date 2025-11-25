@@ -72,3 +72,4 @@ metricsBasicAuth:
   password: ${MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD:rabbit.metrics}
 
 configPaths: ${MOON_RABBIT_CONFIG_PATHS:./datasource}
+messageLogPath: ${MOON_RABBIT_MESSAGE_LOG_PATH:./messages/}

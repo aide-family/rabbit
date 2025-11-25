@@ -19,12 +19,13 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
+	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/aide-family/rabbit/pkg/middler"
 )
 
-func NewMessageLogRepository(d *data.Data, helper *klog.Helper) repository.MessageLog {
+func NewMessageLogRepository(bc *conf.Bootstrap, d *data.Data, helper *klog.Helper) repository.MessageLog {
 	return &messageLogRepositoryImpl{
 		helper: klog.NewHelper(klog.With(helper.Logger(), "data", "dbimpl.messageLogRepository")),
 		d:      d,

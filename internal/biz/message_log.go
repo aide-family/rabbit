@@ -47,6 +47,9 @@ func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogB
 func (m *MessageLog) GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.MessageLogItemBo, error) {
 	messageLogDO, err := m.messageLogRepo.GetMessageLog(ctx, uid)
 	if err != nil {
+		if merr.IsNotFound(err) {
+			return nil, err
+		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
 		return nil, merr.ErrorInternal("get message log failed")
 	}
@@ -56,6 +59,9 @@ func (m *MessageLog) GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.M
 func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, uid)
 	if err != nil {
+		if merr.IsNotFound(err) {
+			return err
+		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("get message log failed")
 	}
@@ -72,6 +78,9 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 func (m *MessageLog) CancelMessage(ctx context.Context, uid snowflake.ID) error {
 	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, uid)
 	if err != nil {
+		if merr.IsNotFound(err) {
+			return err
+		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("get message log failed")
 	}

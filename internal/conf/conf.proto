@@ -27,6 +27,7 @@ message Bootstrap {
 	string enableMetrics = 16;
 	string useDatabase = 17;
 	string configPaths = 18;
+	string messageLogPath = 19;
 }
 
 message Server {

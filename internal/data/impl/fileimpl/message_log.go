@@ -22,35 +22,35 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
+	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/aide-family/rabbit/pkg/middler"
 )
 
 const (
-	logFilePrefix = "message_"
 	logFileSuffix = ".log"
-	dateFormat    = "20060102"
 )
 
-func NewMessageLogRepository(d *data.Data, helper *klog.Helper) repository.MessageLog {
+func NewMessageLogRepository(bc *conf.Bootstrap, d *data.Data, helper *klog.Helper) repository.MessageLog {
 	repo := &messageLogRepositoryImpl{
 		helper:        klog.NewHelper(klog.With(helper.Logger(), "data", "fileimpl.messageLogRepository")),
 		d:             d,
-		cache:         safety.NewMap(make(map[string]struct{})),
-		uidToLocation: safety.NewSyncMap(make(map[snowflake.ID]*fileLocation)),
+		uidToLocation: safety.NewSyncMap(make(map[string]*safety.SyncMap[snowflake.ID, *fileLocation])),
 		fileMutex:     &sync.Mutex{},
 		lastIDByDate:  safety.NewSyncMap(make(map[string]uint32)),
 		codec:         encoding.GetCodec("json"),
 	}
-
-	// 获取当前工作目录
-	baseDir, err := os.Getwd()
-	if err != nil {
-		repo.helper.Errorf("failed to get current directory: %v", err)
-		baseDir = "."
+	repo.baseDir = bc.GetMessageLogPath()
+	if strutil.IsEmpty(repo.baseDir) {
+		// 获取当前工作目录
+		baseDir, err := os.Getwd()
+		if err != nil {
+			repo.helper.Errorf("failed to get current directory: %v", err)
+			baseDir = "."
+		}
+		repo.baseDir = baseDir
 	}
-	repo.baseDir = baseDir
 
 	// 启动时加载数据
 	repo.loadMessageLogs()
@@ -67,17 +67,35 @@ type fileLocation struct {
 type messageLogRepositoryImpl struct {
 	helper        *klog.Helper
 	d             *data.Data
-	cache         *safety.Map[string, struct{}]
-	uidToLocation *safety.SyncMap[snowflake.ID, *fileLocation] // UID 到文件位置的映射
+	uidToLocation *safety.SyncMap[string, *safety.SyncMap[snowflake.ID, *fileLocation]] // 按命名空间存储的 UID 到文件位置的映射：namespace -> (UID -> fileLocation)
 	fileMutex     *sync.Mutex
 	baseDir       string
-	lastIDByDate  *safety.SyncMap[string, uint32] // 按日期存储的lastID，格式：YYYYMMDD -> lastID
+	lastIDByDate  *safety.SyncMap[string, uint32] // 按namespace和weekStart存储的lastID，格式：namespace__weekStart -> lastID
 	codec         encoding.Codec
 }
 
+// getNamespaceMap 获取或创建指定命名空间的 UID 到文件位置的映射
+func (m *messageLogRepositoryImpl) getNamespaceMap(namespace string) *safety.SyncMap[snowflake.ID, *fileLocation] {
+	if nsMap, ok := m.uidToLocation.Get(namespace); ok {
+		return nsMap
+	}
+	// 创建新的命名空间 map
+	nsMap := safety.NewSyncMap(make(map[snowflake.ID]*fileLocation))
+	m.uidToLocation.Set(namespace, nsMap)
+	return nsMap
+}
+
 // loadMessageLogs 加载消息日志数据
-// 按时间倒序加载所有 message_YYYYMMDD.log 格式的文件
+// 按时间倒序加载所有 message_logs__{namespace}__{weekStart}.log 格式的文件
 func (m *messageLogRepositoryImpl) loadMessageLogs() {
+	// 如果目录不存在，则创建目录
+	if _, err := os.Stat(m.baseDir); os.IsNotExist(err) {
+		m.helper.Infof("directory %s not found, creating directory", m.baseDir)
+		if err := os.MkdirAll(m.baseDir, 0o755); err != nil {
+			m.helper.Warnf("failed to create directory %s: %v", m.baseDir, err)
+			return
+		}
+	}
 	// 查找所有日志文件并按时间倒序加载
 	files, err := m.findHistoryFiles()
 	if err != nil {
@@ -96,16 +114,16 @@ func (m *messageLogRepositoryImpl) loadMessageLogs() {
 			m.helper.Warnf("failed to load log file %s: %v", file.path, err)
 		}
 	}
-
-	m.helper.Infof("loaded %d message log locations from files", m.uidToLocation.Len())
 }
 
 type historyFile struct {
-	path string
-	date time.Time
+	path      string
+	date      time.Time
+	namespace string
+	weekStart string
 }
 
-// findHistoryFiles 查找所有日志文件（message_YYYYMMDD.log 格式）
+// findHistoryFiles 查找所有日志文件（message_logs__{namespace}__{weekStart}.log 格式）
 func (m *messageLogRepositoryImpl) findHistoryFiles() ([]historyFile, error) {
 	entries, err := os.ReadDir(m.baseDir)
 	if err != nil {
@@ -119,23 +137,35 @@ func (m *messageLogRepositoryImpl) findHistoryFiles() ([]historyFile, error) {
 		}
 
 		name := entry.Name()
-		// 匹配 message_YYYYMMDD.log 格式
-		if strings.HasPrefix(name, logFilePrefix) && strings.HasSuffix(name, logFileSuffix) {
-			// 提取日期部分
-			dateStr := strings.TrimPrefix(name, logFilePrefix)
-			dateStr = strings.TrimSuffix(dateStr, logFileSuffix)
-
-			date, err := time.Parse(dateFormat, dateStr)
-			if err != nil {
-				m.helper.Warnf("invalid date format in filename %s: %v", name, err)
-				continue
-			}
-
-			files = append(files, historyFile{
-				path: filepath.Join(m.baseDir, name),
-				date: date,
-			})
+		// 匹配 message_logs__{namespace}__{weekStart}.log 格式
+		if !strings.HasSuffix(name, logFileSuffix) {
+			continue
 		}
+
+		// 去掉 .log 后缀
+		baseName := strings.TrimSuffix(name, logFileSuffix)
+		// 格式：message_logs__{namespace}__{weekStart}
+		parts := strings.Split(baseName, "__")
+		if len(parts) != 3 || parts[0] != do.TableNameMessageLog {
+			continue
+		}
+
+		namespace := parts[1]
+		weekStartStr := parts[2]
+
+		// 解析 weekStart 日期
+		weekStart, err := time.Parse("20060102", weekStartStr)
+		if err != nil {
+			m.helper.Warnf("invalid weekStart format in filename %s: %v", name, err)
+			continue
+		}
+
+		files = append(files, historyFile{
+			path:      filepath.Join(m.baseDir, name),
+			date:      weekStart,
+			namespace: namespace,
+			weekStart: weekStartStr,
+		})
 	}
 
 	return files, nil
@@ -152,10 +182,17 @@ func (m *messageLogRepositoryImpl) loadFile(filePath string) error {
 	}
 	defer file.Close()
 
-	// 从文件路径提取日期（message_YYYYMMDD.log）
+	// 从文件路径提取 namespace 和 weekStart（message_logs__{namespace}__{weekStart}.log）
 	fileName := filepath.Base(filePath)
-	dateStr := strings.TrimPrefix(fileName, logFilePrefix)
-	dateStr = strings.TrimSuffix(dateStr, logFileSuffix)
+	baseName := strings.TrimSuffix(fileName, logFileSuffix)
+	parts := strings.Split(baseName, "__")
+	if len(parts) != 3 || parts[0] != do.TableNameMessageLog {
+		return fmt.Errorf("invalid filename format: %s", fileName)
+	}
+
+	namespace := parts[1]
+	weekStartStr := parts[2]
+	key := namespace + "__" + weekStartStr
 
 	var maxID uint32
 	scanner := bufio.NewScanner(file)
@@ -174,41 +211,47 @@ func (m *messageLogRepositoryImpl) loadFile(filePath string) error {
 			continue
 		}
 
-		// 更新该日期的最大ID
+		// 更新该文件的最大ID
 		if msgLog.ID > maxID {
 			maxID = msgLog.ID
 		}
 
+		// 获取该命名空间的 map
+		nsMap := m.getNamespaceMap(namespace)
+
 		// 只建立 UID 到文件位置的映射（如果已存在则更新，保留最新的文件位置）
-		if existing, ok := m.uidToLocation.Get(msgLog.UID); ok {
+		if existing, ok := nsMap.Get(msgLog.UID); ok {
 			// 如果新文件的时间更晚，则更新位置映射
-			// 通过比较文件路径中的日期来判断
-			existingDateStr := strings.TrimPrefix(filepath.Base(existing.filePath), logFilePrefix)
-			existingDateStr = strings.TrimSuffix(existingDateStr, logFileSuffix)
-			if dateStr > existingDateStr {
-				m.uidToLocation.Set(msgLog.UID, &fileLocation{
-					filePath: filePath,
-					lineNum:  lineNum,
-				})
+			// 通过比较文件路径中的 weekStart 来判断
+			existingBaseName := strings.TrimSuffix(filepath.Base(existing.filePath), logFileSuffix)
+			existingParts := strings.Split(existingBaseName, "__")
+			if len(existingParts) == 3 && existingParts[0] == do.TableNameMessageLog {
+				existingWeekStart := existingParts[2]
+				if weekStartStr > existingWeekStart {
+					nsMap.Set(msgLog.UID, &fileLocation{
+						filePath: filePath,
+						lineNum:  lineNum,
+					})
+				}
 			}
 		} else {
 			// 建立 UID 到文件位置的映射
-			m.uidToLocation.Set(msgLog.UID, &fileLocation{
+			nsMap.Set(msgLog.UID, &fileLocation{
 				filePath: filePath,
 				lineNum:  lineNum,
 			})
 		}
 	}
 
-	// 更新该日期的lastID（如果文件中有数据）
+	// 更新该文件的lastID（如果文件中有数据）
 	if maxID > 0 {
-		// 如果已经存在该日期的lastID，取最大值
-		if existingLastID, ok := m.lastIDByDate.Get(dateStr); ok {
+		// 如果已经存在该key的lastID，取最大值
+		if existingLastID, ok := m.lastIDByDate.Get(key); ok {
 			if maxID > existingLastID {
-				m.lastIDByDate.Set(dateStr, maxID)
+				m.lastIDByDate.Set(key, maxID)
 			}
 		} else {
-			m.lastIDByDate.Set(dateStr, maxID)
+			m.lastIDByDate.Set(key, maxID)
 		}
 	}
 
@@ -219,10 +262,10 @@ func (m *messageLogRepositoryImpl) loadFile(filePath string) error {
 	return nil
 }
 
-// getDateLogFile 根据日期获取日志文件路径（message_YYYYMMDD.log 格式）
-func (m *messageLogRepositoryImpl) getDateLogFile(date time.Time) string {
-	dateStr := date.Format(dateFormat)
-	filename := logFilePrefix + dateStr + logFileSuffix
+// getLogFile 根据 namespace 和 sendAt 获取日志文件路径（message_logs__{namespace}__{weekStart}.log 格式）
+func (m *messageLogRepositoryImpl) getLogFile(namespace string, sendAt time.Time) string {
+	tableName := do.GenMessageLogTableName(namespace, sendAt)
+	filename := tableName + logFileSuffix
 	return filepath.Join(m.baseDir, filename)
 }
 
@@ -232,8 +275,8 @@ func (m *messageLogRepositoryImpl) writeMessageLog(msgLog *do.MessageLog) (int, 
 	m.fileMutex.Lock()
 	defer m.fileMutex.Unlock()
 
-	// 根据 SendAt 确定文件路径（统一使用 message_YYYYMMDD.log 格式）
-	filePath := m.getDateLogFile(msgLog.SendAt)
+	// 根据 namespace 和 SendAt 确定文件路径（统一使用 message_logs__{namespace}__{weekStart}.log 格式）
+	filePath := m.getLogFile(msgLog.Namespace, msgLog.SendAt)
 
 	// 计算当前文件的行数（用于确定新行的行号）
 	lineCount, err := m.countLines(filePath)
@@ -262,8 +305,9 @@ func (m *messageLogRepositoryImpl) writeMessageLog(msgLog *do.MessageLog) (int, 
 	// 新行的行号 = 原行数 + 1
 	newLineNum := lineCount + 1
 
-	// 更新位置映射
-	m.uidToLocation.Set(msgLog.UID, &fileLocation{
+	// 更新位置映射（按命名空间存储）
+	nsMap := m.getNamespaceMap(msgLog.Namespace)
+	nsMap.Set(msgLog.UID, &fileLocation{
 		filePath: filePath,
 		lineNum:  newLineNum,
 	})
@@ -302,7 +346,7 @@ func (m *messageLogRepositoryImpl) readMessageLogFromFile(location *fileLocation
 		if os.IsNotExist(err) {
 			return nil, merr.ErrorNotFound("message log file not found: %s", location.filePath)
 		}
-		return nil, fmt.Errorf("failed to open log file %s: %w", location.filePath, err)
+		return nil, merr.ErrorInternal("failed to open log file %s: %v", location.filePath, err)
 	}
 	defer file.Close()
 
@@ -318,26 +362,43 @@ func (m *messageLogRepositoryImpl) readMessageLogFromFile(location *fileLocation
 
 			var msgLog do.MessageLog
 			if err := m.codec.Unmarshal([]byte(line), &msgLog); err != nil {
-				return nil, fmt.Errorf("failed to unmarshal message log at line %d: %w", location.lineNum, err)
+				return nil, merr.ErrorInternal("failed to unmarshal message log at line %d: %v", location.lineNum, err)
 			}
 			return &msgLog, nil
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading file %s: %w", location.filePath, err)
+		return nil, merr.ErrorInternal("error reading file %s: %v", location.filePath, err)
 	}
 
 	return nil, merr.ErrorNotFound("message log at line %d not found in file %s", location.lineNum, location.filePath)
 }
 
-// getNextID 获取指定日期的下一个ID
-func (m *messageLogRepositoryImpl) getNextID(date time.Time) uint32 {
+// getNextID 获取指定 namespace 和 sendAt 的下一个ID
+func (m *messageLogRepositoryImpl) getNextID(namespace string, sendAt time.Time) uint32 {
 	m.fileMutex.Lock()
 	defer m.fileMutex.Unlock()
 
-	dateStr := date.Format(dateFormat)
-	lastID, ok := m.lastIDByDate.Get(dateStr)
+	// 使用 GenMessageLogTableName 生成 key，但去掉表名前缀，只保留 namespace__weekStart
+	tableName := do.GenMessageLogTableName(namespace, sendAt)
+	// tableName 格式：message_logs__{namespace}__{weekStart}
+	// 提取 namespace__weekStart 部分作为 key
+	parts := strings.Split(tableName, "__")
+	if len(parts) != 3 {
+		// 如果格式不对，使用整个 tableName 作为 key
+		key := tableName
+		lastID, ok := m.lastIDByDate.Get(key)
+		if !ok {
+			lastID = 0
+		}
+		newID := lastID + 1
+		m.lastIDByDate.Set(key, newID)
+		return newID
+	}
+	key := parts[1] + "__" + parts[2] // namespace__weekStart
+
+	lastID, ok := m.lastIDByDate.Get(key)
 	if !ok {
 		// 第一天ID从1开始
 		lastID = 0
@@ -345,7 +406,7 @@ func (m *messageLogRepositoryImpl) getNextID(date time.Time) uint32 {
 
 	// ID自增
 	newID := lastID + 1
-	m.lastIDByDate.Set(dateStr, newID)
+	m.lastIDByDate.Set(key, newID)
 
 	return newID
 }
@@ -364,11 +425,11 @@ func (m *messageLogRepositoryImpl) CreateMessageLog(ctx context.Context, message
 		messageLog.WithNamespace(middler.GetNamespace(ctx))
 	}
 
-	// 根据SendAt确定日期，生成当天的ID
+	// 根据SendAt确定日期，生成当周的ID
 	if messageLog.SendAt.IsZero() {
 		messageLog.SendAt = messageLog.CreatedAt
 	}
-	messageLog.ID = m.getNextID(messageLog.SendAt)
+	messageLog.ID = m.getNextID(messageLog.Namespace, messageLog.SendAt)
 
 	// 写入文件（会自动更新位置映射）
 	if _, err = m.writeMessageLog(messageLog); err != nil {
@@ -380,7 +441,15 @@ func (m *messageLogRepositoryImpl) CreateMessageLog(ctx context.Context, message
 
 // GetMessageLog implements repository.MessageLog.
 func (m *messageLogRepositoryImpl) GetMessageLog(ctx context.Context, uid snowflake.ID) (*do.MessageLog, error) {
-	location, ok := m.uidToLocation.Get(uid)
+	namespace := middler.GetNamespace(ctx)
+
+	// 从指定命名空间的 map 中查找
+	nsMap, ok := m.uidToLocation.Get(namespace)
+	if !ok {
+		return nil, merr.ErrorNotFound("message log %d not found", uid.Int64())
+	}
+
+	location, ok := nsMap.Get(uid)
 	if !ok {
 		return nil, merr.ErrorNotFound("message log %d not found", uid.Int64())
 	}
@@ -397,6 +466,8 @@ func (m *messageLogRepositoryImpl) GetMessageLogWithLock(ctx context.Context, ui
 
 // ListMessageLog implements repository.MessageLog.
 func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*do.MessageLog], error) {
+	namespace := middler.GetNamespace(ctx)
+
 	// 查找所有日志文件
 	files, err := m.findHistoryFiles()
 	if err != nil {
@@ -413,23 +484,29 @@ func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.L
 
 	// 遍历所有文件
 	for _, file := range files {
-		// 如果指定了时间范围，可以提前过滤文件（按日期比较）
-		fileDateStr := file.date.Format(dateFormat)
+		// 只处理属于当前 namespace 的文件
+		if file.namespace != namespace {
+			continue
+		}
+
+		// 如果指定了时间范围，可以提前过滤文件（按 weekStart 比较）
+		// weekStart 是周一，所以需要检查时间范围是否与文件相关
+		weekEnd := file.date.AddDate(0, 0, 6) // 周日
 		if !req.StartAt.IsZero() {
-			startDateStr := req.StartAt.Format(dateFormat)
-			if fileDateStr < startDateStr {
+			// 如果请求的开始时间晚于这周的结束时间，跳过
+			if req.StartAt.After(weekEnd) {
 				continue
 			}
 		}
 		if !req.EndAt.IsZero() {
-			endDateStr := req.EndAt.Format(dateFormat)
-			if fileDateStr > endDateStr {
+			// 如果请求的结束时间早于这周的开始时间，跳过
+			if req.EndAt.Before(file.date) {
 				continue
 			}
 		}
 
 		// 读取文件中的所有消息日志
-		fileLogs, err := m.readAllLogsFromFile(file.path, req)
+		fileLogs, err := m.readAllLogsFromFile(file.path, namespace, req)
 		if err != nil {
 			m.helper.Warnf("failed to read logs from file %s: %v", file.path, err)
 			continue
@@ -466,7 +543,7 @@ func (m *messageLogRepositoryImpl) ListMessageLog(ctx context.Context, req *bo.L
 }
 
 // readAllLogsFromFile 从文件中读取所有符合条件的消息日志
-func (m *messageLogRepositoryImpl) readAllLogsFromFile(filePath string, req *bo.ListMessageLogBo) ([]*do.MessageLog, error) {
+func (m *messageLogRepositoryImpl) readAllLogsFromFile(filePath string, namespace string, req *bo.ListMessageLogBo) ([]*do.MessageLog, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -487,6 +564,11 @@ func (m *messageLogRepositoryImpl) readAllLogsFromFile(filePath string, req *bo.
 		var msgLog do.MessageLog
 		if err := m.codec.Unmarshal([]byte(line), &msgLog); err != nil {
 			m.helper.Warnf("failed to unmarshal line in %s: %v", filePath, err)
+			continue
+		}
+
+		// 过滤条件：只返回指定 namespace 的数据
+		if msgLog.Namespace != namespace {
 			continue
 		}
 
@@ -520,8 +602,15 @@ func (m *messageLogRepositoryImpl) updateMessageLogInFile(msgLog *do.MessageLog)
 	m.fileMutex.Lock()
 	defer m.fileMutex.Unlock()
 
-	// 从内存映射中获取文件位置
-	location, ok := m.uidToLocation.Get(msgLog.UID)
+	// 从内存映射中获取文件位置（按命名空间查找）
+	nsMap, ok := m.uidToLocation.Get(msgLog.Namespace)
+	if !ok {
+		// 如果没有命名空间的 map，说明是新记录，直接写入
+		_, err := m.writeMessageLogUnlocked(msgLog)
+		return err
+	}
+
+	location, ok := nsMap.Get(msgLog.UID)
 	if !ok {
 		// 如果没有位置信息，说明是新记录，直接写入
 		_, err := m.writeMessageLogUnlocked(msgLog)
@@ -576,8 +665,9 @@ func (m *messageLogRepositoryImpl) updateMessageLogInFile(msgLog *do.MessageLog)
 			return fmt.Errorf("failed to marshal message log: %w", err)
 		}
 		lines = append(lines, string(updatedBytes))
-		// 更新位置映射
-		m.uidToLocation.Set(msgLog.UID, &fileLocation{
+		// 更新位置映射（按命名空间存储）
+		nsMap := m.getNamespaceMap(msgLog.Namespace)
+		nsMap.Set(msgLog.UID, &fileLocation{
 			filePath: filePath,
 			lineNum:  len(lines),
 		})
@@ -608,8 +698,8 @@ func (m *messageLogRepositoryImpl) updateMessageLogInFile(msgLog *do.MessageLog)
 
 // writeMessageLogUnlocked 写入消息日志到文件（不加锁版本，用于已持有锁的情况）
 func (m *messageLogRepositoryImpl) writeMessageLogUnlocked(msgLog *do.MessageLog) (int, error) {
-	// 根据 SendAt 确定文件路径
-	filePath := m.getDateLogFile(msgLog.SendAt)
+	// 根据 namespace 和 SendAt 确定文件路径
+	filePath := m.getLogFile(msgLog.Namespace, msgLog.SendAt)
 
 	// 计算当前文件的行数
 	lineCount, err := m.countLines(filePath)
@@ -638,8 +728,9 @@ func (m *messageLogRepositoryImpl) writeMessageLogUnlocked(msgLog *do.MessageLog
 	// 新行的行号 = 原行数 + 1
 	newLineNum := lineCount + 1
 
-	// 更新位置映射
-	m.uidToLocation.Set(msgLog.UID, &fileLocation{
+	// 更新位置映射（按命名空间存储）
+	nsMap := m.getNamespaceMap(msgLog.Namespace)
+	nsMap.Set(msgLog.UID, &fileLocation{
 		filePath: filePath,
 		lineNum:  newLineNum,
 	})
@@ -649,7 +740,15 @@ func (m *messageLogRepositoryImpl) writeMessageLogUnlocked(msgLog *do.MessageLog
 
 // UpdateMessageLogStatusIf implements repository.MessageLog.
 func (m *messageLogRepositoryImpl) UpdateMessageLogStatusIf(ctx context.Context, uid snowflake.ID, oldStatus vobj.MessageStatus, newStatus vobj.MessageStatus) (bool, error) {
-	location, ok := m.uidToLocation.Get(uid)
+	namespace := middler.GetNamespace(ctx)
+
+	// 从指定命名空间的 map 中查找
+	nsMap, ok := m.uidToLocation.Get(namespace)
+	if !ok {
+		return false, merr.ErrorNotFound("message log %d not found", uid.Int64())
+	}
+
+	location, ok := nsMap.Get(uid)
 	if !ok {
 		return false, merr.ErrorNotFound("message log %d not found", uid.Int64())
 	}

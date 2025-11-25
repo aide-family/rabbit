@@ -16,7 +16,7 @@ emails:
     createdAt: 2021-01-01 00:00:00
     updatedAt: 2021-01-01 00:00:00
     creator: 1986338680076115969
-    namespace: default
+    namespace: default2
     name: default2
     host: smtp.example.com
     port: 587
