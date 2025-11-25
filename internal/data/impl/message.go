@@ -10,7 +10,6 @@ import (
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
@@ -22,10 +21,15 @@ import (
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
 	"github.com/aide-family/rabbit/pkg/merr"
-	"github.com/aide-family/rabbit/pkg/middler"
 )
 
-func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog, helper *klog.Helper) repository.MessageBus {
+func NewMessageBus(
+	bc *conf.Bootstrap,
+	d *data.Data,
+	transactionRepo repository.Transaction,
+	messageLogRepo repository.MessageLog,
+	helper *klog.Helper,
+) repository.MessageBus {
 	eventBusConf := bc.GetEventBus()
 	clusterConfig := bc.GetCluster()
 	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
@@ -33,16 +37,17 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 	clusterName := clusterConfig.GetName()
 	bus := &messageBusImpl{
-		d:              d,
-		messageLogRepo: messageLogRepo,
-		helper:         klog.NewHelper(klog.With(helper.Logger(), "component", "message_bus")),
-		messageChan:    make(chan *messageTask, eventBusConf.GetBufferSize()),
-		senders:        safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
-		stopChan:       make(chan struct{}),
-		wg:             sync.WaitGroup{},
-		workerCount:    int(eventBusConf.GetWorkerCount()),
-		timeout:        eventBusConf.GetTimeout().AsDuration(),
-		clusters:       make([]sender.Sender, 0, len(clusterEndpoints)),
+		d:               d,
+		transactionRepo: transactionRepo,
+		messageLogRepo:  messageLogRepo,
+		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message_bus")),
+		messageChan:     make(chan *messageTask, eventBusConf.GetBufferSize()),
+		senders:         safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
+		stopChan:        make(chan struct{}),
+		wg:              sync.WaitGroup{},
+		workerCount:     int(eventBusConf.GetWorkerCount()),
+		timeout:         eventBusConf.GetTimeout().AsDuration(),
+		clusters:        make([]sender.Sender, 0, len(clusterEndpoints)),
 	}
 
 	// 注册发送器
@@ -64,15 +69,16 @@ type messageTask struct {
 }
 
 type messageBusImpl struct {
-	d              *data.Data
-	messageLogRepo repository.MessageLog
-	helper         *klog.Helper
-	messageChan    chan *messageTask
-	senders        *safety.SyncMap[vobj.MessageType, repository.MessageSender]
-	stopChan       chan struct{}
-	wg             sync.WaitGroup
-	workerCount    int // 工作协程数量,默认1个
-	timeout        time.Duration
+	d               *data.Data
+	transactionRepo repository.Transaction
+	messageLogRepo  repository.MessageLog
+	helper          *klog.Helper
+	messageChan     chan *messageTask
+	senders         *safety.SyncMap[vobj.MessageType, repository.MessageSender]
+	stopChan        chan struct{}
+	wg              sync.WaitGroup
+	workerCount     int // 工作协程数量,默认1个
+	timeout         time.Duration
 
 	clusters []sender.Sender
 }
@@ -149,12 +155,9 @@ func (m *messageBusImpl) waitProcessMessage(ctx context.Context, messageUID snow
 }
 
 func (m *messageBusImpl) SendMessage(ctx context.Context, messageUID snowflake.ID) error {
-	// 使用分布式锁控制并发，同一时间只能有一个服务或者协程能够访问此UID的消息
-	namespace := middler.GetNamespace(ctx)
 	// 在事务中使用 SELECT FOR UPDATE 获取分布式锁
 	var newMessage *do.MessageLog
-	err := m.d.BizDB(ctx, namespace).WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		transactionCtx := data.WithBizTransaction(ctx, tx, namespace)
+	err := m.transactionRepo.Transaction(ctx, func(transactionCtx context.Context) error {
 		// 使用 SELECT FOR UPDATE 获取行锁，确保同一时间只有一个节点能处理该消息
 		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, messageUID)
 		if err != nil {
