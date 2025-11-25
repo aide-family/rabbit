@@ -2,6 +2,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2"
@@ -90,6 +92,9 @@ func runServer(_ *cobra.Command, _ []string) {
 
 func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
 	defer hello.Hello()
+	if len(srvs) == 0 {
+		return nil, fmt.Errorf("no server components enabled, please enable at least one of HTTP/GRPC/Job")
+	}
 	opts := []kratos.Option{
 		kratos.Logger(helper.Logger()),
 		kratos.Server(srvs...),

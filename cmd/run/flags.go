@@ -109,4 +109,14 @@ func (f *Flags) applyToBootstrap() {
 	if strutil.IsNotEmpty(f.registryType) {
 		f.RegistryType = config.RegistryType(config.RegistryType_value[f.registryType])
 	}
+
+	if strutil.IsEmpty(f.Server.EnableHttp) {
+		f.Server.EnableHttp = "true"
+	}
+	if strutil.IsEmpty(f.Server.EnableGrpc) {
+		f.Server.EnableGrpc = "true"
+	}
+	if strutil.IsEmpty(f.Server.EnableJob) {
+		f.Server.EnableJob = "true"
+	}
 }

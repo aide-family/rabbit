@@ -19,7 +19,7 @@ import (
 
 func wireApp(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		server.ProviderSetServerOnly,
+		server.ProviderSetServer,
 		service.ProviderSetService,
 		biz.ProviderSetBiz,
 		impl.ProviderSetImpl,

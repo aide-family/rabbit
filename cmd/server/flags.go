@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/magicbox/pointer"
@@ -25,11 +26,18 @@ type Flags struct {
 	grpcNetwork string
 	grpcTimeout string
 	environment string
+
+	enableHTTP bool
+	enableGRPC bool
+	enableJob  bool
+
+	flagSet *pflag.FlagSet
 }
 
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
+	f.flagSet = c.Flags()
 	c.Flags().StringVarP(&f.configPath, "config", "c", "./config", "config file (default is ./config)")
 	c.Flags().StringVarP(&f.clientConfigOutputPath, "client-config-output", "o", "~/.rabbit/config.yaml", "client config output file (default is ~/.rabbit/config.yaml)")
 
@@ -40,6 +48,10 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	c.Flags().StringVar(&f.grpcNetwork, "grpc-network", "tcp", "grpc network (default is tcp)")
 	c.Flags().StringVar(&f.grpcTimeout, "grpc-timeout", "10s", "grpc timeout (default is 10s)")
 	c.Flags().StringVarP(&f.environment, "environment", "e", "PROD", "environment (DEV, TEST, PREVIEW, PROD)")
+
+	c.Flags().BoolVar(&f.enableHTTP, "http", false, "enable HTTP server")
+	c.Flags().BoolVar(&f.enableGRPC, "grpc", false, "enable gRPC server")
+	c.Flags().BoolVar(&f.enableJob, "job", false, "enable job workers")
 }
 
 func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
@@ -89,5 +101,56 @@ func (f *Flags) applyToBootstrap(bc *conf.Bootstrap) {
 			env = enum.Environment(enum.Environment_value[f.environment])
 		}
 		bc.Environment = env
+	}
+
+	isFlagChanged := func(name string) bool {
+		if f.flagSet == nil {
+			return false
+		}
+		if flag := f.flagSet.Lookup(name); flag != nil {
+			return flag.Changed
+		}
+		return false
+	}
+	setBoolString := func(target *string, value bool) {
+		if value {
+			*target = "true"
+		} else {
+			*target = "false"
+		}
+	}
+
+	httpChanged := isFlagChanged("http")
+	grpcChanged := isFlagChanged("grpc")
+	jobChanged := isFlagChanged("job")
+	componentChanged := httpChanged || grpcChanged || jobChanged
+
+	if componentChanged {
+		if httpChanged {
+			setBoolString(&bc.Server.EnableHttp, f.enableHTTP)
+		} else {
+			setBoolString(&bc.Server.EnableHttp, false)
+		}
+		if grpcChanged {
+			setBoolString(&bc.Server.EnableGrpc, f.enableGRPC)
+		} else {
+			setBoolString(&bc.Server.EnableGrpc, false)
+		}
+		if jobChanged {
+			setBoolString(&bc.Server.EnableJob, f.enableJob)
+		} else {
+			setBoolString(&bc.Server.EnableJob, false)
+		}
+		return
+	}
+
+	if strutil.IsEmpty(bc.Server.EnableHttp) {
+		setBoolString(&bc.Server.EnableHttp, true)
+	}
+	if strutil.IsEmpty(bc.Server.EnableGrpc) {
+		setBoolString(&bc.Server.EnableGrpc, true)
+	}
+	if strutil.IsEmpty(bc.Server.EnableJob) {
+		setBoolString(&bc.Server.EnableJob, false)
 	}
 }
