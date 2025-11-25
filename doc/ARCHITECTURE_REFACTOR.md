@@ -108,7 +108,33 @@ resources:
 
 ### 1. Server 模式（仅启动 HTTP/gRPC 服务）
 
-启动只包含对外接口服务的实例，不包含后台任务处理。
+启动只包含对外接口服务的实例，不包含后台任务处理。默认启用 HTTP 与 gRPC，`job` 需显式打开；你也可以通过 `--http/--grpc/--job` 组合选择任意子组件：
+
+```bash
+# 仅 HTTP + gRPC（默认）
+./rabbit server
+
+# 仅 job（单进程后台 Worker）
+./rabbit server --job
+
+# HTTP + job
+./rabbit server --http --job
+
+# gRPC + job
+./rabbit server --grpc --job
+
+# HTTP + gRPC + job（单进程 All-in-One）
+./rabbit server --http --grpc --job
+```
+
+也可以通过配置文件或环境变量控制，示例：
+
+```bash
+MOON_RABBIT_SERVER_ENABLE_HTTP=true \
+MOON_RABBIT_SERVER_ENABLE_GRPC=false \
+MOON_RABBIT_SERVER_ENABLE_JOB=true \
+./rabbit server
+```
 
 ```bash
 # 使用默认配置
@@ -159,7 +185,7 @@ resources:
 
 ### 3. Run 模式（兼容模式，同时启动所有服务）
 
-同时启动 Server 和 Job 服务，保持向后兼容。
+同时启动 Server 和 Job 服务，保持向后兼容。`run` 模式会默认启用 HTTP、gRPC、Job 三个组件，也可以通过配置文件关闭其中任意组件。
 
 ```bash
 # 使用默认配置
@@ -242,14 +268,14 @@ cmd/
 ### 核心改动
 
 1. **`internal/server/server.go`**：
-   - 新增 `RegisterServiceOnly()`：只注册 HTTP/gRPC 服务，不包含 EventBus
-   - 新增 `ProviderSetServerOnly`：Server 模式的依赖注入集合
-   - 新增 `ProviderSetJob`：Job 模式的依赖注入集合
+   - 新增 `ServerOptions` / `NewServerOptions()`，从配置或命令行解析 `enableHttp/enableGrpc/enableJob`
+   - `RegisterService()` 根据 `ServerOptions` 按需注册 HTTP、gRPC、Job（EventBus），`Servers` 支持自动发现 HTTP server
+   - `ProviderSetServer` 始终构建 HTTP/gRPC/EventBus，再由 `ServerOptions` 决定是否加入到运行实例
 
 2. **依赖注入分离**：
-   - Server 模式：使用 `ProviderSetServerOnly`，只注入 HTTP/gRPC 相关依赖
-   - Job 模式：使用 `ProviderSetJob`，只注入 EventBus 相关依赖
-   - Run 模式：使用 `ProviderSetServer`，注入所有依赖（保持兼容）
+   - Server 模式：通过开关来启用/禁用 HTTP、gRPC、Job
+   - Job 模式：继续使用 `ProviderSetJob`，只注入 EventBus 相关依赖
+   - Run 模式：使用 `ProviderSetServer`，默认启用全部组件（保持兼容）
 
 ## 📝 迁移指南
 

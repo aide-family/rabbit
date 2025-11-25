@@ -7,6 +7,9 @@ useDatabase: ${MOON_RABBIT_USE_DATABASE:false}
 server:
   name: ${MOON_RABBIT_NAME:moon.rabbit}
   useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
+  enableHttp: ${MOON_RABBIT_SERVER_ENABLE_HTTP:}
+  enableGrpc: ${MOON_RABBIT_SERVER_ENABLE_GRPC:}
+  enableJob: ${MOON_RABBIT_SERVER_ENABLE_JOB:}
   metadata:
     tag: ${MOON_RABBIT_METADATA_TAG:rabbit}
     repository: ${MOON_RABBIT_METADATA_REPOSITORY:https://github.com/aide-family/rabbit}
