@@ -49,7 +49,7 @@ func NewMessageLogRepository(bc *conf.Bootstrap, d *data.Data, helper *klog.Help
 			repo.helper.Errorf("failed to get current directory: %v", err)
 			baseDir = "."
 		}
-		repo.baseDir = baseDir
+		repo.baseDir = filepath.Join(baseDir, "message_logs")
 	}
 
 	// 启动时加载数据

@@ -141,13 +141,16 @@ func (m *messageBusImpl) waitProcessMessage(ctx context.Context, messageUID snow
 	req := &apiv1.SendMessageRequest{
 		Uid: messageUID.Int64(),
 	}
-	for _, cluster := range m.clusters {
-		reply, err := cluster.SendMessage(ctx, req)
-		if err != nil {
-			m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID, "reply", reply)
-			continue
+	// notice: 没有使用外部存储，不允许使用集群模式， 避免消息无法共享到其他节点
+	if m.d.UseDatabase() {
+		for _, cluster := range m.clusters {
+			reply, err := cluster.SendMessage(ctx, req)
+			if err != nil {
+				m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID, "reply", reply)
+				continue
+			}
+			return
 		}
-		return
 	}
 	if err := m.SendMessage(ctx, messageUID); err != nil {
 		m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID)
