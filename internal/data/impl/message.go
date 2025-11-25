@@ -49,34 +49,11 @@ func NewMessageBus(bc *conf.Bootstrap, d *data.Data, messageLogRepo repository.M
 	bus.senders.Set(vobj.MessageTypeEmail, sender.NewEmailSender(helper))
 	bus.senders.Set(vobj.MessageTypeWebhook, sender.NewWebhookSender(helper))
 
-	go func() {
-		time.Sleep(5 * time.Second)
-		for _, clusterEndpoint := range clusterEndpoints {
-			opts := []connect.InitOption{
-				connect.WithProtocol(clusterProtocol.String()),
-				connect.WithDiscovery(d.Registry()),
-			}
-			initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
-			switch clusterProtocol {
-			case config.ClusterConfig_GRPC:
-				grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
-				if err != nil {
-					helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
-					continue
-				}
-				d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
-				bus.clusters = append(bus.clusters, sender.NewClusterSender(grpcClient, nil, clusterProtocol))
-			case config.ClusterConfig_HTTP:
-				httpClient, err := connect.InitHTTPClient(initConfig, opts...)
-				if err != nil {
-					helper.Errorw("msg", "create HTTP client failed", "error", err)
-					continue
-				}
-				d.AppendClose("httpClient", func() error { return httpClient.Close() })
-				bus.clusters = append(bus.clusters, sender.NewClusterSender(nil, httpClient, clusterProtocol))
-			}
-		}
-	}()
+	safety.Go(context.Background(), "message_bus_init_clusters", func(ctx context.Context) error {
+		time.Sleep(3 * time.Second)
+		bus.initClusters(clusterEndpoints, clusterProtocol, clusterName, clusterTimeout)
+		return nil
+	}, helper.Logger())
 
 	return bus
 }
@@ -114,6 +91,23 @@ func (m *messageBusImpl) Start(ctx context.Context) {
 			m.worker(ctx, i)
 			return nil
 		}, m.helper.Logger())
+	}
+}
+
+// Stop 停止事件总线
+func (m *messageBusImpl) Stop(ctx context.Context) {
+	select {
+	case <-ctx.Done():
+		m.helper.Warnw("msg", "message bus stopped by context done")
+		return
+	case <-m.stopChan:
+		m.helper.Warnw("msg", "message bus stopped by stop channel")
+		return
+	default:
+		close(m.stopChan)
+		m.wg.Wait()
+		close(m.messageChan)
+		m.helper.Infow("msg", "message bus stopped")
 	}
 }
 
@@ -258,16 +252,30 @@ func (m *messageBusImpl) AppendMessage(ctx context.Context, messageUID snowflake
 	}
 }
 
-// Stop 停止事件总线
-func (m *messageBusImpl) Stop(ctx context.Context) {
-	select {
-	case <-ctx.Done():
-		m.helper.Warnw("msg", "message bus stopped by context done")
-		return
-	default:
-		close(m.stopChan)
-		m.wg.Wait()
-		close(m.messageChan)
-		m.helper.Infow("msg", "message bus stopped")
+func (m *messageBusImpl) initClusters(clusterEndpoints []string, clusterProtocol config.ClusterConfig_Protocol, clusterName string, clusterTimeout time.Duration) {
+	for _, clusterEndpoint := range clusterEndpoints {
+		opts := []connect.InitOption{
+			connect.WithProtocol(clusterProtocol.String()),
+			connect.WithDiscovery(m.d.Registry()),
+		}
+		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
+		switch clusterProtocol {
+		case config.ClusterConfig_GRPC:
+			grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
+			if err != nil {
+				m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
+				continue
+			}
+			m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
+			m.clusters = append(m.clusters, sender.NewClusterSender(grpcClient, nil, clusterProtocol))
+		case config.ClusterConfig_HTTP:
+			httpClient, err := connect.InitHTTPClient(initConfig, opts...)
+			if err != nil {
+				m.helper.Errorw("msg", "create HTTP client failed", "error", err)
+				continue
+			}
+			m.d.AppendClose("httpClient", func() error { return httpClient.Close() })
+			m.clusters = append(m.clusters, sender.NewClusterSender(nil, httpClient, clusterProtocol))
+		}
 	}
 }

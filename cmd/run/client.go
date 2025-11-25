@@ -130,7 +130,7 @@ func generateClientConfig(
 		return fmt.Errorf("write config file failed: %w", err)
 	}
 
-	helper.Infow("msg", "client config generated", "path", configFile)
+	helper.Info("config generated successfully path is ", configFile)
 	return nil
 }
 
