@@ -12,9 +12,5 @@ func NewNamespaceRepository(d *data.Data) repository.Namespace {
 	if d.UseDatabase() {
 		newRepo = dbimpl.NewNamespaceRepository
 	}
-	return &namespaceRepositoryImpl{Namespace: newRepo(d)}
-}
-
-type namespaceRepositoryImpl struct {
-	repository.Namespace
+	return newRepo(d)
 }

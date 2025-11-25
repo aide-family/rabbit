@@ -12,9 +12,5 @@ func NewEmailConfigRepository(d *data.Data) repository.EmailConfig {
 	if d.UseDatabase() {
 		newRepo = dbimpl.NewEmailConfigRepository
 	}
-	return &emailConfigRepositoryImpl{EmailConfig: newRepo(d)}
-}
-
-type emailConfigRepositoryImpl struct {
-	repository.EmailConfig
+	return newRepo(d)
 }

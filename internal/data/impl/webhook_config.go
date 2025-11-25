@@ -12,9 +12,5 @@ func NewWebhookConfigRepository(d *data.Data) repository.WebhookConfig {
 	if d.UseDatabase() {
 		newRepo = dbimpl.NewWebhookConfigRepository
 	}
-	return &webhookConfigRepositoryImpl{WebhookConfig: newRepo(d)}
-}
-
-type webhookConfigRepositoryImpl struct {
-	repository.WebhookConfig
+	return newRepo(d)
 }

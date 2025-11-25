@@ -12,11 +12,5 @@ func NewTemplateRepository(d *data.Data) repository.Template {
 	if d.UseDatabase() {
 		newRepo = dbimpl.NewTemplateRepository
 	}
-	return &templateRepositoryImpl{
-		Template: newRepo(d),
-	}
-}
-
-type templateRepositoryImpl struct {
-	repository.Template
+	return newRepo(d)
 }

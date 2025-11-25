@@ -42,3 +42,4 @@ go.work.sum
 deploy/*/data
 description.txt
 .rabbit/
+*.log
