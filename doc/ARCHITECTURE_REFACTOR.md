@@ -102,13 +102,13 @@ resources:
 
 - 开发时可以只启动 Server 服务，快速测试 API 接口
 - 可以单独启动 Job 服务，测试消息处理逻辑
-- 本地开发时可以使用 `run` 命令同时启动所有服务
+- 也可以通过 `http` / `grpc` / `server --job` 等命令按需启动不同组件
 
 ## 🚀 启动方式
 
-### 1. Server 模式（仅启动 HTTP/gRPC 服务）
+### 1. Server 模式（组合启动 HTTP/gRPC/Job）
 
-启动只包含对外接口服务的实例，不包含后台任务处理。默认启用 HTTP 与 gRPC，`job` 需显式打开；你也可以通过 `--http/--grpc/--job` 组合选择任意子组件：
+启动可以同时包含对外接口服务和后台任务处理的实例，通过配置/命令行组合开启 HTTP、gRPC、Job：
 
 ```bash
 # 仅 HTTP + gRPC（默认）
@@ -183,30 +183,17 @@ MOON_RABBIT_SERVER_ENABLE_JOB=true \
 - 需要高吞吐量的消息处理
 - 根据消息队列积压情况进行水平扩展
 
-### 3. Run 模式（兼容模式，同时启动所有服务）
+### 3. HTTP / gRPC 独立模式
 
-同时启动 Server 和 Job 服务，保持向后兼容。`run` 模式会默认启用 HTTP、gRPC、Job 三个组件，也可以通过配置文件关闭其中任意组件。
+支持只启动单一协议的服务实例，方便按需拆分或本地调试：
 
 ```bash
-# 使用默认配置
-./rabbit run
+# 仅 HTTP
+./rabbit http --config ./config
 
-# 指定配置文件路径
-./rabbit run --config ./config
-
-# 指定 HTTP 和 gRPC 地址
-./rabbit run \
-  --http-address 0.0.0.0:8080 \
-  --grpc-address 0.0.0.0:9090
-
-# 查看帮助
-./rabbit run --help
+# 仅 gRPC
+./rabbit grpc --config ./config
 ```
-
-**适用场景**：
-- 本地开发环境
-- 测试环境
-- 小规模部署（不需要独立扩缩容的场景）
 
 ## 📊 架构对比
 
@@ -228,16 +215,19 @@ MOON_RABBIT_SERVER_ENABLE_JOB=true \
 ### 改造后
 
 ```
-┌─────────────────┐      ┌─────────────────┐
-│  rabbit server  │      │   rabbit job    │
-│  ┌──────────┐   │      │  ┌─────────────┐│
-│  │  HTTP    │   │      │  │  EventBus   ││
-│  │  gRPC    │   │      │  │  Workers    ││
-│  └──────────┘   │      │  └─────────────┘│
-└─────────────────┘      └─────────────────┘
-      │                          │
-  独立扩展                   独立扩展
-  2-3 实例                   5-10+ 实例
+┌─────────────────────┐      ┌─────────────────┐
+│  rabbit server      │      │   rabbit job    │
+│  ┌──────────┐       │      │  ┌─────────────┐│
+│  │  HTTP    │ ◀──┐  │      │  │  EventBus   ││
+│  │  gRPC    │ ◀┐ │  │      │  │  Workers    ││
+│  │  Job     │ ┌┴─┘  │      │  └─────────────┘│
+│  └──────────┘ │     │      └─────────────────┘
+└─────────────────────┘
+       ▲        ▲
+       │        │
+   rabbit http  rabbit grpc
+
+Server 支持按需组合（HTTP/gRPC/Job），同时保留 `http`、`grpc`、`job` 三个独立模式，方便在不同场景下独立扩展。
 ```
 
 ## 🔧 技术实现
@@ -246,23 +236,27 @@ MOON_RABBIT_SERVER_ENABLE_JOB=true \
 
 ```
 cmd/
-├── server/          # Server 命令
+├── server/          # Server 命令（组合 HTTP/gRPC/Job）
 │   ├── server.go    # 主逻辑
-│   ├── flags.go     # 命令行参数
+│   ├── flags.go     # 命令行参数（支持 --http/--grpc/--job）
 │   ├── wire.go      # 依赖注入定义
 │   ├── wire_gen.go  # 生成的依赖注入代码
 │   └── client.go    # 客户端配置生成
-├── job/             # Job 命令
+├── job/             # Job 命令（仅 EventBus/后台任务）
 │   ├── job.go       # 主逻辑
 │   ├── flags.go     # 命令行参数
 │   ├── wire.go      # 依赖注入定义
 │   └── wire_gen.go  # 生成的依赖注入代码
-└── run/             # Run 命令（兼容模式）
-    ├── run.go       # 主逻辑
+├── http/            # HTTP 命令（仅 HTTP 服务）
+│   ├── http.go      # 主逻辑
+│   ├── flags.go     # 命令行参数
+│   ├── wire.go      # 依赖注入定义
+│   └── wire_gen.go  # 生成的依赖注入代码
+└── grpc/            # gRPC 命令（仅 gRPC 服务）
+    ├── grpc.go      # 主逻辑
     ├── flags.go     # 命令行参数
     ├── wire.go      # 依赖注入定义
-    ├── wire_gen.go  # 生成的依赖注入代码
-    └── client.go    # 客户端配置生成
+    └── wire_gen.go  # 生成的依赖注入代码
 ```
 
 ### 核心改动
@@ -273,26 +267,26 @@ cmd/
    - `ProviderSetServer` 始终构建 HTTP/gRPC/EventBus，再由 `ServerOptions` 决定是否加入到运行实例
 
 2. **依赖注入分离**：
-   - Server 模式：通过开关来启用/禁用 HTTP、gRPC、Job
-   - Job 模式：继续使用 `ProviderSetJob`，只注入 EventBus 相关依赖
-   - Run 模式：使用 `ProviderSetServer`，默认启用全部组件（保持兼容）
+   - Server 模式：通过开关来启用/禁用 HTTP、gRPC、Job（`enableHttp/enableGrpc/enableJob`）
+   - Job 模式：使用 `ProviderSetJob`，只注入 EventBus 相关依赖
+   - HTTP/GRPC 独立模式：同样复用 `ProviderSetServer`，但在命令内部强制只开启对应组件
 
 ## 📝 迁移指南
 
 ### 从旧版本迁移
 
-如果你之前使用 `rabbit run` 命令，迁移非常简单：
+如果你之前使用 `rabbit run` 命令，现在可以迁移到新的命令体系：
 
-**选项 1：继续使用 run 命令（推荐用于开发/测试）**
+**选项 1：使用 server 命令（推荐，用于开发/测试/小规模部署）**
 ```bash
-# 无需修改，继续使用
-./rabbit run
+# 等价于原来的 run：同时启动 HTTP/gRPC/Job
+./rabbit server --http --grpc --job
 ```
 
 **选项 2：分离部署（推荐用于生产环境）**
 ```bash
-# 部署 Server 服务
-./rabbit server
+# 部署 Server 服务（HTTP/gRPC）
+./rabbit server --http --grpc
 
 # 部署 Job 服务（可以多个实例）
 ./rabbit job
@@ -306,7 +300,8 @@ cmd/
 # 所有命令都支持 --config 参数
 ./rabbit server --config /path/to/config
 ./rabbit job --config /path/to/config
-./rabbit run --config /path/to/config
+./rabbit http --config /path/to/config
+./rabbit grpc --config /path/to/config
 ```
 
 ## 🎓 最佳实践
