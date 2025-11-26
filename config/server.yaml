@@ -40,7 +40,7 @@ main:
     loc: Asia/Shanghai
 
 eventBus:
-  workerCount: ${MOON_RABBIT_EVENT_BUS_WORKER_COUNT:10}
+  workerTotal: ${MOON_RABBIT_EVENT_BUS_WORKER_TOTAL:10}
   timeout: ${MOON_RABBIT_EVENT_BUS_TIMEOUT:10s}
   bufferSize: ${MOON_RABBIT_EVENT_BUS_BUFFER_SIZE:1000}
   

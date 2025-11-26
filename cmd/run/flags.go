@@ -50,8 +50,9 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
 	c.Flags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
 	c.Flags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
-	c.Flags().Int32Var(&f.EventBus.WorkerCount, "event-bus-worker-count", f.EventBus.WorkerCount, `Example: --event-bus-worker-count=1"`)
+	c.Flags().Int32Var(&f.EventBus.WorkerTotal, "event-bus-worker-total", f.EventBus.WorkerTotal, `Example: --event-bus-worker-total=10"`)
 	c.Flags().StringVar(&f.eventBusTimeout, "event-bus-timeout", f.EventBus.Timeout.AsDuration().String(), `Example: --event-bus-timeout="10s", --event-bus-timeout="1m", --event-bus-timeout="1h", --event-bus-timeout="1d"`)
+	c.Flags().Uint32Var(&f.EventBus.BufferSize, "event-bus-buffer-size", f.EventBus.BufferSize, `Example: --event-bus-buffer-size=1000"`)
 	c.Flags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="etcd"`)
 	c.Flags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
 	c.Flags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
@@ -67,6 +68,7 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.EnableMetrics, "enable-metrics", f.EnableMetrics, `Example: --enable-metrics="true"`)
 	c.Flags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
 	c.Flags().StringVar(&f.ConfigPaths, "config-paths", f.ConfigPaths, `Example: --config-paths="./datasource" --config-paths="./config,./datasource"`)
+	c.Flags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
 }
 
 func (f *Flags) applyToBootstrap() {

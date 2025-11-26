@@ -45,7 +45,7 @@ func NewMessageBus(
 		senders:         safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
 		stopChan:        make(chan struct{}),
 		wg:              sync.WaitGroup{},
-		workerCount:     int(eventBusConf.GetWorkerCount()),
+		workerTotal:     int(eventBusConf.GetWorkerTotal()),
 		timeout:         eventBusConf.GetTimeout().AsDuration(),
 		clusters:        make([]sender.Sender, 0, len(clusterEndpoints)),
 	}
@@ -77,7 +77,7 @@ type messageBusImpl struct {
 	senders         *safety.SyncMap[vobj.MessageType, repository.MessageSender]
 	stopChan        chan struct{}
 	wg              sync.WaitGroup
-	workerCount     int // 工作协程数量,默认1个
+	workerTotal     int // 工作协程数量,默认1个
 	timeout         time.Duration
 
 	clusters []sender.Sender
@@ -85,16 +85,16 @@ type messageBusImpl struct {
 
 // start 启动后台处理goroutine
 func (m *messageBusImpl) Start(ctx context.Context) {
-	if m.workerCount <= 0 {
-		m.workerCount = 1
+	if m.workerTotal <= 0 {
+		m.workerTotal = 1
 	}
 
 	// 启动多个worker goroutine
-	for i := 0; i < m.workerCount; i++ {
+	for workerID := 0; workerID < m.workerTotal; workerID++ {
 		m.wg.Add(1)
-		safety.Go(ctx, fmt.Sprintf("message_bus_worker_%d", i), func(ctx context.Context) error {
+		safety.Go(ctx, fmt.Sprintf("message_bus_worker_%d", workerID), func(ctx context.Context) error {
 			defer m.wg.Done()
-			m.worker(ctx, i)
+			m.worker(ctx, workerID)
 			return nil
 		}, m.helper.Logger())
 	}
@@ -118,20 +118,20 @@ func (m *messageBusImpl) Stop(ctx context.Context) {
 }
 
 // worker 处理消息的工作协程
-func (m *messageBusImpl) worker(ctx context.Context, id int) {
+func (m *messageBusImpl) worker(ctx context.Context, workerID int) {
 	for {
 		select {
 		case task, ok := <-m.messageChan:
 			if !ok {
-				m.helper.Infow("msg", "message bus worker stopped by message channel closed", "worker", id)
+				m.helper.Infow("msg", "message bus worker stopped by message channel closed", "worker", workerID)
 				return
 			}
 			m.waitProcessMessage(task.ctx, task.messageUID)
 		case <-m.stopChan:
-			m.helper.Infow("msg", "message bus worker stopped by stop channel", "worker", id)
+			m.helper.Infow("msg", "message bus worker stopped by stop channel", "worker", workerID)
 			return
 		case <-ctx.Done():
-			m.helper.Infow("msg", "message bus worker stopped by context done", "worker", id)
+			m.helper.Infow("msg", "message bus worker stopped by context done", "worker", workerID)
 			return
 		}
 	}

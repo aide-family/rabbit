@@ -64,7 +64,7 @@ message JWT {
 }
 
 message EventBus {
-	int32 workerCount = 1;
+	int32 workerTotal = 1;
 	google.protobuf.Duration timeout = 2;
 	uint32 bufferSize = 3;
 }
