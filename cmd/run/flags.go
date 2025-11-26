@@ -16,7 +16,8 @@ import (
 
 type Flags struct {
 	cmd.GlobalFlags
-	configPath string
+	configPath             string
+	clientConfigOutputPath string
 
 	*conf.Bootstrap
 	environment     string

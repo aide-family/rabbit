@@ -70,7 +70,16 @@ func (c *protoYAMLCodec) Name() string {
 	return "yaml"
 }
 
-var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewEventBus)
+var ProviderSetServer = wire.NewSet(
+	NewHTTPServer,
+	NewGRPCServer,
+	NewEventBus,
+	NewServerOptions,
+	RegisterService,
+)
+
+// ProviderSetJob provides only EventBus for job workers
+var ProviderSetJob = wire.NewSet(NewEventBus)
 
 // init initializes the json.MarshalOptions.
 func init() {
@@ -82,7 +91,45 @@ func init() {
 	encoding.RegisterCodec(newProtoYAMLCodec())
 }
 
+type ServerOptions struct {
+	EnableHTTP bool
+	EnableGRPC bool
+	EnableJob  bool
+}
+
+func NewServerOptions(bc *conf.Bootstrap) *ServerOptions {
+	serverConf := bc.GetServer()
+	enableHTTP := true
+	enableGRPC := true
+	enableJob := true
+	if serverConf != nil {
+		if serverConf.GetEnableHttp() != "" {
+			enableHTTP = serverConf.GetEnableHttp() == "true"
+		}
+		if serverConf.GetEnableGrpc() != "" {
+			enableGRPC = serverConf.GetEnableGrpc() == "true"
+		}
+		if serverConf.GetEnableJob() != "" {
+			enableJob = serverConf.GetEnableJob() == "true"
+		}
+	}
+	return &ServerOptions{
+		EnableHTTP: enableHTTP,
+		EnableGRPC: enableGRPC,
+		EnableJob:  enableJob,
+	}
+}
+
 type Servers []transport.Server
+
+func (s Servers) httpServer() *http.Server {
+	for _, srv := range s {
+		if hs, ok := srv.(*http.Server); ok {
+			return hs
+		}
+	}
+	return nil
+}
 
 func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
 	if bc.GetEnableSwagger() != "true" {
@@ -90,8 +137,8 @@ func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
 		return
 	}
 
-	httSrv, ok := s[0].(*http.Server)
-	if !ok {
+	httSrv := s.httpServer()
+	if httSrv == nil {
 		return
 	}
 
@@ -118,8 +165,8 @@ func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
 		helper.Debugw("msg", "metrics is not enabled", "enableMetrics", bc.GetEnableMetrics())
 		return
 	}
-	httSrv, ok := s[0].(*http.Server)
-	if !ok {
+	httSrv := s.httpServer()
+	if httSrv == nil {
 		return
 	}
 
@@ -129,7 +176,7 @@ func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
 	}
 	basicAuth := bc.GetMetricsBasicAuth()
 	authHandler := promhttp.Handler()
-	if basicAuth.GetEnabled() == "true" {
+	if basicAuth != nil && basicAuth.GetEnabled() == "true" {
 		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
 		helper.Infof("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 	} else {
@@ -151,23 +198,37 @@ func RegisterService(
 	messageLogService *service.MessageLogService,
 	templateService *service.TemplateService,
 	eventBus *EventBus,
+	opts *ServerOptions,
 ) Servers {
-	apiv1.RegisterHealthServer(grpcSrv, healthService)
-	apiv1.RegisterEmailServer(grpcSrv, emailService)
-	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
-	apiv1.RegisterSenderServer(grpcSrv, senderService)
-	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
-	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
-	apiv1.RegisterTemplateServer(grpcSrv, templateService)
+	var srvs Servers
 
-	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
-	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
-	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
-	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
-	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
-	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
-	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
-	return Servers{httpSrv, grpcSrv, eventBus}
+	if opts.EnableGRPC {
+		apiv1.RegisterHealthServer(grpcSrv, healthService)
+		apiv1.RegisterEmailServer(grpcSrv, emailService)
+		apiv1.RegisterWebhookServer(grpcSrv, webhookService)
+		apiv1.RegisterSenderServer(grpcSrv, senderService)
+		apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
+		apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
+		apiv1.RegisterTemplateServer(grpcSrv, templateService)
+		srvs = append(srvs, grpcSrv)
+	}
+
+	if opts.EnableHTTP {
+		apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
+		apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
+		apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
+		apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
+		apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+		apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
+		apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
+		srvs = append(srvs, httpSrv)
+	}
+
+	if opts.EnableJob {
+		srvs = append(srvs, eventBus)
+	}
+
+	return srvs
 }
 
 var namespaceAllowList = []string{

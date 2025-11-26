@@ -47,6 +47,9 @@ message Server {
 	HTTPServer http = 3;
 	GRPCServer grpc = 4;
 	string useRandomID = 5;
+	string enableHttp = 6;
+	string enableGrpc = 7;
+	string enableJob = 8;
 }
 
 message GlobalEmail {
