@@ -28,6 +28,8 @@ require (
 
 // replace github.com/aide-family/magicbox => ../magicbox
 
+// replace github.com/go-kratos/kratos/v2 => ../kratos
+
 require (
 	buf.build/go/protovalidate v1.0.0 // indirect
 	cel.dev/expr v0.24.0 // indirect

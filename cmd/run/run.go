@@ -21,11 +21,7 @@ import (
 	"github.com/aide-family/rabbit/internal/server"
 )
 
-func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
-	runCmd := &cobra.Command{
-		Use:   "run",
-		Short: "Run the Rabbit service",
-		Long: `Start the Rabbit messaging service, providing unified message delivery and management capabilities.
+const cmdRunLong = `Start the Rabbit messaging service, providing unified message delivery and management capabilities.
 
 Rabbit is a distributed messaging platform built on the Kratos framework, supporting unified
 management and delivery of multiple message channels (email, Webhook, SMS, etc.). It implements
@@ -45,7 +41,13 @@ Use Cases:
   • Multi-channel push platform: Integrate multiple message channels for unified message delivery and management
 
 After starting the service, Rabbit will listen on the configured ports and provide HTTP/gRPC API
-interfaces for client access.`,
+interfaces for client access.`
+
+func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
+	runCmd := &cobra.Command{
+		Use:   "run",
+		Short: "Run the Rabbit service",
+		Long:  cmdRunLong,
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},
@@ -55,7 +57,7 @@ interfaces for client access.`,
 	c := config.New(config.WithSource(
 		env.NewSource(),
 		conf.NewBytesSource(defaultServerConfigBytes),
-	))
+	) /*config.WithPrintLoadedDebugLog(false)*/)
 	if err := c.Load(); err != nil {
 		klog.Errorw("msg", "load config failed", "error", err)
 		panic(err)
