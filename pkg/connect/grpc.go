@@ -41,7 +41,7 @@ func InitGRPCClient(c InitConfig, opts ...InitOption) (*grpc.ClientConn, error) 
 	if pointer.IsNotNil(cfg.discovery) {
 		clientOpts = append(clientOpts, kGrpc.WithDiscovery(cfg.discovery), kGrpc.WithPrintDiscoveryDebugLog(false))
 		filterOpts := make([]selector.NodeFilter, 0, 2)
-		filterOpts = append(filterOpts, SelectNodeFilter(cfg.nodeFilter))
+		filterOpts = append(filterOpts, SelectNodeFilterOr(cfg.nodeFilters...))
 		if nodeVersion := strings.TrimSpace(cfg.nodeVersion); nodeVersion != "" {
 			filterOpts = append(filterOpts, filter.Version(nodeVersion))
 		}

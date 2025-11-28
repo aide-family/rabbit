@@ -60,18 +60,16 @@ type initConfig struct {
 	timeout     time.Duration
 	nodeVersion string
 	discovery   registry.Discovery
-	nodeFilter  func(node selector.Node) bool
+	nodeFilters []NodeFilter
 }
 
 func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
 	cfg := &initConfig{
-		name:     config.GetName(),
-		endpoint: config.GetEndpoint(),
-		protocol: ProtocolGRPC,
-		timeout:  config.GetTimeout().AsDuration(),
-		nodeFilter: func(_ selector.Node) bool {
-			return true
-		},
+		name:        config.GetName(),
+		endpoint:    config.GetEndpoint(),
+		protocol:    ProtocolGRPC,
+		timeout:     config.GetTimeout().AsDuration(),
+		nodeFilters: []NodeFilter{},
 	}
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
@@ -106,10 +104,10 @@ func WithProtocol(protocol string) InitOption {
 
 func WithNodeFilter(filter func(node selector.Node) bool) InitOption {
 	return func(cfg *initConfig) error {
-		if pointer.IsNil(cfg.nodeFilter) {
+		if pointer.IsNotNil(cfg.nodeFilters) {
 			return merr.ErrorInternalServer("node filter already set")
 		}
-		cfg.nodeFilter = filter
+		cfg.nodeFilters = append(cfg.nodeFilters, filter)
 		return nil
 	}
 }

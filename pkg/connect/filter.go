@@ -6,12 +6,35 @@ import (
 	"github.com/go-kratos/kratos/v2/selector"
 )
 
-// SelectNodeFilter 根据节点数据自定义过滤器
-func SelectNodeFilter(filter func(node selector.Node) bool) selector.NodeFilter {
+type NodeFilter func(node selector.Node) bool
+
+func SelectNodeFilterOr(filters ...NodeFilter) selector.NodeFilter {
 	return func(ctx context.Context, nodes []selector.Node) []selector.Node {
 		newNodes := make([]selector.Node, 0, len(nodes))
 		for _, node := range nodes {
-			if filter(node) {
+			anyPass := false
+			for _, filter := range filters {
+				anyPass = anyPass || filter(node)
+			}
+			if anyPass {
+				newNodes = append(newNodes, node)
+			}
+		}
+		return newNodes
+	}
+}
+
+func SelectNodeFilterAnd(filters ...NodeFilter) selector.NodeFilter {
+	return func(ctx context.Context, nodes []selector.Node) []selector.Node {
+		newNodes := make([]selector.Node, 0, len(nodes))
+		for _, node := range nodes {
+			allPass := true
+			for _, filter := range filters {
+				if allPass = allPass && filter(node); !allPass {
+					break
+				}
+			}
+			if allPass {
 				newNodes = append(newNodes, node)
 			}
 		}
