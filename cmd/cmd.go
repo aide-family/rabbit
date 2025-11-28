@@ -11,6 +11,10 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aide-family/magicbox/log"
+	"github.com/aide-family/magicbox/log/stdio"
+	"github.com/aide-family/rabbit/pkg/merr"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 )
 
@@ -60,6 +64,19 @@ func NewCmd() *cobra.Command {
 		Long:  cmdLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Help()
+		},
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			logger, err := log.NewLogger(stdio.LoggerDriver())
+			if err != nil {
+				panic(merr.ErrorInternal("new logger failed with error: %v", err).WithCause(err))
+			}
+			logger = klog.With(logger,
+				"ts", klog.DefaultTimestamp,
+			)
+			filterLogger := klog.NewFilter(logger, klog.FilterLevel(klog.ParseLevel(globalFlags.LogLevel)))
+			helper := klog.NewHelper(filterLogger)
+			klog.SetLogger(helper.Logger())
+			helper.Debugw("msg", "logger initialized", "log-format", globalFlags.LogFormat, "log-level", globalFlags.LogLevel)
 		},
 	}
 	globalFlags.addFlags(rootCmd)

@@ -19,7 +19,10 @@ const (
 	KeyTemplates  = "templates"
 )
 
-var fileConfigOnce sync.Once
+var (
+	keys           = []string{KeyNamespaces, KeyWebhooks, KeyEmails, KeyTemplates}
+	fileConfigOnce sync.Once
+)
 
 // GetFileConfig returns the file-based configuration
 func (d *Data) GetFileConfig() *conf.Config {
@@ -75,22 +78,12 @@ func (d *Data) LoadFileConfig(bc *conf.Bootstrap, helper *klog.Helper) error {
 			helper.Errorw("msg", "scan config failed", "error", err)
 			return
 		}
-		c.Watch(KeyNamespaces, func(key string, value config.Value) {
-			helper.Infow("msg", "namespaces changed", "key", key, "value", value)
-			reloadFunc(c, key)
-		})
-		c.Watch(KeyWebhooks, func(key string, value config.Value) {
-			helper.Infow("msg", "webhooks changed", "key", key, "value", value)
-			reloadFunc(c, key)
-		})
-		c.Watch(KeyEmails, func(key string, value config.Value) {
-			helper.Infow("msg", "emails changed", "key", key, "value", value)
-			reloadFunc(c, key)
-		})
-		c.Watch(KeyTemplates, func(key string, value config.Value) {
-			helper.Infow("msg", "templates changed", "key", key, "value", value)
-			reloadFunc(c, key)
-		})
+		for _, key := range keys {
+			c.Watch(key, func(key string, value config.Value) {
+				helper.Debugw("msg", "file config changed", "key", key, "value", value)
+				reloadFunc(c, key)
+			})
+		}
 	})
 
 	return err

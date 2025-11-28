@@ -104,16 +104,16 @@ func (m *messageBusImpl) Start(ctx context.Context) {
 func (m *messageBusImpl) Stop(ctx context.Context) {
 	select {
 	case <-ctx.Done():
-		m.helper.Warnw("msg", "message bus stopped by context done")
+		m.helper.Debug("msg", "message bus stopped by context done")
 		return
 	case <-m.stopChan:
-		m.helper.Warnw("msg", "message bus stopped by stop channel")
+		m.helper.Debug("msg", "message bus stopped by stop channel")
 		return
 	default:
 		close(m.stopChan)
 		m.wg.Wait()
 		close(m.messageChan)
-		m.helper.Infow("msg", "message bus stopped")
+		m.helper.Debug("msg", "message bus stopped")
 	}
 }
 
@@ -123,15 +123,15 @@ func (m *messageBusImpl) worker(ctx context.Context, workerID int) {
 		select {
 		case task, ok := <-m.messageChan:
 			if !ok {
-				m.helper.Infow("msg", "message bus worker stopped by message channel closed", "worker", workerID)
+				m.helper.Debugw("msg", "message bus worker stopped by message channel closed", "worker", workerID)
 				return
 			}
 			m.waitProcessMessage(task.ctx, task.messageUID)
 		case <-m.stopChan:
-			m.helper.Infow("msg", "message bus worker stopped by stop channel", "worker", workerID)
+			m.helper.Debugw("msg", "message bus worker stopped by stop channel", "worker", workerID)
 			return
 		case <-ctx.Done():
-			m.helper.Infow("msg", "message bus worker stopped by context done", "worker", workerID)
+			m.helper.Debugw("msg", "message bus worker stopped by context done", "worker", workerID)
 			return
 		}
 	}

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -54,7 +55,7 @@ func runConfig(_ *cobra.Command, _ []string) {
 
 	// 确保路径存在
 	if err := os.MkdirAll(flags.path, 0o755); err != nil {
-		flags.Helper.Errorw("msg", "failed to create directory", "path", flags.path, "error", err)
+		klog.Errorw("msg", "failed to create directory", "path", flags.path, "error", err)
 		return
 	}
 
@@ -65,7 +66,7 @@ func runConfig(_ *cobra.Command, _ []string) {
 	if _, err := os.Stat(targetPath); err == nil {
 		if flags.force {
 			// force 模式：直接覆盖
-			flags.Helper.Infow("msg", "overwriting existing file", "path", targetPath)
+			klog.Debugw("msg", "overwriting existing file", "path", targetPath)
 		} else {
 			// 非 force 模式：重命名现有文件
 			ext := filepath.Ext(flags.name)
@@ -79,18 +80,18 @@ func runConfig(_ *cobra.Command, _ []string) {
 			backupPath := filepath.Join(flags.path, backupName)
 
 			if err := os.Rename(targetPath, backupPath); err != nil {
-				flags.Helper.Errorw("msg", "failed to rename existing file", "old", targetPath, "new", backupPath, "error", err)
+				klog.Errorw("msg", "failed to rename existing file", "old", targetPath, "new", backupPath, "error", err)
 				return
 			}
-			flags.Helper.Infow("msg", "existing file renamed", "old", targetPath, "new", backupPath)
+			klog.Debugw("msg", "existing file renamed", "old", targetPath, "new", backupPath)
 		}
 	}
 
 	// 写入新文件
 	if err := os.WriteFile(targetPath, defaultConfigContent, 0o644); err != nil {
-		flags.Helper.Errorw("msg", "failed to write config file", "path", targetPath, "error", err)
+		klog.Errorw("msg", "failed to write config file", "path", targetPath, "error", err)
 		return
 	}
 
-	flags.Helper.Infow("msg", "config file generated successfully", "path", targetPath)
+	klog.Debugw("msg", "config file generated successfully", "path", targetPath)
 }

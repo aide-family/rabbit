@@ -105,9 +105,9 @@ func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
 	basicAuth := bc.GetSwaggerBasicAuth()
 	if basicAuth.GetEnabled() == "true" {
 		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
-		helper.Infof("[Swagger] endpoint: %s/doc/swagger (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
+		helper.Debugf("[Swagger] endpoint: %s/doc/swagger (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 	} else {
-		helper.Infof("[Swagger] endpoint: %s/doc/swagger (No Basic Auth)", endpoint)
+		helper.Debugf("[Swagger] endpoint: %s/doc/swagger (No Basic Auth)", endpoint)
 	}
 
 	httSrv.HandlePrefix("/doc/", authHandler)
@@ -131,9 +131,9 @@ func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
 	authHandler := promhttp.Handler()
 	if basicAuth.GetEnabled() == "true" {
 		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
-		helper.Infof("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
+		helper.Debugf("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 	} else {
-		helper.Infof("[Metrics] endpoint: %s/metrics (No Basic Auth)", endpoint)
+		helper.Debugf("[Metrics] endpoint: %s/metrics (No Basic Auth)", endpoint)
 	}
 	httSrv.Handle("/metrics", authHandler)
 }

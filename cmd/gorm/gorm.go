@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/gormlog"
-	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
@@ -69,22 +67,21 @@ func NewCmd() *cobra.Command {
 
 func initDB() (*gorm.DB, error) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
-	flags.Helper = klog.NewHelper(klog.With(flags.Helper.Logger(), "cmd", "gorm"))
 
 	var bc conf.Bootstrap
 	if strutil.IsNotEmpty(flags.configPath) {
-		flags.Helper.Infow("msg", "load config file", "file", flags.configPath)
+		klog.Debugw("msg", "load config file", "file", flags.configPath)
 		c := config.New(config.WithSource(
 			env.NewSource(),
 			file.NewSource(flags.configPath),
 		))
 		if err := c.Load(); err != nil {
-			flags.Helper.Errorw("msg", "load config failed", "error", err)
+			klog.Errorw("msg", "load config failed", "error", err)
 			return nil, err
 		}
 
 		if err := c.Scan(&bc); err != nil {
-			flags.Helper.Errorw("msg", "scan config failed", "error", err)
+			klog.Errorw("msg", "scan config failed", "error", err)
 			return nil, err
 		}
 	}
@@ -92,25 +89,25 @@ func initDB() (*gorm.DB, error) {
 
 	// check mysql database is exists
 	connectDSN := flags.connectDSN()
-	flags.Helper.Infow("msg", "check mysql database is exists", "dsn", connectDSN)
+	klog.Debugw("msg", "check mysql database is exists", "dsn", connectDSN)
 	sqlDB, err := sql.Open("mysql", connectDSN)
 	if err != nil {
-		flags.Helper.Errorw("msg", "open mysql connection failed", "error", err)
+		klog.Errorw("msg", "open mysql connection failed", "error", err)
 		return nil, err
 	}
 	defer sqlDB.Close()
 
-	flags.Helper.Infow("msg", "ping mysql")
+	klog.Debugw("msg", "ping mysql")
 	if err := sqlDB.Ping(); err != nil {
-		flags.Helper.Errorw("msg", "ping mysql failed", "error", err)
+		klog.Errorw("msg", "ping mysql failed", "error", err)
 		return nil, err
 	}
-	flags.Helper.Infow("msg", "ping mysql success")
+	klog.Debugw("msg", "ping mysql success")
 	// show databases
-	flags.Helper.Infow("msg", "show databases")
+	klog.Debugw("msg", "show databases")
 	rows, err := sqlDB.Query("SHOW DATABASES")
 	if err != nil {
-		flags.Helper.Errorw("msg", "query databases failed", "error", err)
+		klog.Errorw("msg", "query databases failed", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -118,46 +115,38 @@ func initDB() (*gorm.DB, error) {
 	for rows.Next() {
 		var database string
 		if err := rows.Scan(&database); err != nil {
-			flags.Helper.Errorw("msg", "scan database failed", "error", err)
+			klog.Errorw("msg", "scan database failed", "error", err)
 			return nil, err
 		}
 		databases = append(databases, database)
 	}
-	flags.Helper.Infow("msg", "show databases success", "databases", databases)
+	klog.Debugw("msg", "show databases success", "databases", databases)
 	if !slices.Contains(databases, flags.database) {
 		// create database
-		flags.Helper.Warnw("msg", "database not exists", "database", flags.database)
-		flags.Helper.Infow("msg", "create database", "database", flags.database)
+		klog.Warnw("msg", "database not exists", "database", flags.database)
+		klog.Debugw("msg", "create database", "database", flags.database)
 		_, err := sqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", flags.database))
 		if err != nil {
-			flags.Helper.Errorw("msg", "create database failed", "error", err, "database", flags.database)
+			klog.Errorw("msg", "create database failed", "error", err, "database", flags.database)
 			return nil, err
 		}
-		flags.Helper.Infow("msg", "create database success", "database", flags.database)
+		klog.Debugw("msg", "create database success", "database", flags.database)
 	}
 
 	dsn := flags.databaseDSN()
-	flags.Helper.Infow("msg", "open mysql connection", "dsn", dsn)
+	klog.Debugw("msg", "open mysql connection", "dsn", dsn)
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: gormlog.New(flags.Helper.Logger()),
+		Logger: gormlog.New(klog.GetLogger()),
 	})
 	if err != nil {
-		flags.Helper.Errorw("msg", "open mysql connection failed", "error", err)
+		klog.Errorw("msg", "open mysql connection failed", "error", err)
 		return nil, err
 	}
-	flags.Helper.Infow("msg", "open mysql connection success")
+	klog.Debugw("msg", "open mysql connection success")
 	return db.Debug(), nil
 }
 
 func main() {
-	logger, err := log.NewLogger(stdio.LoggerDriver())
-	if err != nil {
-		panic(err)
-	}
-	helper := klog.NewHelper(logger)
-	cmd.SetGlobalFlags(
-		cmd.WithGlobalFlagsHelper(helper),
-	)
 	rootCmd := cmd.NewCmd()
 	cmd.Execute(rootCmd, NewCmd())
 }

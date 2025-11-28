@@ -65,7 +65,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		if err := d.LoadFileConfig(d.c, d.helper); err != nil {
 			return nil, d.close, err
 		}
-		d.helper.Infow("msg", "file config mode enabled, database connections disabled")
+		d.helper.Debugw("msg", "file config mode enabled, database connections disabled")
 	}
 
 	cacheDriver := mem.CacheDriver()
@@ -102,7 +102,7 @@ func (d *Data) close() {
 			d.helper.Errorw("msg", "close db failed", "name", name, "error", err)
 			continue
 		}
-		d.helper.Infow("msg", "close success", "name", name)
+		d.helper.Debugw("msg", "close success", "name", name)
 	}
 }
 

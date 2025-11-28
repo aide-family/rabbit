@@ -90,7 +90,7 @@ func (m *messageLogRepositoryImpl) getNamespaceMap(namespace string) *safety.Syn
 func (m *messageLogRepositoryImpl) loadMessageLogs() {
 	// 如果目录不存在，则创建目录
 	if _, err := os.Stat(m.baseDir); os.IsNotExist(err) {
-		m.helper.Infof("directory %s not found, creating directory", m.baseDir)
+		m.helper.Debugf("directory %s not found, creating directory", m.baseDir)
 		if err := os.MkdirAll(m.baseDir, 0o755); err != nil {
 			m.helper.Warnf("failed to create directory %s: %v", m.baseDir, err)
 			return

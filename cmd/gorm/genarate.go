@@ -71,16 +71,16 @@ func newGenCmd() *cobra.Command {
 
 func generate() {
 	if flags.forceGen {
-		flags.Helper.Infow("msg", "remove all files")
+		klog.Debugw("msg", "remove all files")
 		os.RemoveAll(genConfig.OutPath)
-		flags.Helper.Infow("msg", "remove all files success", "path", genConfig.OutPath)
+		klog.Debugw("msg", "remove all files success", "path", genConfig.OutPath)
 	}
 	g := gen.NewGenerator(genConfig)
-	g.SetLogger(&genLogger{helper: flags.Helper})
-	flags.Helper.Infow("msg", "generate code start")
+	g.SetLogger(&genLogger{helper: klog.NewHelper(klog.GetLogger())})
+	klog.Debugw("msg", "generate code start")
 	g.ApplyBasic(do.Models()...)
 	g.Execute()
-	flags.Helper.Infow("msg", "generate code success")
+	klog.Debugw("msg", "generate code success")
 }
 
 type genLogger struct {
@@ -88,5 +88,5 @@ type genLogger struct {
 }
 
 func (g *genLogger) Println(v ...any) {
-	g.helper.Info(v...)
+	g.helper.Debug(v...)
 }

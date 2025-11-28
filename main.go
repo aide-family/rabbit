@@ -7,9 +7,6 @@ package main
 import (
 	_ "embed"
 
-	"github.com/aide-family/magicbox/log"
-	"github.com/aide-family/magicbox/log/stdio"
-	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -37,19 +34,7 @@ var Description string
 var defaultServerConfig []byte
 
 func main() {
-	logger, err := log.NewLogger(stdio.LoggerDriver())
-	if err != nil {
-		panic(err)
-	}
-	logger = klog.With(logger,
-		"ts", klog.DefaultTimestamp,
-	)
-	filterLogger := klog.NewFilter(logger, klog.FilterLevel(klog.LevelInfo))
-	helper := klog.NewHelper(filterLogger)
-	klog.SetLogger(helper.Logger())
-
 	cmd.SetGlobalFlags(
-		cmd.WithGlobalFlagsHelper(helper),
 		cmd.WithGlobalFlagsVersion(Version),
 		cmd.WithGlobalFlagsBuildTime(BuildTime),
 		cmd.WithGlobalFlagsAuthor(Author),

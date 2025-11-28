@@ -1,6 +1,7 @@
 package main
 
 import (
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 	"gorm.io/gorm"
 
@@ -39,7 +40,7 @@ func newMigrateCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			db, err := initDB()
 			if err != nil {
-				flags.Helper.Errorw("msg", "init db failed", "error", err)
+				klog.Errorw("msg", "init db failed", "error", err)
 				return
 			}
 			migrate(db)
@@ -49,10 +50,10 @@ func newMigrateCmd() *cobra.Command {
 
 func migrate(db *gorm.DB) {
 	tables := do.Models()
-	flags.Helper.Infow("msg", "migrate database", "tables", tables)
+	klog.Debugw("msg", "migrate database", "tables", tables)
 	if err := db.Migrator().AutoMigrate(tables...); err != nil {
-		flags.Helper.Errorw("msg", "migrate database failed", "error", err, "tables", tables)
+		klog.Errorw("msg", "migrate database failed", "error", err, "tables", tables)
 		return
 	}
-	flags.Helper.Infow("msg", "migrate database success")
+	klog.Debugw("msg", "migrate database success")
 }

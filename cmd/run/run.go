@@ -57,12 +57,12 @@ interfaces for client access.`,
 		conf.NewBytesSource(defaultServerConfigBytes),
 	))
 	if err := c.Load(); err != nil {
-		flags.Helper.Errorw("msg", "load config failed", "error", err)
+		klog.Errorw("msg", "load config failed", "error", err)
 		panic(err)
 	}
 
 	if err := c.Scan(&bc); err != nil {
-		flags.Helper.Errorw("msg", "scan config failed", "error", err)
+		klog.Errorw("msg", "scan config failed", "error", err)
 		panic(err)
 	}
 
@@ -87,7 +87,7 @@ func runServer(_ *cobra.Command, _ []string) {
 	}
 	if len(sourceOpts) > 0 {
 		if err := conf.Load(&bc, sourceOpts...); err != nil {
-			flags.Helper.Errorw("msg", "load config failed", "error", err)
+			klog.Errorw("msg", "load config failed", "error", err)
 			return
 		}
 		flags.Bootstrap = &bc
@@ -106,7 +106,7 @@ func runServer(_ *cobra.Command, _ []string) {
 	}
 	hello.SetEnvWithOption(envOpts...)
 
-	helper := klog.NewHelper(klog.With(flags.Helper.Logger(),
+	helper := klog.NewHelper(klog.With(klog.GetLogger(),
 		"cmd", "run",
 		"service.name", hello.Name(),
 		"service.id", hello.ID(),
@@ -117,12 +117,12 @@ func runServer(_ *cobra.Command, _ []string) {
 
 	app, cleanup, err := wireApp(flags.Bootstrap, helper)
 	if err != nil {
-		flags.Helper.Errorw("msg", "wireApp failed", "error", err)
+		klog.Errorw("msg", "wireApp failed", "error", err)
 		return
 	}
 	defer cleanup()
 	if err := app.Run(); err != nil {
-		flags.Helper.Errorw("msg", "app run failed", "error", err)
+		klog.Errorw("msg", "app run failed", "error", err)
 		return
 	}
 }

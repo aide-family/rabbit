@@ -28,7 +28,7 @@ func run(_ *cobra.Command, _ []string) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc config.ClientConfig
 	if err := conf.Load(&bc, env.NewSource(), file.NewSource(flags.RabbitConfigPath)); err != nil {
-		flags.Helper.Errorw("msg", "load config failed", "error", err)
+		klog.Errorw("msg", "load config failed", "error", err)
 		return
 	}
 
@@ -36,7 +36,7 @@ func run(_ *cobra.Command, _ []string) {
 
 	req, err := flags.parseRequestParams()
 	if err != nil {
-		flags.Helper.Errorw("msg", "parse request params failed", "error", err)
+		klog.Errorw("msg", "parse request params failed", "error", err)
 		return
 	}
 	var discovery connect.Registry
@@ -44,7 +44,7 @@ func run(_ *cobra.Command, _ []string) {
 	case config.RegistryType_ETCD:
 		etcdConfig := bc.GetEtcd()
 		if pointer.IsNil(etcdConfig) {
-			flags.Helper.Errorw("msg", "etcd config is not found")
+			klog.Errorw("msg", "etcd config is not found")
 			return
 		}
 		client, err := clientV3.New(clientV3.Config{
@@ -54,19 +54,19 @@ func run(_ *cobra.Command, _ []string) {
 			DialTimeout: 10 * time.Second,
 		})
 		if err != nil {
-			flags.Helper.Errorw("msg", "etcd client initialization failed", "error", err)
+			klog.Errorw("msg", "etcd client initialization failed", "error", err)
 			return
 		}
 		discovery = etcd.New(client)
 	case config.RegistryType_KUBERNETES:
 		kubeConfig := bc.GetKubernetes()
 		if pointer.IsNil(kubeConfig) {
-			flags.Helper.Errorw("msg", "kubernetes config is not found")
+			klog.Errorw("msg", "kubernetes config is not found")
 			return
 		}
 		kubeClient, err := connect.NewKubernetesClientSet(kubeConfig.GetKubeConfig())
 		if err != nil {
-			flags.Helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
+			klog.Errorw("msg", "kubernetes client initialization failed", "error", err)
 			return
 		}
 		discovery = kubeRegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
@@ -80,22 +80,22 @@ func run(_ *cobra.Command, _ []string) {
 
 	for _, clusterEndpoint := range clusterEndpoints {
 		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
-		sender, err := NewSender(initConfig, clusterProtocol, bc.GetJwtToken(), discovery, flags.Helper)
+		sender, err := NewSender(initConfig, clusterProtocol, bc.GetJwtToken(), discovery)
 		if err != nil {
 			continue
 		}
 
 		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
-			flags.Helper.Warnw("msg", "send email failed", "cluster", clusterName, "protocol", clusterProtocol, "error", err)
+			klog.Warnw("msg", "send email failed", "cluster", clusterName, "protocol", clusterProtocol, "error", err)
 			return
 		}
 
-		flags.Helper.Infow("msg", "send email success", "cluster", clusterName, "protocol", clusterProtocol, "reply", reply)
+		klog.Debugw("msg", "send email success", "cluster", clusterName, "protocol", clusterProtocol, "reply", reply)
 		return
 	}
 	// 没有可用的节点，退出
-	flags.Helper.Error("no available nodes")
+	klog.Warn("no available nodes")
 }
 
 type Sender interface {
@@ -124,17 +124,16 @@ func (s *sender) SendEmail(ctx context.Context, in *apiv1.SendEmailRequest) (*ap
 	return s.call(ctx, in)
 }
 
-func NewSender(cluster connect.InitConfig, protocol config.ClusterConfig_Protocol, jwtToken string, discovery connect.Registry, helper *klog.Helper) (Sender, error) {
+func NewSender(cluster connect.InitConfig, protocol config.ClusterConfig_Protocol, jwtToken string, discovery connect.Registry) (Sender, error) {
 	name := cluster.GetName()
 	newSender := &sender{
 		jwtToken: jwtToken,
-		helper:   helper,
 		name:     name,
 		protocol: protocol,
 		timeout:  cluster.GetTimeout().AsDuration(),
 		close:    func() error { return nil },
 		call: func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
-			helper.Errorw("msg", "unknown protocol", "cluster", name, "protocol", protocol)
+			klog.Errorw("msg", "unknown protocol", "cluster", name, "protocol", protocol)
 			return nil, merr.ErrorInternalServer("cluster %s unknown protocol %s", name, protocol)
 		},
 	}
@@ -146,7 +145,7 @@ func NewSender(cluster connect.InitConfig, protocol config.ClusterConfig_Protoco
 	case config.ClusterConfig_GRPC:
 		grpcClient, err := connect.InitGRPCClient(cluster, opts...)
 		if err != nil {
-			helper.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "protocol", protocol, "error", err)
+			klog.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "protocol", protocol, "error", err)
 			return nil, merr.ErrorInternalServer("failed to initialize GRPC client").WithCause(err)
 		}
 		newSender.close = grpcClient.Close
@@ -156,7 +155,7 @@ func NewSender(cluster connect.InitConfig, protocol config.ClusterConfig_Protoco
 	case config.ClusterConfig_HTTP:
 		httpClient, err := connect.InitHTTPClient(cluster, opts...)
 		if err != nil {
-			helper.Errorw("msg", "cluster HTTP client initialization failed", "cluster", name, "protocol", protocol, "error", err)
+			klog.Errorw("msg", "cluster HTTP client initialization failed", "cluster", name, "protocol", protocol, "error", err)
 			return nil, merr.ErrorInternalServer("failed to initialize HTTP client").WithCause(err)
 		}
 		newSender.close = httpClient.Close
