@@ -2,7 +2,10 @@
 package run
 
 import (
+	"strings"
+
 	"github.com/aide-family/magicbox/hello"
+	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
@@ -71,8 +74,19 @@ func runServer(_ *cobra.Command, _ []string) {
 	flags.GlobalFlags = cmd.GetGlobalFlags()
 	flags.applyToBootstrap()
 	var bc conf.Bootstrap
-	if strutil.IsNotEmpty(flags.configPath) {
-		if err := conf.Load(&bc, env.NewSource(), file.NewSource(flags.configPath)); err != nil {
+	sourceOpts := make([]config.Source, 0, len(flags.configPaths))
+	if flags.useEnv {
+		sourceOpts = append(sourceOpts, env.NewSource())
+	}
+	if len(flags.configPaths) > 0 {
+		for _, configPath := range flags.configPaths {
+			if strutil.IsNotEmpty(configPath) {
+				sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
+			}
+		}
+	}
+	if len(sourceOpts) > 0 {
+		if err := conf.Load(&bc, sourceOpts...); err != nil {
 			flags.Helper.Errorw("msg", "load config failed", "error", err)
 			return
 		}

@@ -1,3 +1,4 @@
+// Package conf provides configuration loading and management functionality.
 package conf
 
 import (
@@ -14,6 +15,7 @@ var (
 	_ config.Watcher = (*noOpWatcher)(nil)
 )
 
+// NewBytesSource creates a new bytes source from the given data.
 func NewBytesSource(data []byte) config.Source {
 	d := bytesSource(data)
 	return &d

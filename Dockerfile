@@ -39,8 +39,6 @@ COPY --from=builder /moon/bin/rabbit /usr/local/bin/rabbit
 # 设置可执行权限
 RUN chmod +x /usr/local/bin/rabbit
 
-RUN mkdir -p /moon/datasource
-
 # 暴露端口（根据实际配置调整）
 EXPOSE 8080 9090
 
