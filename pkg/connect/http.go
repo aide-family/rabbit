@@ -10,6 +10,7 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/filter"
 	"github.com/go-kratos/kratos/v2/transport/http"
 
@@ -39,10 +40,12 @@ func InitHTTPClient(c InitConfig, opts ...InitOption) (*http.Client, error) {
 
 	if pointer.IsNotNil(cfg.discovery) {
 		clientOpts = append(clientOpts, http.WithDiscovery(cfg.discovery), http.WithBlock())
+		filterOpts := make([]selector.NodeFilter, 0, 2)
+		filterOpts = append(filterOpts, SelectNodeFilter(cfg.nodeFilter))
 		if nodeVersion := strings.TrimSpace(cfg.nodeVersion); nodeVersion != "" {
-			nodeFilter := filter.Version(nodeVersion)
-			clientOpts = append(clientOpts, http.WithNodeFilter(nodeFilter))
+			filterOpts = append(filterOpts, filter.Version(nodeVersion))
 		}
+		clientOpts = append(clientOpts, http.WithNodeFilter(filterOpts...))
 	}
 
 	if cfg.timeout > 0 {

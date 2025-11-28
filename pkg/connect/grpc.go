@@ -9,15 +9,16 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
+	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/filter"
-	"github.com/go-kratos/kratos/v2/transport/grpc"
-	ggrpc "google.golang.org/grpc"
+	kGrpc "github.com/go-kratos/kratos/v2/transport/grpc"
+	"google.golang.org/grpc"
 
 	"github.com/aide-family/rabbit/pkg/merr"
 	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
-func InitGRPCClient(c InitConfig, opts ...InitOption) (*ggrpc.ClientConn, error) {
+func InitGRPCClient(c InitConfig, opts ...InitOption) (*grpc.ClientConn, error) {
 	cfg, err := NewInitConfig(c, opts...)
 	if err != nil {
 		return nil, err
@@ -32,22 +33,24 @@ func InitGRPCClient(c InitConfig, opts ...InitOption) (*ggrpc.ClientConn, error)
 		rabbitMiddler.JwtClient(),
 	}
 
-	clientOpts := []grpc.ClientOption{
-		grpc.WithEndpoint(cfg.endpoint),
-		grpc.WithMiddleware(middlewares...),
+	clientOpts := []kGrpc.ClientOption{
+		kGrpc.WithEndpoint(cfg.endpoint),
+		kGrpc.WithMiddleware(middlewares...),
 	}
 
 	if pointer.IsNotNil(cfg.discovery) {
-		clientOpts = append(clientOpts, grpc.WithDiscovery(cfg.discovery), grpc.WithPrintDiscoveryDebugLog(false))
+		clientOpts = append(clientOpts, kGrpc.WithDiscovery(cfg.discovery), kGrpc.WithPrintDiscoveryDebugLog(false))
+		filterOpts := make([]selector.NodeFilter, 0, 2)
+		filterOpts = append(filterOpts, SelectNodeFilter(cfg.nodeFilter))
 		if nodeVersion := strings.TrimSpace(cfg.nodeVersion); nodeVersion != "" {
-			nodeFilter := filter.Version(nodeVersion)
-			clientOpts = append(clientOpts, grpc.WithNodeFilter(nodeFilter))
+			filterOpts = append(filterOpts, filter.Version(nodeVersion))
 		}
+		clientOpts = append(clientOpts, kGrpc.WithNodeFilter(filterOpts...))
 	}
 
 	if cfg.timeout > 0 {
-		clientOpts = append(clientOpts, grpc.WithTimeout(cfg.timeout))
+		clientOpts = append(clientOpts, kGrpc.WithTimeout(cfg.timeout))
 	}
 
-	return grpc.DialInsecure(context.Background(), clientOpts...)
+	return kGrpc.DialInsecure(context.Background(), clientOpts...)
 }

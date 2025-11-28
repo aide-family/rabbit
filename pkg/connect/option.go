@@ -3,10 +3,13 @@ package connect
 import (
 	"time"
 
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/selector"
 	"github.com/go-kratos/kratos/v2/selector/p2c"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func init() {
@@ -57,6 +60,7 @@ type initConfig struct {
 	timeout     time.Duration
 	nodeVersion string
 	discovery   registry.Discovery
+	nodeFilter  func(node selector.Node) bool
 }
 
 func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
@@ -65,6 +69,9 @@ func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
 		endpoint: config.GetEndpoint(),
 		protocol: ProtocolGRPC,
 		timeout:  config.GetTimeout().AsDuration(),
+		nodeFilter: func(_ selector.Node) bool {
+			return true
+		},
 	}
 	for _, opt := range opts {
 		if err := opt(cfg); err != nil {
@@ -93,6 +100,16 @@ func WithDiscovery(discovery registry.Discovery) InitOption {
 func WithProtocol(protocol string) InitOption {
 	return func(cfg *initConfig) error {
 		cfg.protocol = protocol
+		return nil
+	}
+}
+
+func WithNodeFilter(filter func(node selector.Node) bool) InitOption {
+	return func(cfg *initConfig) error {
+		if pointer.IsNil(cfg.nodeFilter) {
+			return merr.ErrorInternalServer("node filter already set")
+		}
+		cfg.nodeFilter = filter
 		return nil
 	}
 }
