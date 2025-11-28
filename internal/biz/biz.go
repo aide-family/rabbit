@@ -13,5 +13,5 @@ var ProviderSetBiz = wire.NewSet(
 	NewWebhook,
 	NewTemplate,
 	NewMessage,
-	NewMessageBus,
+	NewEventBus,
 )

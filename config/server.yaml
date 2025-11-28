@@ -20,6 +20,10 @@ server:
     address: "${MOON_RABBIT_GRPC_ADDRESS:0.0.0.0:9090}"
     network: "${MOON_RABBIT_GRPC_NETWORK:tcp}"
     timeout: "${MOON_RABBIT_GRPC_TIMEOUT:10s}"
+  eventBus:
+    address: "${MOON_RABBIT_EVENT_BUS_ADDRESS:0.0.0.0:9091}"
+    network: "${MOON_RABBIT_EVENT_BUS_NETWORK:grpc}"
+    timeout: "${MOON_RABBIT_EVENT_BUS_TIMEOUT:10s}"
 
 jwt:
   secret: "${MOON_RABBIT_JWT_SECRET:xxx}"
@@ -39,10 +43,10 @@ main:
     parseTime: "true"
     loc: Asia/Shanghai
 
-eventBus:
-  workerTotal: ${MOON_RABBIT_EVENT_BUS_WORKER_TOTAL:10}
-  timeout: ${MOON_RABBIT_EVENT_BUS_TIMEOUT:10s}
-  bufferSize: ${MOON_RABBIT_EVENT_BUS_BUFFER_SIZE:1000}
+eventBusCore:
+  workerTotal: ${MOON_RABBIT_EVENT_BUS_CORE_WORKER_TOTAL:10}
+  timeout: "${MOON_RABBIT_EVENT_BUS_CORE_TIMEOUT:10s}"
+  bufferSize: ${MOON_RABBIT_EVENT_BUS_CORE_BUFFER_SIZE:1000}
   
 registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 

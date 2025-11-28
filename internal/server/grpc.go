@@ -18,10 +18,10 @@ import (
 
 // NewGRPCServer new a gRPC server.
 func NewGRPCServer(bc *conf.Bootstrap, namespaceService *service.NamespaceService, helper *klog.Helper) *grpc.Server {
-	serverConf := bc.GetServer()
-	grpcConf := serverConf.GetGrpc()
-	jwtConf := bc.GetJwt()
+	return newGRPCServer(bc.GetServer().GetGrpc(), bc.GetJwt(), namespaceService, helper)
+}
 
+func newGRPCServer(grpcConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) *grpc.Server {
 	selectorNamespaceMiddlewares := []middleware.Middleware{
 		rabbitMiddler.MustNamespace(),
 		rabbitMiddler.MustNamespaceExist(namespaceService.HasNamespace),

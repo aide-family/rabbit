@@ -143,6 +143,7 @@ func RegisterService(
 	c *conf.Bootstrap,
 	httpSrv *http.Server,
 	grpcSrv *grpc.Server,
+	eventBusSrv *EventBus,
 	healthService *service.HealthService,
 	emailService *service.EmailService,
 	webhookService *service.WebhookService,
@@ -150,7 +151,7 @@ func RegisterService(
 	namespaceService *service.NamespaceService,
 	messageLogService *service.MessageLogService,
 	templateService *service.TemplateService,
-	eventBus *EventBus,
+	eventBusService *service.EventBusService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
@@ -167,7 +168,9 @@ func RegisterService(
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
 	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
 	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
-	return Servers{httpSrv, grpcSrv, eventBus}
+
+	eventBusSrv.RegisterHandler(eventBusService)
+	return Servers{httpSrv, grpcSrv, eventBusSrv}
 }
 
 var namespaceAllowList = []string{

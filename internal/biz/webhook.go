@@ -14,14 +14,14 @@ import (
 func NewWebhook(
 	webhookConfigBiz *WebhookConfig,
 	messageLogBiz *MessageLog,
-	messageBusBiz *MessageBus,
+	eventBusBiz *EventBus,
 	templateBiz *Template,
 	helper *klog.Helper,
 ) *Webhook {
 	return &Webhook{
 		webhookConfigBiz: webhookConfigBiz,
 		messageLogBiz:    messageLogBiz,
-		messageBusBiz:    messageBusBiz,
+		eventBusBiz:      eventBusBiz,
 		templateBiz:      templateBiz,
 		helper:           klog.NewHelper(klog.With(helper.Logger(), "biz", "webhook")),
 	}
@@ -30,7 +30,7 @@ func NewWebhook(
 type Webhook struct {
 	webhookConfigBiz *WebhookConfig
 	messageLogBiz    *MessageLog
-	messageBusBiz    *MessageBus
+	eventBusBiz      *EventBus
 	templateBiz      *Template
 	helper           *klog.Helper
 }
@@ -55,7 +55,7 @@ func (w *Webhook) AppendWebhookMessage(ctx context.Context, req *bo.SendWebhookB
 		return merr.ErrorInternal("create message log failed").WithCause(err)
 	}
 
-	if err := w.messageBusBiz.appendMessage(ctx, messageLog.UID); err != nil {
+	if err := w.eventBusBiz.appendMessage(ctx, messageLog.UID); err != nil {
 		w.helper.Errorw("msg", "append webhook message failed", "error", err, "uid", messageLog.UID)
 		return merr.ErrorInternal("append webhook message failed").WithCause(err)
 	}

@@ -18,10 +18,10 @@ import (
 
 // NewHTTPServer new an HTTP server.
 func NewHTTPServer(bc *conf.Bootstrap, namespaceService *service.NamespaceService, helper *klog.Helper) *http.Server {
-	serverConf := bc.GetServer()
-	httpConf := serverConf.GetHttp()
-	jwtConf := bc.GetJwt()
+	return newHTTPServer(bc.GetServer().GetHttp(), bc.GetJwt(), namespaceService, helper)
+}
 
+func newHTTPServer(httpConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) *http.Server {
 	selectorNamespaceMiddlewares := []middleware.Middleware{
 		rabbitMiddler.MustNamespace(),
 		rabbitMiddler.MustNamespaceExist(namespaceService.HasNamespace),

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-kratos/kratos/v2/config"
+	durationpb "google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/rabbit/pkg/merr"
 )
@@ -85,4 +86,16 @@ func Load(bc any, sources ...config.Source) error {
 		return merr.ErrorInternal("scan config failed").WithCause(err)
 	}
 	return nil
+}
+
+type ServerConfig interface {
+	GetAddress() string
+	GetNetwork() string
+	GetTimeout() *durationpb.Duration
+}
+
+type JWTConfig interface {
+	GetSecret() string
+	GetExpire() *durationpb.Duration
+	GetIssuer() string
 }

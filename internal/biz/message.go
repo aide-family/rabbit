@@ -11,12 +11,12 @@ import (
 
 func NewMessage(
 	messageLogRepo repository.MessageLog,
-	messageBus repository.MessageBus,
+	messageRepo repository.Message,
 	helper *klog.Helper,
 ) *Message {
 	return &Message{
 		messageLogRepo: messageLogRepo,
-		messageBus:     messageBus,
+		messageRepo:    messageRepo,
 		helper:         klog.NewHelper(klog.With(helper.Logger(), "biz", "message")),
 	}
 }
@@ -24,7 +24,7 @@ func NewMessage(
 type Message struct {
 	helper         *klog.Helper
 	messageLogRepo repository.MessageLog
-	messageBus     repository.MessageBus
+	messageRepo    repository.Message
 }
 
 func (m *Message) SendMessage(ctx context.Context, uid snowflake.ID) error {
@@ -40,5 +40,5 @@ func (m *Message) SendMessage(ctx context.Context, uid snowflake.ID) error {
 		m.helper.Warnw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)
 		return nil
 	}
-	return m.messageBus.SendMessage(ctx, uid)
+	return m.messageRepo.SendMessage(ctx, uid)
 }

@@ -20,12 +20,13 @@ type Flags struct {
 	useEnv      bool
 
 	*conf.Bootstrap
-	environment     string
-	httpTimeout     string
-	grpcTimeout     string
-	jwtExpire       string
-	eventBusTimeout string
-	registryType    string
+	environment         string
+	httpTimeout         string
+	grpcTimeout         string
+	eventBusTimeout     string
+	jwtExpire           string
+	eventBusCoreTimeout string
+	registryType        string
 }
 
 var flags Flags
@@ -42,6 +43,9 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.Server.Grpc.Address, "grpc-address", f.Server.Grpc.Address, `Example: --grpc-address="0.0.0.0:9090", --grpc-address=":9090"`)
 	c.Flags().StringVar(&f.Server.Grpc.Network, "grpc-network", f.Server.Grpc.Network, `Example: --grpc-network="tcp"`)
 	c.Flags().StringVar(&f.grpcTimeout, "grpc-timeout", f.Server.Grpc.Timeout.AsDuration().String(), `Example: --grpc-timeout="10s", --grpc-timeout="1m", --grpc-timeout="1h", --grpc-timeout="1d"`)
+	c.Flags().StringVar(&f.Server.EventBus.Address, "event-bus-address", f.Server.EventBus.Address, `Example: --event-bus-address="0.0.0.0:9091", --event-bus-address=":9091"`)
+	c.Flags().StringVar(&f.Server.EventBus.Network, "event-bus-network", f.Server.EventBus.Network, `Example: --event-bus-network="tcp"`)
+	c.Flags().StringVar(&f.eventBusTimeout, "event-bus-timeout", f.Server.EventBus.Timeout.AsDuration().String(), `Example: --event-bus-timeout="10s", --event-bus-timeout="1m", --event-bus-timeout="1h", --event-bus-timeout="1d"`)
 	c.Flags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
 	c.Flags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
 	c.Flags().StringVar(&f.Jwt.Issuer, "jwt-issuer", f.Jwt.Issuer, `Example: --jwt-issuer="xxx"`)
@@ -52,9 +56,9 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
 	c.Flags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
 	c.Flags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
-	c.Flags().Int32Var(&f.EventBus.WorkerTotal, "event-bus-worker-total", f.EventBus.WorkerTotal, `Example: --event-bus-worker-total=10"`)
-	c.Flags().StringVar(&f.eventBusTimeout, "event-bus-timeout", f.EventBus.Timeout.AsDuration().String(), `Example: --event-bus-timeout="10s", --event-bus-timeout="1m", --event-bus-timeout="1h", --event-bus-timeout="1d"`)
-	c.Flags().Uint32Var(&f.EventBus.BufferSize, "event-bus-buffer-size", f.EventBus.BufferSize, `Example: --event-bus-buffer-size=1000"`)
+	c.Flags().Int32Var(&f.EventBusCore.WorkerTotal, "event-bus-core-worker-total", f.EventBusCore.WorkerTotal, `Example: --event-bus-core-worker-total=10"`)
+	c.Flags().StringVar(&f.eventBusCoreTimeout, "event-bus-core-timeout", f.EventBusCore.Timeout.AsDuration().String(), `Example: --event-bus-core-timeout="10s", --event-bus-core-timeout="1m", --event-bus-core-timeout="1h", --event-bus-core-timeout="1d"`)
+	c.Flags().Uint32Var(&f.EventBusCore.BufferSize, "event-bus-core-buffer-size", f.EventBusCore.BufferSize, `Example: --event-bus-core-buffer-size=1000"`)
 	c.Flags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="etcd"`)
 	c.Flags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
 	c.Flags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
@@ -92,18 +96,24 @@ func (f *Flags) applyToBootstrap() {
 			f.Server.Grpc.Timeout = durationpb.New(timeout)
 		}
 	}
+	if strutil.IsNotEmpty(f.eventBusTimeout) {
+		if timeout, err := time.ParseDuration(f.eventBusTimeout); pointer.IsNil(err) {
+			f.Server.EventBus.Timeout = durationpb.New(timeout)
+		}
+	}
 
 	if strutil.IsNotEmpty(f.environment) {
 		f.Environment = enum.Environment(enum.Environment_value[f.environment])
 	}
+
 	if strutil.IsNotEmpty(f.jwtExpire) {
 		if expire, err := time.ParseDuration(f.jwtExpire); pointer.IsNil(err) {
 			f.Jwt.Expire = durationpb.New(expire)
 		}
 	}
-	if strutil.IsNotEmpty(f.eventBusTimeout) {
-		if timeout, err := time.ParseDuration(f.eventBusTimeout); pointer.IsNil(err) {
-			f.EventBus.Timeout = durationpb.New(timeout)
+	if strutil.IsNotEmpty(f.eventBusCoreTimeout) {
+		if timeout, err := time.ParseDuration(f.eventBusCoreTimeout); pointer.IsNil(err) {
+			f.EventBusCore.Timeout = durationpb.New(timeout)
 		}
 	}
 

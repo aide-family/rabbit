@@ -23,44 +23,44 @@ import (
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
-func NewMessageBus(
+func NewMessageRepository(
 	bc *conf.Bootstrap,
 	d *data.Data,
 	transactionRepo repository.Transaction,
 	messageLogRepo repository.MessageLog,
 	helper *klog.Helper,
-) repository.MessageBus {
-	eventBusConf := bc.GetEventBus()
+) repository.Message {
+	eventBusCoreConf := bc.GetEventBusCore()
 	clusterConfig := bc.GetCluster()
 	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 	clusterProtocol := clusterConfig.GetProtocol()
 	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 	clusterName := clusterConfig.GetName()
-	bus := &messageBusImpl{
+	messageRepo := &messageRepositoryImpl{
 		d:               d,
 		transactionRepo: transactionRepo,
 		messageLogRepo:  messageLogRepo,
 		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message_bus")),
-		messageChan:     make(chan *messageTask, eventBusConf.GetBufferSize()),
+		messageChan:     make(chan *messageTask, eventBusCoreConf.GetBufferSize()),
 		senders:         safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
 		stopChan:        make(chan struct{}),
 		wg:              sync.WaitGroup{},
-		workerTotal:     int(eventBusConf.GetWorkerTotal()),
-		timeout:         eventBusConf.GetTimeout().AsDuration(),
+		workerTotal:     int(eventBusCoreConf.GetWorkerTotal()),
+		timeout:         eventBusCoreConf.GetTimeout().AsDuration(),
 		clusters:        make([]sender.Sender, 0, len(clusterEndpoints)),
 	}
 
 	// 注册发送器
-	bus.senders.Set(vobj.MessageTypeEmail, sender.NewEmailSender(helper))
-	bus.senders.Set(vobj.MessageTypeWebhook, sender.NewWebhookSender(helper))
+	messageRepo.senders.Set(vobj.MessageTypeEmail, sender.NewEmailSender(helper))
+	messageRepo.senders.Set(vobj.MessageTypeWebhook, sender.NewWebhookSender(helper))
 
-	safety.Go(context.Background(), "message_bus_init_clusters", func(ctx context.Context) error {
+	safety.Go(context.Background(), "message_repository_init_clusters", func(ctx context.Context) error {
 		time.Sleep(3 * time.Second)
-		bus.initClusters(clusterEndpoints, clusterProtocol, clusterName, clusterTimeout)
+		messageRepo.initClusters(clusterEndpoints, clusterProtocol, clusterName, clusterTimeout)
 		return nil
 	}, helper.Logger())
 
-	return bus
+	return messageRepo
 }
 
 type messageTask struct {
@@ -68,7 +68,7 @@ type messageTask struct {
 	messageUID snowflake.ID
 }
 
-type messageBusImpl struct {
+type messageRepositoryImpl struct {
 	d               *data.Data
 	transactionRepo repository.Transaction
 	messageLogRepo  repository.MessageLog
@@ -84,7 +84,7 @@ type messageBusImpl struct {
 }
 
 // start 启动后台处理goroutine
-func (m *messageBusImpl) Start(ctx context.Context) {
+func (m *messageRepositoryImpl) Start(ctx context.Context) error {
 	if m.workerTotal <= 0 {
 		m.workerTotal = 1
 	}
@@ -98,27 +98,29 @@ func (m *messageBusImpl) Start(ctx context.Context) {
 			return nil
 		}, m.helper.Logger())
 	}
+	return nil
 }
 
 // Stop 停止事件总线
-func (m *messageBusImpl) Stop(ctx context.Context) {
+func (m *messageRepositoryImpl) Stop(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		m.helper.Debug("msg", "message bus stopped by context done")
-		return
+		return nil
 	case <-m.stopChan:
 		m.helper.Debug("msg", "message bus stopped by stop channel")
-		return
+		return nil
 	default:
 		close(m.stopChan)
 		m.wg.Wait()
 		close(m.messageChan)
 		m.helper.Debug("msg", "message bus stopped")
+		return nil
 	}
 }
 
 // worker 处理消息的工作协程
-func (m *messageBusImpl) worker(ctx context.Context, workerID int) {
+func (m *messageRepositoryImpl) worker(ctx context.Context, workerID int) {
 	for {
 		select {
 		case task, ok := <-m.messageChan:
@@ -137,7 +139,7 @@ func (m *messageBusImpl) worker(ctx context.Context, workerID int) {
 	}
 }
 
-func (m *messageBusImpl) waitProcessMessage(ctx context.Context, messageUID snowflake.ID) {
+func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageUID snowflake.ID) {
 	req := &apiv1.SendMessageRequest{
 		Uid: messageUID.Int64(),
 	}
@@ -157,7 +159,7 @@ func (m *messageBusImpl) waitProcessMessage(ctx context.Context, messageUID snow
 	}
 }
 
-func (m *messageBusImpl) SendMessage(ctx context.Context, messageUID snowflake.ID) error {
+func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	// 在事务中使用 SELECT FOR UPDATE 获取分布式锁
 	var newMessage *do.MessageLog
 	err := m.transactionRepo.Transaction(ctx, func(transactionCtx context.Context) error {
@@ -202,7 +204,7 @@ func (m *messageBusImpl) SendMessage(ctx context.Context, messageUID snowflake.I
 }
 
 // processMessage 处理消息
-func (m *messageBusImpl) processMessage(ctx context.Context, message *do.MessageLog) error {
+func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *do.MessageLog) error {
 	if message.Status.IsSent() || message.Status.IsSending() {
 		return nil
 	}
@@ -245,8 +247,8 @@ func (m *messageBusImpl) processMessage(ctx context.Context, message *do.Message
 	return nil
 }
 
-// AppendMessage implements repository.MessageBus.
-func (m *messageBusImpl) AppendMessage(ctx context.Context, messageUID snowflake.ID) error {
+// AppendMessage implements repository.Message.
+func (m *messageRepositoryImpl) AppendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	// 将消息放入channel异步处理
 	select {
 	case m.messageChan <- &messageTask{ctx: safety.CopyValueCtx(ctx), messageUID: messageUID}:
@@ -258,7 +260,7 @@ func (m *messageBusImpl) AppendMessage(ctx context.Context, messageUID snowflake
 	}
 }
 
-func (m *messageBusImpl) initClusters(clusterEndpoints []string, clusterProtocol config.ClusterConfig_Protocol, clusterName string, clusterTimeout time.Duration) {
+func (m *messageRepositoryImpl) initClusters(clusterEndpoints []string, clusterProtocol config.ClusterConfig_Protocol, clusterName string, clusterTimeout time.Duration) {
 	for _, clusterEndpoint := range clusterEndpoints {
 		opts := []connect.InitOption{
 			connect.WithProtocol(clusterProtocol.String()),
