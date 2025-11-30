@@ -201,7 +201,7 @@ MOON_RABBIT_SERVER_ENABLE_JOB=true \
 
 ```
 ┌─────────────────────────────────┐
-│      rabbit run                  │
+│      rabbit server              │
 │  ┌──────────┐  ┌─────────────┐ │
 │  │  HTTP    │  │  EventBus   │ │
 │  │  gRPC    │  │  Workers    │ │
@@ -292,6 +292,18 @@ cmd/
 ./rabbit job
 ```
 
+**选项 3：使用独立命令（精细控制）**
+```bash
+# 只启动 HTTP
+./rabbit http
+
+# 只启动 gRPC
+./rabbit grpc
+
+# 只启动 Job
+./rabbit job
+```
+
 ### 配置文件
 
 所有命令使用相同的配置文件格式，无需修改配置文件。只需要确保配置文件路径正确：
@@ -303,6 +315,8 @@ cmd/
 ./rabbit http --config /path/to/config
 ./rabbit grpc --config /path/to/config
 ```
+
+**注意**：`rabbit run` 命令已被移除，请使用 `rabbit server --http --grpc --job` 替代。
 
 ## 🎓 最佳实践
 
@@ -322,11 +336,15 @@ cmd/
 
 ### 开发环境
 
-使用 `run` 命令，方便本地开发和调试：
+使用 `server` 命令，方便本地开发和调试：
 
 ```bash
-# 本地开发，同时启动所有服务
-./rabbit run --config ./config
+# 本地开发，同时启动所有服务（HTTP + gRPC + Job）
+./rabbit server --http --grpc --job --config ./config
+
+# 或者只启动需要的组件
+./rabbit server --http --grpc --config ./config
+./rabbit job --config ./config
 ```
 
 ### 监控指标
@@ -352,9 +370,9 @@ A: 不是。根据你的需求：
 - 如果只需要处理消息，只部署 Job
 - 如果需要完整功能，同时部署两者
 
-### Q: Run 命令会被废弃吗？
+### Q: Run 命令去哪了？
 
-A: 不会。Run 命令会一直保留，用于开发、测试和小规模部署场景。
+A: `rabbit run` 命令已被移除。请使用 `rabbit server --http --grpc --job` 来替代原来的 `run` 命令功能。这样可以更灵活地控制启动哪些组件。
 
 ### Q: Server 和 Job 可以共享同一个数据库吗？
 
