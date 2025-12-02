@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/go-kratos/kratos/v2/encoding"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
@@ -79,12 +80,16 @@ func runConfig(_ *cobra.Command, _ []string) {
 			backupName := fmt.Sprintf("%s_%s%s", nameWithoutExt, timestamp, ext)
 			backupPath := filepath.Join(flags.path, backupName)
 
-			if err := os.Rename(targetPath, backupPath); err != nil {
-				klog.Errorw("msg", "failed to rename existing file", "old", targetPath, "new", backupPath, "error", err)
-				return
-			}
-			klog.Debugw("msg", "existing file renamed", "old", targetPath, "new", backupPath)
+			targetPath = backupPath
 		}
+	}
+	if flags.isClient {
+		yamlData, err := encoding.GetCodec("yaml").Marshal(clientConfig)
+		if err != nil {
+			klog.Errorw("msg", "failed to marshal client config", "error", err)
+			return
+		}
+		defaultConfigContent = yamlData
 	}
 
 	// 写入新文件
