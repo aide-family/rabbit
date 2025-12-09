@@ -43,3 +43,5 @@ deploy/*/data
 description.txt
 .rabbit/
 *.log
+messages
+message_logs
