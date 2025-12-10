@@ -70,7 +70,12 @@ func (c *protoYAMLCodec) Name() string {
 	return "yaml"
 }
 
-var ProviderSetServer = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewEventBus)
+var (
+	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewJob)
+	ProviderSetServerHTTP = wire.NewSet(NewHTTPServer, RegisterHTTPService)
+	ProviderSetServerGRPC = wire.NewSet(NewGRPCServer, RegisterGRPCService)
+	ProviderSetServerJob  = wire.NewSet(NewJob, RegisterJobService)
+)
 
 // init initializes the json.MarshalOptions.
 func init() {
@@ -143,7 +148,7 @@ func RegisterService(
 	c *conf.Bootstrap,
 	httpSrv *http.Server,
 	grpcSrv *grpc.Server,
-	eventBusSrv *EventBus,
+	jobSrv *Job,
 	healthService *service.HealthService,
 	emailService *service.EmailService,
 	webhookService *service.WebhookService,
@@ -151,7 +156,67 @@ func RegisterService(
 	namespaceService *service.NamespaceService,
 	messageLogService *service.MessageLogService,
 	templateService *service.TemplateService,
-	eventBusService *service.EventBusService,
+	jobService *service.JobService,
+) Servers {
+	var srvs Servers
+
+	srvs = append(srvs, RegisterHTTPService(c, httpSrv,
+		healthService,
+		emailService,
+		webhookService,
+		senderService,
+		namespaceService,
+		messageLogService,
+		templateService,
+	)...)
+	srvs = append(srvs, RegisterGRPCService(c, grpcSrv,
+		healthService,
+		emailService,
+		webhookService,
+		senderService,
+		namespaceService,
+		messageLogService,
+		templateService,
+	)...)
+	srvs = append(srvs, RegisterJobService(c, jobSrv,
+		jobService,
+	)...)
+	return srvs
+}
+
+// RegisterHTTPService registers only HTTP service.
+func RegisterHTTPService(
+	c *conf.Bootstrap,
+	httpSrv *http.Server,
+	healthService *service.HealthService,
+	emailService *service.EmailService,
+	webhookService *service.WebhookService,
+	senderService *service.SenderService,
+	namespaceService *service.NamespaceService,
+	messageLogService *service.MessageLogService,
+	templateService *service.TemplateService,
+) Servers {
+	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
+	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
+	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
+	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
+	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
+	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
+	return Servers{httpSrv}
+}
+
+// RegisterGRPCService registers only gRPC service.
+func RegisterGRPCService(
+	c *conf.Bootstrap,
+	grpcSrv *grpc.Server,
+	healthService *service.HealthService,
+	emailService *service.EmailService,
+	webhookService *service.WebhookService,
+	senderService *service.SenderService,
+	namespaceService *service.NamespaceService,
+	messageLogService *service.MessageLogService,
+	templateService *service.TemplateService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
@@ -160,17 +225,17 @@ func RegisterService(
 	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
 	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
 	apiv1.RegisterTemplateServer(grpcSrv, templateService)
+	return Servers{grpcSrv}
+}
 
-	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
-	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
-	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
-	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
-	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
-	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
-	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
-
-	eventBusSrv.RegisterHandler(eventBusService)
-	return Servers{httpSrv, grpcSrv, eventBusSrv}
+// RegisterJobService registers only Job service.
+func RegisterJobService(
+	c *conf.Bootstrap,
+	jobSrv *Job,
+	jobService *service.JobService,
+) Servers {
+	jobSrv.RegisterHandler(jobService)
+	return Servers{jobSrv}
 }
 
 var namespaceAllowList = []string{

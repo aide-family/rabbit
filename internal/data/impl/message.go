@@ -30,7 +30,7 @@ func NewMessageRepository(
 	messageLogRepo repository.MessageLog,
 	helper *klog.Helper,
 ) repository.Message {
-	eventBusCoreConf := bc.GetEventBusCore()
+	jobCoreConf := bc.GetJobCore()
 	clusterConfig := bc.GetCluster()
 	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 	clusterProtocol := clusterConfig.GetProtocol()
@@ -40,13 +40,13 @@ func NewMessageRepository(
 		d:               d,
 		transactionRepo: transactionRepo,
 		messageLogRepo:  messageLogRepo,
-		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message_bus")),
-		messageChan:     make(chan *messageTask, eventBusCoreConf.GetBufferSize()),
+		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message")),
+		messageChan:     make(chan *messageTask, jobCoreConf.GetBufferSize()),
 		senders:         safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
 		stopChan:        make(chan struct{}),
 		wg:              sync.WaitGroup{},
-		workerTotal:     int(eventBusCoreConf.GetWorkerTotal()),
-		timeout:         eventBusCoreConf.GetTimeout().AsDuration(),
+		workerTotal:     int(jobCoreConf.GetWorkerTotal()),
+		timeout:         jobCoreConf.GetTimeout().AsDuration(),
 		clusters:        make([]sender.Sender, 0, len(clusterEndpoints)),
 	}
 

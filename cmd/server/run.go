@@ -21,7 +21,12 @@ import (
 	"github.com/aide-family/rabbit/internal/server"
 )
 
-const cmdRunLong = `Start the Rabbit messaging service, providing unified message delivery and management capabilities.
+const cmdRunLong = `Start the Rabbit messaging service with all services (HTTP, gRPC, and Job).
+
+The server command starts all services together:
+  • HTTP service: Provides RESTful API interfaces for message delivery and management
+  • gRPC service: Provides high-performance gRPC API interfaces for inter-service communication
+  • Job service: Provides asynchronous message processing capabilities via EventBus
 
 Rabbit is a distributed messaging platform built on the Kratos framework, supporting unified
 management and delivery of multiple message channels (email, Webhook, SMS, etc.). It implements
@@ -36,16 +41,21 @@ Key Features:
   • Multi-tenant isolation: Namespace-based isolation of configurations and data for different businesses or tenants
 
 Use Cases:
-  • Enterprise notification system: Unified management of business notifications (orders, alerts, system messages, etc.)
-  • Microservices message center: Provide unified messaging capabilities for microservices architecture
-  • Multi-channel push platform: Integrate multiple message channels for unified message delivery and management
+  • All-in-one deployment: Deploy all services together for simple deployment scenarios
+  • Development and testing: Quick start for development and testing environments
+  • Small to medium deployments: Suitable for deployments that don't require service separation
 
-After starting the service, Rabbit will listen on the configured ports and provide HTTP/gRPC API
-interfaces for client access.`
+Note: For production environments requiring service separation, consider using the http, grpc, or job
+commands to start services independently for better scalability and resource management.
+
+After starting the service, Rabbit will listen on the configured ports:
+  • HTTP: Default 0.0.0.0:8080 (configurable via --http-address)
+  • gRPC: Default 0.0.0.0:9090 (configurable via --grpc-address)
+  • Job: Default 0.0.0.0:9091 (configurable via --job-address)`
 
 func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	runCmd := &cobra.Command{
-		Use:   "run",
+		Use:   "server",
 		Short: "Run the Rabbit service",
 		Long:  cmdRunLong,
 		Annotations: map[string]string{

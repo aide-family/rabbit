@@ -13,13 +13,13 @@ func NewEmail(
 	emailConfigBiz *EmailConfig,
 	templateBiz *Template,
 	messageLogBiz *MessageLog,
-	eventBusBiz *EventBus,
+	jobBiz *Job,
 	helper *klog.Helper,
 ) *Email {
 	return &Email{
 		emailConfigBiz: emailConfigBiz,
 		messageLogBiz:  messageLogBiz,
-		eventBusBiz:    eventBusBiz,
+		jobBiz:         jobBiz,
 		templateBiz:    templateBiz,
 		helper:         klog.NewHelper(klog.With(helper.Logger(), "biz", "email")),
 	}
@@ -29,7 +29,7 @@ type Email struct {
 	emailConfigBiz *EmailConfig
 	templateBiz    *Template
 	messageLogBiz  *MessageLog
-	eventBusBiz    *EventBus
+	jobBiz         *Job
 	helper         *klog.Helper
 }
 
@@ -49,7 +49,7 @@ func (e *Email) AppendEmailMessage(ctx context.Context, req *bo.SendEmailBo) err
 		return merr.ErrorInternal("create message log failed").WithCause(err)
 	}
 
-	if err := e.eventBusBiz.appendMessage(ctx, messageLog.UID); err != nil {
+	if err := e.jobBiz.appendMessage(ctx, messageLog.UID); err != nil {
 		e.helper.Errorw("msg", "append email message failed", "error", err, "uid", messageLog.UID)
 		return merr.ErrorInternal("append email message failed").WithCause(err)
 	}

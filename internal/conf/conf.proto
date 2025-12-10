@@ -14,7 +14,7 @@ message Bootstrap {
 	JWT jwt = 3;
 	map<string, rabbit.config.MySQLConfig> biz = 4;
 	rabbit.config.MySQLConfig main = 5;
-	EventBusCore eventBusCore = 6;
+	JobCore jobCore = 6;
 	rabbit.config.ClusterConfig cluster = 7;
 	rabbit.config.RegistryType registryType = 8;
 	rabbit.config.ETCDConfig etcd = 9;
@@ -40,7 +40,7 @@ message Server {
 	map<string, string> metadata = 2;
 	ServerConfig http = 3;
 	ServerConfig grpc = 4;
-	ServerConfig eventBus = 5;
+	ServerConfig job = 5;
 	string useRandomID = 6;
 }
 	
@@ -50,7 +50,7 @@ message JWT {
 	string issuer = 3;
 }
 
-message EventBusCore {
+message JobCore {
 	int32 workerTotal = 1;
 	google.protobuf.Duration timeout = 2;
 	uint32 bufferSize = 3;

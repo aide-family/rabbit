@@ -1,8 +1,8 @@
 //go:build wireinject
 // +build wireinject
 
-// Package server is the server command for the Rabbit service
-package server
+// Package job is the job command for the Rabbit service
+package job
 
 import (
 	"github.com/go-kratos/kratos/v2"
@@ -19,7 +19,7 @@ import (
 
 func wireApp(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		server.ProviderSetServerAll,
+		server.ProviderSetServerJob,
 		service.ProviderSetService,
 		biz.ProviderSetBiz,
 		impl.ProviderSetImpl,

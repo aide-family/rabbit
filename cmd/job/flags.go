@@ -1,4 +1,4 @@
-package server
+package job
 
 import (
 	"time"
@@ -21,8 +21,6 @@ type Flags struct {
 
 	*conf.Bootstrap
 	environment    string
-	httpTimeout    string
-	grpcTimeout    string
 	jobTimeout     string
 	jwtExpire      string
 	jobCoreTimeout string
@@ -37,12 +35,6 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().BoolVar(&f.useEnv, "use-env", false, `Example: --use-env or --use-env=true`)
 
 	c.Flags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
-	c.Flags().StringVar(&f.Server.Http.Address, "http-address", f.Server.Http.Address, `Example: --http-address="0.0.0.0:8080", --http-address=":8080"`)
-	c.Flags().StringVar(&f.Server.Http.Network, "http-network", f.Server.Http.Network, `Example: --http-network="tcp"`)
-	c.Flags().StringVar(&f.httpTimeout, "http-timeout", f.Server.Http.Timeout.AsDuration().String(), `Example: --http-timeout="10s", --http-timeout="1m", --http-timeout="1h", --http-timeout="1d"`)
-	c.Flags().StringVar(&f.Server.Grpc.Address, "grpc-address", f.Server.Grpc.Address, `Example: --grpc-address="0.0.0.0:9090", --grpc-address=":9090"`)
-	c.Flags().StringVar(&f.Server.Grpc.Network, "grpc-network", f.Server.Grpc.Network, `Example: --grpc-network="tcp"`)
-	c.Flags().StringVar(&f.grpcTimeout, "grpc-timeout", f.Server.Grpc.Timeout.AsDuration().String(), `Example: --grpc-timeout="10s", --grpc-timeout="1m", --grpc-timeout="1h", --grpc-timeout="1d"`)
 	c.Flags().StringVar(&f.Server.Job.Address, "job-address", f.Server.Job.Address, `Example: --job-address="0.0.0.0:9091", --job-address=":9091"`)
 	c.Flags().StringVar(&f.Server.Job.Network, "job-network", f.Server.Job.Network, `Example: --job-network="tcp"`)
 	c.Flags().StringVar(&f.jobTimeout, "job-timeout", f.Server.Job.Timeout.AsDuration().String(), `Example: --job-timeout="10s", --job-timeout="1m", --job-timeout="1h", --job-timeout="1d"`)
@@ -65,13 +57,6 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.Etcd.Password, "etcd-password", f.Etcd.Password, `Example: --etcd-password="123456"`)
 	c.Flags().StringVar(&f.Kubernetes.Namespace, "kubernetes-namespace", f.Kubernetes.Namespace, `Example: --kubernetes-namespace="moon"`)
 	c.Flags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
-	c.Flags().StringVar(&f.SwaggerBasicAuth.Username, "swagger-basic-auth-username", f.SwaggerBasicAuth.Username, `Example: --swagger-basic-auth-username="root"`)
-	c.Flags().StringVar(&f.SwaggerBasicAuth.Password, "swagger-basic-auth-password", f.SwaggerBasicAuth.Password, `Example: --swagger-basic-auth-password="123456"`)
-	c.Flags().StringVar(&f.MetricsBasicAuth.Username, "metrics-basic-auth-username", f.MetricsBasicAuth.Username, `Example: --metrics-basic-auth-username="root"`)
-	c.Flags().StringVar(&f.MetricsBasicAuth.Password, "metrics-basic-auth-password", f.MetricsBasicAuth.Password, `Example: --metrics-basic-auth-password="123456"`)
-	c.Flags().StringVar(&f.EnableClientConfig, "enable-client-config", f.EnableClientConfig, `Example: --enable-client-config="true"`)
-	c.Flags().StringVar(&f.EnableSwagger, "enable-swagger", f.EnableSwagger, `Example: --enable-swagger="true"`)
-	c.Flags().StringVar(&f.EnableMetrics, "enable-metrics", f.EnableMetrics, `Example: --enable-metrics="true"`)
 	c.Flags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
 	c.Flags().StringVar(&f.ConfigPaths, "config-paths", f.ConfigPaths, `Example: --config-paths="./datasource" --config-paths="./config,./datasource"`)
 	c.Flags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
@@ -86,16 +71,6 @@ func (f *Flags) applyToBootstrap() {
 	metadata["author"] = f.Author
 	metadata["email"] = f.Email
 	f.Server.Metadata = metadata
-	if strutil.IsNotEmpty(f.httpTimeout) {
-		if timeout, err := time.ParseDuration(f.httpTimeout); pointer.IsNil(err) {
-			f.Server.Http.Timeout = durationpb.New(timeout)
-		}
-	}
-	if strutil.IsNotEmpty(f.grpcTimeout) {
-		if timeout, err := time.ParseDuration(f.grpcTimeout); pointer.IsNil(err) {
-			f.Server.Grpc.Timeout = durationpb.New(timeout)
-		}
-	}
 	if strutil.IsNotEmpty(f.jobTimeout) {
 		if timeout, err := time.ParseDuration(f.jobTimeout); pointer.IsNil(err) {
 			f.Server.Job.Timeout = durationpb.New(timeout)

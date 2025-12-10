@@ -14,6 +14,9 @@ import (
 	"github.com/aide-family/rabbit/cmd/config"
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
+	"github.com/aide-family/rabbit/cmd/grpc"
+	"github.com/aide-family/rabbit/cmd/http"
+	"github.com/aide-family/rabbit/cmd/job"
 	"github.com/aide-family/rabbit/cmd/send"
 	"github.com/aide-family/rabbit/cmd/server"
 	"github.com/aide-family/rabbit/cmd/version"
@@ -48,6 +51,9 @@ func main() {
 		config.NewCmd(defaultServerConfig),
 		delete.NewCmd(),
 		get.NewCmd(),
+		grpc.NewCmd(defaultServerConfig),
+		http.NewCmd(defaultServerConfig),
+		job.NewCmd(defaultServerConfig),
 		server.NewCmd(defaultServerConfig),
 		send.NewCmd(),
 		version.NewCmd(),

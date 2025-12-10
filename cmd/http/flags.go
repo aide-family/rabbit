@@ -1,4 +1,4 @@
-package server
+package http
 
 import (
 	"time"
@@ -20,13 +20,10 @@ type Flags struct {
 	useEnv      bool
 
 	*conf.Bootstrap
-	environment    string
-	httpTimeout    string
-	grpcTimeout    string
-	jobTimeout     string
-	jwtExpire      string
-	jobCoreTimeout string
-	registryType   string
+	environment  string
+	httpTimeout  string
+	jwtExpire    string
+	registryType string
 }
 
 var flags Flags
@@ -40,12 +37,6 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.Server.Http.Address, "http-address", f.Server.Http.Address, `Example: --http-address="0.0.0.0:8080", --http-address=":8080"`)
 	c.Flags().StringVar(&f.Server.Http.Network, "http-network", f.Server.Http.Network, `Example: --http-network="tcp"`)
 	c.Flags().StringVar(&f.httpTimeout, "http-timeout", f.Server.Http.Timeout.AsDuration().String(), `Example: --http-timeout="10s", --http-timeout="1m", --http-timeout="1h", --http-timeout="1d"`)
-	c.Flags().StringVar(&f.Server.Grpc.Address, "grpc-address", f.Server.Grpc.Address, `Example: --grpc-address="0.0.0.0:9090", --grpc-address=":9090"`)
-	c.Flags().StringVar(&f.Server.Grpc.Network, "grpc-network", f.Server.Grpc.Network, `Example: --grpc-network="tcp"`)
-	c.Flags().StringVar(&f.grpcTimeout, "grpc-timeout", f.Server.Grpc.Timeout.AsDuration().String(), `Example: --grpc-timeout="10s", --grpc-timeout="1m", --grpc-timeout="1h", --grpc-timeout="1d"`)
-	c.Flags().StringVar(&f.Server.Job.Address, "job-address", f.Server.Job.Address, `Example: --job-address="0.0.0.0:9091", --job-address=":9091"`)
-	c.Flags().StringVar(&f.Server.Job.Network, "job-network", f.Server.Job.Network, `Example: --job-network="tcp"`)
-	c.Flags().StringVar(&f.jobTimeout, "job-timeout", f.Server.Job.Timeout.AsDuration().String(), `Example: --job-timeout="10s", --job-timeout="1m", --job-timeout="1h", --job-timeout="1d"`)
 	c.Flags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
 	c.Flags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
 	c.Flags().StringVar(&f.Jwt.Issuer, "jwt-issuer", f.Jwt.Issuer, `Example: --jwt-issuer="xxx"`)
@@ -56,9 +47,6 @@ func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.Flags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
 	c.Flags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
 	c.Flags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
-	c.Flags().Int32Var(&f.JobCore.WorkerTotal, "job-core-worker-total", f.JobCore.WorkerTotal, `Example: --job-core-worker-total=10"`)
-	c.Flags().StringVar(&f.jobCoreTimeout, "job-core-timeout", f.JobCore.Timeout.AsDuration().String(), `Example: --job-core-timeout="10s", --job-core-timeout="1m", --job-core-timeout="1h", --job-core-timeout="1d"`)
-	c.Flags().Uint32Var(&f.JobCore.BufferSize, "job-core-buffer-size", f.JobCore.BufferSize, `Example: --job-core-buffer-size=1000"`)
 	c.Flags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="etcd"`)
 	c.Flags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
 	c.Flags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
@@ -91,16 +79,6 @@ func (f *Flags) applyToBootstrap() {
 			f.Server.Http.Timeout = durationpb.New(timeout)
 		}
 	}
-	if strutil.IsNotEmpty(f.grpcTimeout) {
-		if timeout, err := time.ParseDuration(f.grpcTimeout); pointer.IsNil(err) {
-			f.Server.Grpc.Timeout = durationpb.New(timeout)
-		}
-	}
-	if strutil.IsNotEmpty(f.jobTimeout) {
-		if timeout, err := time.ParseDuration(f.jobTimeout); pointer.IsNil(err) {
-			f.Server.Job.Timeout = durationpb.New(timeout)
-		}
-	}
 
 	if strutil.IsNotEmpty(f.environment) {
 		f.Environment = enum.Environment(enum.Environment_value[f.environment])
@@ -109,11 +87,6 @@ func (f *Flags) applyToBootstrap() {
 	if strutil.IsNotEmpty(f.jwtExpire) {
 		if expire, err := time.ParseDuration(f.jwtExpire); pointer.IsNil(err) {
 			f.Jwt.Expire = durationpb.New(expire)
-		}
-	}
-	if strutil.IsNotEmpty(f.jobCoreTimeout) {
-		if timeout, err := time.ParseDuration(f.jobCoreTimeout); pointer.IsNil(err) {
-			f.JobCore.Timeout = durationpb.New(timeout)
 		}
 	}
 
