@@ -5,9 +5,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
-	"github.com/aide-family/rabbit/cmd/send/email"
-	"github.com/aide-family/rabbit/cmd/send/feishu"
-	"github.com/aide-family/rabbit/cmd/send/sms"
 )
 
 const cmdLong = `Send messages to specified channels, supporting multiple message types and delivery methods.
@@ -36,7 +33,7 @@ Messages sent through this command are processed immediately, making it suitable
 testing and urgent scenarios. For bulk message sending, it is recommended to use the
 apply command to submit messages to the queue for asynchronous processing.`
 
-func NewCmd() *cobra.Command {
+func NewCmd(children ...*cobra.Command) *cobra.Command {
 	sendCmd := &cobra.Command{
 		Use:   "send",
 		Short: "Send messages to specified channels",
@@ -48,14 +45,9 @@ func NewCmd() *cobra.Command {
 			cmd.Help()
 		},
 	}
-	commands := []*cobra.Command{
-		sms.NewCmd(),
-		feishu.NewCmd(),
-		email.NewCmd(),
-	}
-	sendCmd.AddCommand(commands...)
 
-	flags.addFlags(sendCmd)
+	sendFlags.addFlags(sendCmd)
+	sendCmd.AddCommand(children...)
 
 	return sendCmd
 }

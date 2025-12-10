@@ -18,6 +18,9 @@ import (
 	"github.com/aide-family/rabbit/cmd/http"
 	"github.com/aide-family/rabbit/cmd/job"
 	"github.com/aide-family/rabbit/cmd/send"
+	"github.com/aide-family/rabbit/cmd/send/email"
+	"github.com/aide-family/rabbit/cmd/send/feishu"
+	"github.com/aide-family/rabbit/cmd/send/sms"
 	"github.com/aide-family/rabbit/cmd/server"
 	"github.com/aide-family/rabbit/cmd/version"
 )
@@ -46,6 +49,8 @@ func main() {
 		cmd.WithGlobalFlagsDescription(Description),
 	)
 
+	sendCmd := send.NewCmd(sms.NewCmd(), feishu.NewCmd(), email.NewCmd())
+
 	children := []*cobra.Command{
 		apply.NewCmd(),
 		config.NewCmd(defaultServerConfig),
@@ -55,7 +60,7 @@ func main() {
 		http.NewCmd(defaultServerConfig),
 		job.NewCmd(defaultServerConfig),
 		server.NewCmd(defaultServerConfig),
-		send.NewCmd(),
+		sendCmd,
 		version.NewCmd(),
 	}
 	cmd.Execute(cmd.NewCmd(), children...)
