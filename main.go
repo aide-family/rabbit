@@ -14,8 +14,8 @@ import (
 	"github.com/aide-family/rabbit/cmd/config"
 	"github.com/aide-family/rabbit/cmd/delete"
 	"github.com/aide-family/rabbit/cmd/get"
-	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/cmd/send"
+	"github.com/aide-family/rabbit/cmd/server"
 	"github.com/aide-family/rabbit/cmd/version"
 )
 
@@ -42,16 +42,15 @@ func main() {
 		cmd.WithGlobalFlagsREPO(Repo),
 		cmd.WithGlobalFlagsDescription(Description),
 	)
-	rootCmd := cmd.NewCmd()
 
 	children := []*cobra.Command{
 		apply.NewCmd(),
 		config.NewCmd(defaultServerConfig),
 		delete.NewCmd(),
 		get.NewCmd(),
-		run.NewCmd(defaultServerConfig),
+		server.NewCmd(defaultServerConfig),
 		send.NewCmd(),
 		version.NewCmd(),
 	}
-	cmd.Execute(rootCmd, children...)
+	cmd.Execute(cmd.NewCmd(), children...)
 }

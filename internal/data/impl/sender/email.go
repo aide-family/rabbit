@@ -13,7 +13,6 @@ import (
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
-	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/pkg/merr"
@@ -40,7 +39,7 @@ func (e *emailSender) Type() vobj.MessageType {
 }
 
 // Send 发送邮件
-func (e *emailSender) Send(ctx context.Context, messageLog *do.MessageLog) error {
+func (e *emailSender) Send(ctx context.Context, messageLog *bo.MessageLogItemBo) error {
 	msg, err := e.buildEmailMessage([]byte(string(messageLog.Message)))
 	if err != nil {
 		return merr.ErrorInternal("convert to email message failed").WithCause(err)

@@ -25,19 +25,14 @@ func NewEventBus(bc *conf.Bootstrap, namespaceService *service.NamespaceService,
 
 func newEventBus(eventBusConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) *EventBus {
 	var server EventBusServer
-	switch strings.ToLower(eventBusConf.GetNetwork()) {
-	case string(transport.KindHTTP):
-		httpConf := &conf.Server_HTTPServer{
-			Address: eventBusConf.GetAddress(),
-			Timeout: eventBusConf.GetTimeout(),
-		}
-		server = newHTTPServer(httpConf, jwtConf, namespaceService, helper)
-	default:
-		grpcConf := &conf.Server_GRPCServer{
-			Address: eventBusConf.GetAddress(),
-			Timeout: eventBusConf.GetTimeout(),
-		}
-		server = newGRPCServer(grpcConf, jwtConf, namespaceService, helper)
+	serverConf := &conf.Server_ServerConfig{
+		Address: eventBusConf.GetAddress(),
+		Timeout: eventBusConf.GetTimeout(),
+	}
+	if strings.EqualFold(eventBusConf.GetNetwork(), string(transport.KindHTTP)) {
+		server = newHTTPServer(serverConf, jwtConf, namespaceService, helper)
+	} else {
+		server = newGRPCServer(serverConf, jwtConf, namespaceService, helper)
 	}
 	return &EventBus{
 		helper: klog.NewHelper(klog.With(helper.Logger(), "server", "event_bus")),

@@ -16,7 +16,6 @@ import (
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
-	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/pkg/merr"
@@ -51,7 +50,7 @@ func (w *webhookSender) Type() vobj.MessageType {
 }
 
 // Send 发送Webhook请求
-func (w *webhookSender) Send(ctx context.Context, messageLog *do.MessageLog) error {
+func (w *webhookSender) Send(ctx context.Context, messageLog *bo.MessageLogItemBo) error {
 	webhookMessage, err := w.buildWebhookMessage([]byte(string(messageLog.Message)))
 	if err != nil {
 		return err

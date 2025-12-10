@@ -1,5 +1,5 @@
-// Package run is the run command for the Rabbit service
-package run
+// Package server is the server command for the Rabbit service
+package server
 
 import (
 	"strings"

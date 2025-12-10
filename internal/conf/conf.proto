@@ -11,39 +11,26 @@ option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 message Bootstrap {
 	rabbit.enum.Environment environment = 1;
 	Server server = 2;
-	// GlobalEmail globalEmail = 3;
-	JWT jwt = 4;
-	map<string, rabbit.config.MySQLConfig> biz = 5;
-	rabbit.config.MySQLConfig main = 6;
-	EventBusCore eventBusCore = 7;
-	rabbit.config.ClusterConfig cluster = 8;
-	rabbit.config.RegistryType registryType = 9;
-	rabbit.config.ETCDConfig etcd = 10;
-	rabbit.config.KubernetesConfig kubernetes = 11;
-	rabbit.config.BasicAuthConfig swaggerBasicAuth = 12;
-	rabbit.config.BasicAuthConfig metricsBasicAuth = 13;
-	string enableClientConfig = 14;
-	string enableSwagger = 15;
-	string enableMetrics = 16;
-	string useDatabase = 17;
-	string configPaths = 18;
-	string messageLogPath = 19;
+	JWT jwt = 3;
+	map<string, rabbit.config.MySQLConfig> biz = 4;
+	rabbit.config.MySQLConfig main = 5;
+	EventBusCore eventBusCore = 6;
+	rabbit.config.ClusterConfig cluster = 7;
+	rabbit.config.RegistryType registryType = 8;
+	rabbit.config.ETCDConfig etcd = 9;
+	rabbit.config.KubernetesConfig kubernetes = 10;
+	rabbit.config.BasicAuthConfig swaggerBasicAuth = 11;
+	rabbit.config.BasicAuthConfig metricsBasicAuth = 12;
+	string enableClientConfig = 13;
+	string enableSwagger = 14;
+	string enableMetrics = 15;
+	string useDatabase = 16;
+	string configPaths = 17;
+	string messageLogPath = 18;
 }
 
 message Server {
-	message HTTPServer {
-		string address = 1;
-		string network = 2;
-		google.protobuf.Duration timeout = 3;
-	}
-	
-	message GRPCServer {
-		string address = 1;
-		string network = 2;
-		google.protobuf.Duration timeout = 3;
-	}
-
-	message EventBusServer {
+	message ServerConfig {
 		string address = 1;
 		string network = 2;
 		google.protobuf.Duration timeout = 3;
@@ -51,19 +38,12 @@ message Server {
 	
 	string name = 1;
 	map<string, string> metadata = 2;
-	HTTPServer http = 3;
-	GRPCServer grpc = 4;
-	EventBusServer eventBus = 5;
+	ServerConfig http = 3;
+	ServerConfig grpc = 4;
+	ServerConfig eventBus = 5;
 	string useRandomID = 6;
 }
-
-message GlobalEmail {
-	string host = 1;
-	int32 port = 2;
-	string username = 3;
-	string password = 4;
-}
-
+	
 message JWT {
 	string secret = 1;
 	google.protobuf.Duration expire = 2;
