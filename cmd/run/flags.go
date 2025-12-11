@@ -28,10 +28,11 @@ type RunFlags struct {
 	*conf.Bootstrap
 	cmd.GlobalFlags
 
-	ConfigPaths  []string
-	environment  string
-	jwtExpire    string
-	registryType string
+	configPaths     []string
+	dataSourcePaths []string
+	environment     string
+	jwtExpire       string
+	registryType    string
 }
 
 var (
@@ -43,7 +44,7 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
 	f.Bootstrap = bc
 
-	c.PersistentFlags().StringSliceVarP(&f.ConfigPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
+	c.PersistentFlags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
 
 	c.PersistentFlags().StringVar(&f.environment, "environment", f.environment, `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
 	c.PersistentFlags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
@@ -63,7 +64,7 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringVar(&f.Kubernetes.Namespace, "kubernetes-namespace", f.Kubernetes.Namespace, `Example: --kubernetes-namespace="moon"`)
 	c.PersistentFlags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
 	c.PersistentFlags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
-	c.PersistentFlags().StringSliceVar(&f.ConfigPaths, "config-paths", f.ConfigPaths, `Example: --config-paths="./datasource" --config-paths="./config,./datasource"`)
+	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strings.Split(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
 	c.PersistentFlags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
 }
 
@@ -92,11 +93,11 @@ func (f *RunFlags) applyToBootstrap() {
 			f.RegistryType = config.RegistryType(config.RegistryType_value[f.registryType])
 		}
 
-		if len(f.ConfigPaths) > 0 {
+		if len(f.configPaths) > 0 {
 			var bc conf.Bootstrap
-			sourceOpts := make([]kconfig.Source, 0, len(f.ConfigPaths))
+			sourceOpts := make([]kconfig.Source, 0, len(f.configPaths))
 			sourceOpts = append(sourceOpts, env.NewSource())
-			for _, configPath := range f.ConfigPaths {
+			for _, configPath := range f.configPaths {
 				if strutil.IsNotEmpty(configPath) {
 					sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
 				}
@@ -108,6 +109,9 @@ func (f *RunFlags) applyToBootstrap() {
 				}
 				f.Bootstrap = &bc
 			}
+		}
+		if len(f.dataSourcePaths) > 0 {
+			f.DataSourcePaths = strings.Join(f.configPaths, ",")
 		}
 	})
 }

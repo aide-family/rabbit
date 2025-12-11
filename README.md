@@ -46,7 +46,7 @@ make init
 make build
 
 # Run the service
-./bin/rabbit run
+./bin/rabbit run all
 ```
 
 #### Using Docker
@@ -80,6 +80,12 @@ rabbit config --path ./config --name server.yaml
 
 # Or with custom path
 rabbit config -p ./config -n server.yaml
+
+# Force overwrite existing file
+rabbit config -p ./config -n server.yaml --force
+
+# Generate client configuration file
+rabbit config -p ./config -n client.yaml --client
 ```
 
 ## 📦 Deployment
@@ -127,14 +133,18 @@ kubectl apply -k deploy/server/k8s/
 
 4. **Run the service**:
    ```bash
-   ./bin/rabbit run -c ./config/server.yaml
+   ./bin/rabbit run all -c ./config/server.yaml
    ```
 
 ## ⚙️ Configuration
 
 ### Configuration File
 
-The default configuration file is `config/server.yaml`. You can specify a custom path using the `--config` or `-c` flag.
+The default configuration file is `config/server.yaml`. You can specify custom paths using the `--config` or `-c` flag (can be used multiple times).
+
+**Note**: The `--use-database` and `--datasource-paths` options are mutually exclusive:
+- Use `--use-database true` for database storage mode (recommended for production)
+- Use `--datasource-paths` for file-based storage mode (useful for development and testing)
 
 ### Environment Variables
 
@@ -146,22 +156,33 @@ Rabbit supports configuration through environment variables. All environment var
 |----------|---------|-------------|
 | `MOON_RABBIT_ENVIRONMENT` | `PROD` | Environment: DEV, TEST, PREVIEW, PROD |
 | `MOON_RABBIT_NAME` | `moon.rabbit` | Service name |
+| `MOON_RABBIT_USE_RANDOM_ID` | `false` | Use random service ID |
+| `MOON_RABBIT_METADATA_TAG` | `rabbit` | Service metadata tag |
+| `MOON_RABBIT_METADATA_REPOSITORY` | `https://github.com/aide-family/rabbit` | Service metadata repository |
+| `MOON_RABBIT_METADATA_AUTHOR` | `Aide Family` | Service metadata author |
+| `MOON_RABBIT_METADATA_EMAIL` | `aidecloud@163.com` | Service metadata email |
 | `MOON_RABBIT_HTTP_ADDRESS` | `0.0.0.0:8080` | HTTP server address |
-| `MOON_RABBIT_GRPC_ADDRESS` | `0.0.0.0:9090` | gRPC server address |
+| `MOON_RABBIT_HTTP_NETWORK` | `tcp` | HTTP server network |
 | `MOON_RABBIT_HTTP_TIMEOUT` | `10s` | HTTP request timeout |
+| `MOON_RABBIT_GRPC_ADDRESS` | `0.0.0.0:9090` | gRPC server address |
+| `MOON_RABBIT_GRPC_NETWORK` | `tcp` | gRPC server network |
 | `MOON_RABBIT_GRPC_TIMEOUT` | `10s` | gRPC request timeout |
+| `MOON_RABBIT_JOB_ADDRESS` | `0.0.0.0:9091` | Job server address |
+| `MOON_RABBIT_JOB_NETWORK` | `grpc` | Job server network |
+| `MOON_RABBIT_JOB_TIMEOUT` | `10s` | Job request timeout |
 
 #### Database Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MOON_RABBIT_USE_DATABASE` | `false` | Enable database storage mode |
+| `MOON_RABBIT_USE_DATABASE` | `false` | Enable database storage mode (mutually exclusive with MOON_RABBIT_DATASOURCE_PATHS) |
 | `MOON_RABBIT_MAIN_HOST` | `localhost` | MySQL host |
 | `MOON_RABBIT_MAIN_PORT` | `3306` | MySQL port |
 | `MOON_RABBIT_MAIN_DATABASE` | `rabbit` | Database name |
 | `MOON_RABBIT_MAIN_USERNAME` | `root` | MySQL username |
 | `MOON_RABBIT_MAIN_PASSWORD` | `123456` | MySQL password |
 | `MOON_RABBIT_MAIN_DEBUG` | `false` | Enable database debug mode |
+| `MOON_RABBIT_MAIN_USE_SYSTEM_LOGGER` | `true` | Use system logger for database |
 
 #### JWT Configuration
 
@@ -182,14 +203,48 @@ Rabbit supports configuration through environment variables. All environment var
 | `MOON_RABBIT_KUBERNETES_NAMESPACE` | `moon` | Kubernetes namespace |
 | `MOON_RABBIT_KUBERNETES_KUBECONFIG` | `~/.kube/config` | Kubernetes kubeconfig path |
 
+#### Cluster Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MOON_RABBIT_CLUSTER_NAME` | `moon.rabbit` | Cluster name |
+| `MOON_RABBIT_CLUSTER_ENDPOINTS` | `` | Cluster endpoints |
+| `MOON_RABBIT_CLUSTER_PROTOCOL` | `GRPC` | Cluster protocol: GRPC, HTTP |
+| `MOON_RABBIT_CLUSTER_TIMEOUT` | `10s` | Cluster request timeout |
+
+#### Job Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MOON_RABBIT_JOB_CORE_WORKER_TOTAL` | `10` | Total number of job workers |
+| `MOON_RABBIT_JOB_CORE_TIMEOUT` | `10s` | Job core timeout |
+| `MOON_RABBIT_JOB_CORE_BUFFER_SIZE` | `1000` | Job core buffer size |
+
 #### Feature Flags
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MOON_RABBIT_ENABLE_CLIENT_CONFIG` | `true` | Enable client configuration |
-| `MOON_RABBIT_ENABLE_SWAGGER` | `true` | Enable Swagger UI |
-| `MOON_RABBIT_ENABLE_METRICS` | `true` | Enable metrics endpoint |
-| `MOON_RABBIT_CONFIG_PATHS` | `./datasource` | Configuration file paths (comma-separated) |
+| `MOON_RABBIT_ENABLE_CLIENT_CONFIG` | `false` | Enable client configuration |
+| `MOON_RABBIT_ENABLE_SWAGGER` | `false` | Enable Swagger UI |
+| `MOON_RABBIT_ENABLE_METRICS` | `false` | Enable metrics endpoint |
+| `MOON_RABBIT_DATASOURCE_PATHS` | `` | Data source file paths (comma-separated, mutually exclusive with MOON_RABBIT_USE_DATABASE) |
+| `MOON_RABBIT_MESSAGE_LOG_PATH` | `` | Message log file path |
+
+#### Swagger Basic Auth
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED` | `true` | Enable Swagger basic authentication |
+| `MOON_RABBIT_SWAGGER_BASIC_AUTH_USERNAME` | `moon.rabbit` | Swagger basic auth username |
+| `MOON_RABBIT_SWAGGER_BASIC_AUTH_PASSWORD` | `rabbit.swagger` | Swagger basic auth password |
+
+#### Metrics Basic Auth
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED` | `true` | Enable metrics basic authentication |
+| `MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME` | `moon.rabbit` | Metrics basic auth username |
+| `MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD` | `rabbit.metrics` | Metrics basic auth password |
 
 ### Command Line Arguments
 
@@ -199,37 +254,122 @@ Rabbit supports configuration through environment variables. All environment var
 |------|-------|---------|-------------|
 | `--namespace` | `-n` | `` | The namespace of the service |
 | `--rabbit-config` | | `./.rabbit/` | The config file directory of the rabbit |
+| `--log-format` | | `TEXT` | Log format: TEXT, JSON |
+| `--log-level` | | `DEBUG` | Log level: DEBUG, INFO, WARN, ERROR |
+
+#### Config Command Flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--path`, `-p` | | `.` | Output path for the config file |
+| `--name` | | `config.yaml` | Output file name |
+| `--force`, `-f` | | `false` | Overwrite existing file if it exists |
+| `--client` | | `false` | Generate client config file instead of server config |
 
 #### Run Command Flags
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--config`, `-c` | `` | Configuration file path |
+| `--config`, `-c` | `` | Configuration file path (can be used multiple times) |
 | `--environment` | `PROD` | Environment: DEV, TEST, PREVIEW, PROD |
-| `--http-address` | `0.0.0.0:8080` | HTTP server address |
-| `--grpc-address` | `0.0.0.0:9090` | gRPC server address |
-| `--use-database` | `false` | Enable database storage mode |
-| `--config-paths` | `./datasource` | Configuration file paths |
+| `--use-database` | `false` | Enable database storage mode (mutually exclusive with --datasource-paths) |
+| `--datasource-paths` | `` | Data source file paths (comma-separated, mutually exclusive with --use-database) |
+| `--message-log-path` | `` | Message log file path |
+| `--jwt-secret` | `xxx` | JWT secret key |
+| `--jwt-expire` | `600s` | JWT expiration time |
+| `--jwt-issuer` | `rabbit` | JWT issuer |
+| `--main-host` | `localhost` | MySQL host |
+| `--main-port` | `3306` | MySQL port |
+| `--main-database` | `rabbit` | Database name |
+| `--main-username` | `root` | MySQL username |
+| `--main-password` | `123456` | MySQL password |
+| `--main-debug` | `false` | Enable database debug mode |
+| `--main-use-system-logger` | `true` | Use system logger for database |
+| `--registry-type` | `` | Registry type: etcd, kubernetes |
+| `--etcd-endpoints` | `127.0.0.1:2379` | etcd endpoints |
+| `--etcd-username` | `` | etcd username |
+| `--etcd-password` | `` | etcd password |
+| `--kubernetes-namespace` | `moon` | Kubernetes namespace |
+| `--kubernetes-kubeconfig` | `~/.kube/config` | Kubernetes kubeconfig path |
 
-See `rabbit run --help` for all available flags.
+#### Run All Command Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--http-address` | `0.0.0.0:8080` | HTTP server address |
+| `--http-network` | `tcp` | HTTP server network |
+| `--http-timeout` | `10s` | HTTP request timeout |
+| `--grpc-address` | `0.0.0.0:9090` | gRPC server address |
+| `--grpc-network` | `tcp` | gRPC server network |
+| `--grpc-timeout` | `10s` | gRPC request timeout |
+| `--job-address` | `0.0.0.0:9091` | Job server address |
+| `--job-network` | `grpc` | Job server network |
+| `--job-timeout` | `10s` | Job request timeout |
+| `--job-core-worker-total` | `10` | Total number of job workers |
+| `--job-core-timeout` | `10s` | Job core timeout |
+| `--job-core-buffer-size` | `1000` | Job core buffer size |
+| `--enable-swagger` | `false` | Enable Swagger UI |
+| `--enable-swagger-basic-auth` | `true` | Enable Swagger basic authentication |
+| `--swagger-basic-auth-username` | `moon.rabbit` | Swagger basic auth username |
+| `--swagger-basic-auth-password` | `rabbit.swagger` | Swagger basic auth password |
+| `--enable-metrics` | `false` | Enable metrics endpoint |
+| `--enable-metrics-basic-auth` | `true` | Enable metrics basic authentication |
+| `--metrics-basic-auth-username` | `moon.rabbit` | Metrics basic auth username |
+| `--metrics-basic-auth-password` | `rabbit.metrics` | Metrics basic auth password |
+| `--enable-client-config` | `false` | Enable client configuration |
+
+#### GORM Command Flags
+
+| Flag | Short | Default | Description |
+|------|-------|---------|-------------|
+| `--config`, `-c` | | `./config` | Config file path |
+| `--force-gen`, `-f` | | `false` | Force generate code, overwrite existing |
+| `--username` | | `root` | MySQL username |
+| `--password` | | `123456` | MySQL password |
+| `--host` | | `localhost` | MySQL host |
+| `--port` | | `3306` | MySQL port |
+| `--database` | | `rabbit` | MySQL database |
+| `--params` | | `charset=utf8mb4,parseTime=true,loc=Asia/Shanghai` | MySQL connection parameters |
+| `--biz`, `-b` | | `false` | Use biz namespace configuration |
+
+See `rabbit run --help` and `rabbit run all --help` for all available flags.
 
 ### Example Usage
 
 ```bash
-# Run with custom configuration file
-rabbit run -c ./config/server.yaml
+# Run all services (HTTP, gRPC, Job) with custom configuration file
+rabbit run all -c ./config/server.yaml
+
+# Run only HTTP server
+rabbit run http -c ./config/server.yaml
+
+# Run only gRPC server
+rabbit run grpc -c ./config/server.yaml
+
+# Run only Job server
+rabbit run job -c ./config/server.yaml
+
+# Run with multiple configuration files
+rabbit run all -c ./config/server.yaml -c ./config/override.yaml
 
 # Run with environment variables
 MOON_RABBIT_HTTP_ADDRESS=0.0.0.0:8080 \
 MOON_RABBIT_USE_DATABASE=true \
-rabbit run
+rabbit run all
 
-# Run with command line flags
-rabbit run \
+# Run with database storage mode
+rabbit run all \
   --http-address 0.0.0.0:8080 \
   --grpc-address 0.0.0.0:9090 \
-  --use-database true \
-  --config-paths ./datasource,./config
+  --job-address 0.0.0.0:9091 \
+  --use-database true
+
+# Run with file-based storage mode
+rabbit run all \
+  --http-address 0.0.0.0:8080 \
+  --grpc-address 0.0.0.0:9090 \
+  --job-address 0.0.0.0:9091 \
+  --datasource-paths ./datasource,./config
 ```
 
 ## 📚 Commands
@@ -251,11 +391,13 @@ rabbit run \
 ### Service Commands
 
 - `rabbit run` - Start the Rabbit service
-
-### Database Commands
-
-- `rabbit gorm migrate` - Migrate database schema
-- `rabbit gorm gen` - Generate GORM query code
+  - `rabbit run all` - Start all services (HTTP, gRPC, Job)
+  - `rabbit run http` - Start only HTTP server
+  - `rabbit run grpc` - Start only gRPC server
+  - `rabbit run job` - Start only Job server
+- `rabbit gorm` - GORM code generation and database migration tools
+  - `rabbit gorm gen` - Generate GORM query code
+  - `rabbit gorm migrate` - Migrate database schema
 
 See `rabbit --help` for detailed command information.
 

@@ -46,7 +46,7 @@ make init
 make build
 
 # 运行服务
-./bin/rabbit run
+./bin/rabbit run all
 ```
 
 #### 使用 Docker
@@ -80,6 +80,12 @@ rabbit config --path ./config --name server.yaml
 
 # 或使用自定义路径
 rabbit config -p ./config -n server.yaml
+
+# 强制覆盖已存在的文件
+rabbit config -p ./config -n server.yaml --force
+
+# 生成客户端配置文件
+rabbit config -p ./config -n client.yaml --client
 ```
 
 ## 📦 部署
@@ -127,14 +133,18 @@ kubectl apply -k deploy/server/k8s/
 
 4. **运行服务**：
    ```bash
-   ./bin/rabbit run -c ./config/server.yaml
+   ./bin/rabbit run all -c ./config/server.yaml
    ```
 
 ## ⚙️ 配置说明
 
 ### 配置文件
 
-默认配置文件为 `config/server.yaml`。可以使用 `--config` 或 `-c` 参数指定自定义路径。
+默认配置文件为 `config/server.yaml`。可以使用 `--config` 或 `-c` 参数指定自定义路径（可多次使用）。
+
+**注意**：`--use-database` 和 `--datasource-paths` 选项互斥：
+- 使用 `--use-database true` 启用数据库存储模式（推荐用于生产环境）
+- 使用 `--datasource-paths` 启用基于文件的存储模式（适用于开发和测试）
 
 ### 环境变量
 
@@ -146,22 +156,33 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 |------|--------|------|
 | `MOON_RABBIT_ENVIRONMENT` | `PROD` | 环境：DEV, TEST, PREVIEW, PROD |
 | `MOON_RABBIT_NAME` | `moon.rabbit` | 服务名称 |
+| `MOON_RABBIT_USE_RANDOM_ID` | `false` | 使用随机服务 ID |
+| `MOON_RABBIT_METADATA_TAG` | `rabbit` | 服务元数据标签 |
+| `MOON_RABBIT_METADATA_REPOSITORY` | `https://github.com/aide-family/rabbit` | 服务元数据仓库 |
+| `MOON_RABBIT_METADATA_AUTHOR` | `Aide Family` | 服务元数据作者 |
+| `MOON_RABBIT_METADATA_EMAIL` | `aidecloud@163.com` | 服务元数据邮箱 |
 | `MOON_RABBIT_HTTP_ADDRESS` | `0.0.0.0:8080` | HTTP 服务器地址 |
-| `MOON_RABBIT_GRPC_ADDRESS` | `0.0.0.0:9090` | gRPC 服务器地址 |
+| `MOON_RABBIT_HTTP_NETWORK` | `tcp` | HTTP 服务器网络 |
 | `MOON_RABBIT_HTTP_TIMEOUT` | `10s` | HTTP 请求超时时间 |
+| `MOON_RABBIT_GRPC_ADDRESS` | `0.0.0.0:9090` | gRPC 服务器地址 |
+| `MOON_RABBIT_GRPC_NETWORK` | `tcp` | gRPC 服务器网络 |
 | `MOON_RABBIT_GRPC_TIMEOUT` | `10s` | gRPC 请求超时时间 |
+| `MOON_RABBIT_JOB_ADDRESS` | `0.0.0.0:9091` | Job 服务器地址 |
+| `MOON_RABBIT_JOB_NETWORK` | `grpc` | Job 服务器网络 |
+| `MOON_RABBIT_JOB_TIMEOUT` | `10s` | Job 请求超时时间 |
 
 #### 数据库配置
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `MOON_RABBIT_USE_DATABASE` | `false` | 启用数据库存储模式 |
+| `MOON_RABBIT_USE_DATABASE` | `false` | 启用数据库存储模式（与 MOON_RABBIT_DATASOURCE_PATHS 互斥） |
 | `MOON_RABBIT_MAIN_HOST` | `localhost` | MySQL 主机地址 |
 | `MOON_RABBIT_MAIN_PORT` | `3306` | MySQL 端口 |
 | `MOON_RABBIT_MAIN_DATABASE` | `rabbit` | 数据库名称 |
 | `MOON_RABBIT_MAIN_USERNAME` | `root` | MySQL 用户名 |
 | `MOON_RABBIT_MAIN_PASSWORD` | `123456` | MySQL 密码 |
 | `MOON_RABBIT_MAIN_DEBUG` | `false` | 启用数据库调试模式 |
+| `MOON_RABBIT_MAIN_USE_SYSTEM_LOGGER` | `true` | 数据库使用系统日志 |
 
 #### JWT 配置
 
@@ -182,14 +203,48 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | `MOON_RABBIT_KUBERNETES_NAMESPACE` | `moon` | Kubernetes 命名空间 |
 | `MOON_RABBIT_KUBERNETES_KUBECONFIG` | `~/.kube/config` | Kubernetes kubeconfig 路径 |
 
+#### 集群配置
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `MOON_RABBIT_CLUSTER_NAME` | `moon.rabbit` | 集群名称 |
+| `MOON_RABBIT_CLUSTER_ENDPOINTS` | `` | 集群端点 |
+| `MOON_RABBIT_CLUSTER_PROTOCOL` | `GRPC` | 集群协议：GRPC, HTTP |
+| `MOON_RABBIT_CLUSTER_TIMEOUT` | `10s` | 集群请求超时时间 |
+
+#### Job 配置
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `MOON_RABBIT_JOB_CORE_WORKER_TOTAL` | `10` | Job 工作线程总数 |
+| `MOON_RABBIT_JOB_CORE_TIMEOUT` | `10s` | Job 核心超时时间 |
+| `MOON_RABBIT_JOB_CORE_BUFFER_SIZE` | `1000` | Job 核心缓冲区大小 |
+
 #### 功能开关
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `MOON_RABBIT_ENABLE_CLIENT_CONFIG` | `true` | 启用客户端配置 |
-| `MOON_RABBIT_ENABLE_SWAGGER` | `true` | 启用 Swagger UI |
-| `MOON_RABBIT_ENABLE_METRICS` | `true` | 启用指标端点 |
-| `MOON_RABBIT_CONFIG_PATHS` | `./datasource` | 配置文件路径（逗号分隔） |
+| `MOON_RABBIT_ENABLE_CLIENT_CONFIG` | `false` | 启用客户端配置 |
+| `MOON_RABBIT_ENABLE_SWAGGER` | `false` | 启用 Swagger UI |
+| `MOON_RABBIT_ENABLE_METRICS` | `false` | 启用指标端点 |
+| `MOON_RABBIT_DATASOURCE_PATHS` | `` | 数据源文件路径（逗号分隔，与 MOON_RABBIT_USE_DATABASE 互斥） |
+| `MOON_RABBIT_MESSAGE_LOG_PATH` | `` | 消息日志文件路径 |
+
+#### Swagger 基础认证
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED` | `true` | 启用 Swagger 基础认证 |
+| `MOON_RABBIT_SWAGGER_BASIC_AUTH_USERNAME` | `moon.rabbit` | Swagger 基础认证用户名 |
+| `MOON_RABBIT_SWAGGER_BASIC_AUTH_PASSWORD` | `rabbit.swagger` | Swagger 基础认证密码 |
+
+#### Metrics 基础认证
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED` | `true` | 启用 Metrics 基础认证 |
+| `MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME` | `moon.rabbit` | Metrics 基础认证用户名 |
+| `MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD` | `rabbit.metrics` | Metrics 基础认证密码 |
 
 ### 命令行参数
 
@@ -199,37 +254,122 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 |------|------|--------|------|
 | `--namespace` | `-n` | `` | 服务命名空间 |
 | `--rabbit-config` | | `./.rabbit/` | Rabbit 配置文件目录 |
+| `--log-format` | | `TEXT` | 日志格式：TEXT, JSON |
+| `--log-level` | | `DEBUG` | 日志级别：DEBUG, INFO, WARN, ERROR |
+
+#### Config 命令参数
+
+| 参数 | 简写 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--path`, `-p` | | `.` | 配置文件输出路径 |
+| `--name` | | `config.yaml` | 输出文件名 |
+| `--force`, `-f` | | `false` | 强制覆盖已存在的文件 |
+| `--client` | | `false` | 生成客户端配置文件而非服务器配置 |
 
 #### Run 命令参数
 
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
-| `--config`, `-c` | `` | 配置文件路径 |
+| `--config`, `-c` | `` | 配置文件路径（可多次使用） |
 | `--environment` | `PROD` | 环境：DEV, TEST, PREVIEW, PROD |
-| `--http-address` | `0.0.0.0:8080` | HTTP 服务器地址 |
-| `--grpc-address` | `0.0.0.0:9090` | gRPC 服务器地址 |
-| `--use-database` | `false` | 启用数据库存储模式 |
-| `--config-paths` | `./datasource` | 配置文件路径 |
+| `--use-database` | `false` | 启用数据库存储模式（与 --datasource-paths 互斥） |
+| `--datasource-paths` | `` | 数据源文件路径（逗号分隔，与 --use-database 互斥） |
+| `--message-log-path` | `` | 消息日志文件路径 |
+| `--jwt-secret` | `xxx` | JWT 密钥 |
+| `--jwt-expire` | `600s` | JWT 过期时间 |
+| `--jwt-issuer` | `rabbit` | JWT 签发者 |
+| `--main-host` | `localhost` | MySQL 主机地址 |
+| `--main-port` | `3306` | MySQL 端口 |
+| `--main-database` | `rabbit` | 数据库名称 |
+| `--main-username` | `root` | MySQL 用户名 |
+| `--main-password` | `123456` | MySQL 密码 |
+| `--main-debug` | `false` | 启用数据库调试模式 |
+| `--main-use-system-logger` | `true` | 数据库使用系统日志 |
+| `--registry-type` | `` | 注册中心类型：etcd, kubernetes |
+| `--etcd-endpoints` | `127.0.0.1:2379` | etcd 端点 |
+| `--etcd-username` | `` | etcd 用户名 |
+| `--etcd-password` | `` | etcd 密码 |
+| `--kubernetes-namespace` | `moon` | Kubernetes 命名空间 |
+| `--kubernetes-kubeconfig` | `~/.kube/config` | Kubernetes kubeconfig 路径 |
 
-更多参数请使用 `rabbit run --help` 查看。
+#### Run All 命令参数
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `--http-address` | `0.0.0.0:8080` | HTTP 服务器地址 |
+| `--http-network` | `tcp` | HTTP 服务器网络 |
+| `--http-timeout` | `10s` | HTTP 请求超时时间 |
+| `--grpc-address` | `0.0.0.0:9090` | gRPC 服务器地址 |
+| `--grpc-network` | `tcp` | gRPC 服务器网络 |
+| `--grpc-timeout` | `10s` | gRPC 请求超时时间 |
+| `--job-address` | `0.0.0.0:9091` | Job 服务器地址 |
+| `--job-network` | `grpc` | Job 服务器网络 |
+| `--job-timeout` | `10s` | Job 请求超时时间 |
+| `--job-core-worker-total` | `10` | Job 工作线程总数 |
+| `--job-core-timeout` | `10s` | Job 核心超时时间 |
+| `--job-core-buffer-size` | `1000` | Job 核心缓冲区大小 |
+| `--enable-swagger` | `false` | 启用 Swagger UI |
+| `--enable-swagger-basic-auth` | `true` | 启用 Swagger 基础认证 |
+| `--swagger-basic-auth-username` | `moon.rabbit` | Swagger 基础认证用户名 |
+| `--swagger-basic-auth-password` | `rabbit.swagger` | Swagger 基础认证密码 |
+| `--enable-metrics` | `false` | 启用指标端点 |
+| `--enable-metrics-basic-auth` | `true` | 启用 Metrics 基础认证 |
+| `--metrics-basic-auth-username` | `moon.rabbit` | Metrics 基础认证用户名 |
+| `--metrics-basic-auth-password` | `rabbit.metrics` | Metrics 基础认证密码 |
+| `--enable-client-config` | `false` | 启用客户端配置 |
+
+#### GORM 命令参数
+
+| 参数 | 简写 | 默认值 | 说明 |
+|------|------|--------|------|
+| `--config`, `-c` | | `./config` | 配置文件路径 |
+| `--force-gen`, `-f` | | `false` | 强制生成代码，覆盖已存在的代码 |
+| `--username` | | `root` | MySQL 用户名 |
+| `--password` | | `123456` | MySQL 密码 |
+| `--host` | | `localhost` | MySQL 主机地址 |
+| `--port` | | `3306` | MySQL 端口 |
+| `--database` | | `rabbit` | MySQL 数据库 |
+| `--params` | | `charset=utf8mb4,parseTime=true,loc=Asia/Shanghai` | MySQL 连接参数 |
+| `--biz`, `-b` | | `false` | 使用 biz 命名空间配置 |
+
+更多参数请使用 `rabbit run --help` 和 `rabbit run all --help` 查看。
 
 ### 使用示例
 
 ```bash
-# 使用自定义配置文件运行
-rabbit run -c ./config/server.yaml
+# 运行所有服务（HTTP、gRPC、Job）使用自定义配置文件
+rabbit run all -c ./config/server.yaml
+
+# 仅运行 HTTP 服务器
+rabbit run http -c ./config/server.yaml
+
+# 仅运行 gRPC 服务器
+rabbit run grpc -c ./config/server.yaml
+
+# 仅运行 Job 服务器
+rabbit run job -c ./config/server.yaml
+
+# 使用多个配置文件运行
+rabbit run all -c ./config/server.yaml -c ./config/override.yaml
 
 # 使用环境变量运行
 MOON_RABBIT_HTTP_ADDRESS=0.0.0.0:8080 \
 MOON_RABBIT_USE_DATABASE=true \
-rabbit run
+rabbit run all
 
-# 使用命令行参数运行
-rabbit run \
+# 使用数据库存储模式运行
+rabbit run all \
   --http-address 0.0.0.0:8080 \
   --grpc-address 0.0.0.0:9090 \
-  --use-database true \
-  --config-paths ./datasource,./config
+  --job-address 0.0.0.0:9091 \
+  --use-database true
+
+# 使用基于文件的存储模式运行
+rabbit run all \
+  --http-address 0.0.0.0:8080 \
+  --grpc-address 0.0.0.0:9090 \
+  --job-address 0.0.0.0:9091 \
+  --datasource-paths ./datasource,./config
 ```
 
 ## 📚 命令说明
@@ -251,11 +391,13 @@ rabbit run \
 ### 服务命令
 
 - `rabbit run` - 启动 Rabbit 服务
-
-### 数据库命令
-
-- `rabbit gorm migrate` - 迁移数据库表结构
-- `rabbit gorm gen` - 生成 GORM 查询代码
+  - `rabbit run all` - 启动所有服务（HTTP、gRPC、Job）
+  - `rabbit run http` - 仅启动 HTTP 服务器
+  - `rabbit run grpc` - 仅启动 gRPC 服务器
+  - `rabbit run job` - 仅启动 Job 服务器
+- `rabbit gorm` - GORM 代码生成和数据库迁移工具
+  - `rabbit gorm gen` - 生成 GORM 查询代码
+  - `rabbit gorm migrate` - 迁移数据库表结构
 
 详细命令说明请使用 `rabbit --help` 查看。
 
