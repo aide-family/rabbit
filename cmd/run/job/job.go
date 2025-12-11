@@ -2,13 +2,16 @@
 package job
 
 import (
-	"github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/aide-family/magicbox/hello"
+	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/internal/data"
+	"github.com/aide-family/rabbit/internal/server"
 )
 
 const cmdJobLong = `Start the Rabbit job service (EventBus) only, providing asynchronous message processing capabilities.
@@ -42,7 +45,7 @@ After starting the service, Rabbit job will:
   • Start processing messages from the queue asynchronously
   • Handle background message delivery tasks with the configured worker pool`
 
-func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
+func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "job",
 		Short: "Run the Rabbit job service (EventBus) only",
@@ -52,21 +55,31 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 		},
 		Run: runJobServer,
 	}
-	var bc conf.Bootstrap
-	c := config.New(config.WithSource(
-		env.NewSource(),
-		conf.NewBytesSource(defaultServerConfigBytes),
-	))
-	if err := c.Load(); err != nil {
-		klog.Errorw("msg", "load config failed", "error", err)
-		panic(err)
-	}
 
-	if err := c.Scan(&bc); err != nil {
-		klog.Errorw("msg", "scan config failed", "error", err)
-		panic(err)
-	}
-
-	flags.addFlags(runCmd, &bc)
+	flags.addFlags(runCmd)
 	return runCmd
+}
+
+func runJobServer(_ *cobra.Command, _ []string) {
+	flags.applyToBootstrap()
+
+	run.StartServer("job", wireApp)
+}
+
+func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
+	defer hello.Hello()
+	opts := []kratos.Option{
+		kratos.Logger(helper.Logger()),
+		kratos.Server(srvs...),
+		kratos.Version(hello.Version()),
+		kratos.ID(hello.ID()),
+		kratos.Name(hello.Name()),
+		kratos.Metadata(hello.Metadata()),
+	}
+
+	if registry := d.Registry(); registry != nil {
+		opts = append(opts, kratos.Registrar(registry))
+	}
+
+	return kratos.New(opts...), nil
 }

@@ -2,13 +2,16 @@
 package http
 
 import (
-	"github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/aide-family/magicbox/hello"
+	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/internal/data"
+	"github.com/aide-family/rabbit/internal/server"
 )
 
 const cmdHTTPLong = `Start the Rabbit HTTP service only, providing RESTful API interfaces for message delivery and management.
@@ -38,7 +41,7 @@ start the job service separately using the "rabbit job" command.
 After starting the service, Rabbit HTTP will listen on the configured HTTP port (default: 0.0.0.0:8080,
 configurable via --http-address) and provide RESTful API interfaces for client access.`
 
-func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
+func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "http",
 		Short: "Run the Rabbit HTTP service only",
@@ -48,22 +51,34 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 		},
 		Run: runHTTPServer,
 	}
-	var bc conf.Bootstrap
-	c := config.New(config.WithSource(
-		env.NewSource(),
-		conf.NewBytesSource(defaultServerConfigBytes),
-	))
-	if err := c.Load(); err != nil {
-		klog.Errorw("msg", "load config failed", "error", err)
-		panic(err)
-	}
 
-	if err := c.Scan(&bc); err != nil {
-		klog.Errorw("msg", "scan config failed", "error", err)
-		panic(err)
-	}
-
-	flags.addFlags(runCmd, &bc)
+	flags.addFlags(runCmd)
 	return runCmd
 }
 
+func runHTTPServer(_ *cobra.Command, _ []string) {
+	flags.applyToBootstrap()
+
+	run.StartServer("http", wireApp)
+}
+
+func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
+	defer hello.Hello()
+	opts := []kratos.Option{
+		kratos.Logger(helper.Logger()),
+		kratos.Server(srvs...),
+		kratos.Version(hello.Version()),
+		kratos.ID(hello.ID()),
+		kratos.Name(hello.Name()),
+		kratos.Metadata(hello.Metadata()),
+	}
+
+	if registry := d.Registry(); registry != nil {
+		opts = append(opts, kratos.Registrar(registry))
+	}
+
+	srvs.BindSwagger(bc, helper)
+	srvs.BindMetrics(bc, helper)
+
+	return kratos.New(opts...), nil
+}

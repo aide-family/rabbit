@@ -1,4 +1,4 @@
-package server
+package all
 
 import (
 	"fmt"
@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/strutil"
+	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/v2/encoding"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -14,9 +17,6 @@ import (
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/strutil"
-	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/server"
 	"github.com/aide-family/rabbit/pkg/config"

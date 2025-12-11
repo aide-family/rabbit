@@ -1,8 +1,8 @@
 //go:build wireinject
 // +build wireinject
 
-// Package server is the server command for the Rabbit service
-package server
+// Package all is the all command for the Rabbit service
+package all
 
 import (
 	"github.com/go-kratos/kratos/v2"

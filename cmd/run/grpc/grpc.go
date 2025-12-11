@@ -2,13 +2,16 @@
 package grpc
 
 import (
-	"github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/aide-family/magicbox/hello"
+	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/internal/data"
+	"github.com/aide-family/rabbit/internal/server"
 )
 
 const cmdGRPCLong = `Start the Rabbit gRPC service only, providing high-performance gRPC API interfaces for message delivery and management.
@@ -38,7 +41,7 @@ start the job service separately using the "rabbit job" command.
 After starting the service, Rabbit gRPC will listen on the configured gRPC port (default: 0.0.0.0:9090,
 configurable via --grpc-address) and provide gRPC API interfaces for client access.`
 
-func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
+func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "grpc",
 		Short: "Run the Rabbit gRPC service only",
@@ -48,22 +51,31 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 		},
 		Run: runGRPCServer,
 	}
-	var bc conf.Bootstrap
-	c := config.New(config.WithSource(
-		env.NewSource(),
-		conf.NewBytesSource(defaultServerConfigBytes),
-	))
-	if err := c.Load(); err != nil {
-		klog.Errorw("msg", "load config failed", "error", err)
-		panic(err)
-	}
 
-	if err := c.Scan(&bc); err != nil {
-		klog.Errorw("msg", "scan config failed", "error", err)
-		panic(err)
-	}
-
-	flags.addFlags(runCmd, &bc)
+	flags.addFlags(runCmd)
 	return runCmd
 }
 
+func runGRPCServer(_ *cobra.Command, _ []string) {
+	flags.applyToBootstrap()
+
+	run.StartServer("grpc", wireApp)
+}
+
+func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
+	defer hello.Hello()
+	opts := []kratos.Option{
+		kratos.Logger(helper.Logger()),
+		kratos.Server(srvs...),
+		kratos.Version(hello.Version()),
+		kratos.ID(hello.ID()),
+		kratos.Name(hello.Name()),
+		kratos.Metadata(hello.Metadata()),
+	}
+
+	if registry := d.Registry(); registry != nil {
+		opts = append(opts, kratos.Registrar(registry))
+	}
+
+	return kratos.New(opts...), nil
+}

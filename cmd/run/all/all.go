@@ -1,27 +1,20 @@
-// Package server is the server command for the Rabbit service
-package server
+// Package all is the all command for the Rabbit service
+package all
 
 import (
-	"strings"
-
 	"github.com/aide-family/magicbox/hello"
-	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2"
-	"github.com/go-kratos/kratos/v2/config"
-	"github.com/go-kratos/kratos/v2/config/env"
-	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/internal/server"
 )
 
-const cmdRunLong = `Start the Rabbit messaging service with all services (HTTP, gRPC, and Job).
+const cmdAllLong = `Start the Rabbit messaging service with all services (HTTP, gRPC, and Job).
 
 The server command starts all services together:
   • HTTP service: Provides RESTful API interfaces for message delivery and management
@@ -53,90 +46,25 @@ After starting the service, Rabbit will listen on the configured ports:
   • gRPC: Default 0.0.0.0:9090 (configurable via --grpc-address)
   • Job: Default 0.0.0.0:9091 (configurable via --job-address)`
 
-func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
+func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
-		Use:   "server",
-		Short: "Run the Rabbit service",
-		Long:  cmdRunLong,
+		Use:   "all",
+		Short: "Run the Rabbit all services",
+		Long:  cmdAllLong,
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},
-		Run: runServer,
-	}
-	var bc conf.Bootstrap
-	c := config.New(config.WithSource(
-		env.NewSource(),
-		conf.NewBytesSource(defaultServerConfigBytes),
-	) /*config.WithPrintLoadedDebugLog(false)*/)
-	if err := c.Load(); err != nil {
-		klog.Errorw("msg", "load config failed", "error", err)
-		panic(err)
+		Run: runAll,
 	}
 
-	if err := c.Scan(&bc); err != nil {
-		klog.Errorw("msg", "scan config failed", "error", err)
-		panic(err)
-	}
-
-	flags.addFlags(runCmd, &bc)
+	flags.addFlags(runCmd)
 	return runCmd
 }
 
-func runServer(_ *cobra.Command, _ []string) {
-	flags.GlobalFlags = cmd.GetGlobalFlags()
+func runAll(_ *cobra.Command, _ []string) {
 	flags.applyToBootstrap()
-	var bc conf.Bootstrap
-	sourceOpts := make([]config.Source, 0, len(flags.configPaths))
-	if flags.useEnv {
-		sourceOpts = append(sourceOpts, env.NewSource())
-	}
-	if len(flags.configPaths) > 0 {
-		for _, configPath := range flags.configPaths {
-			if strutil.IsNotEmpty(configPath) {
-				sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
-			}
-		}
-	}
-	if len(sourceOpts) > 0 {
-		if err := conf.Load(&bc, sourceOpts...); err != nil {
-			klog.Errorw("msg", "load config failed", "error", err)
-			return
-		}
-		flags.Bootstrap = &bc
-	}
 
-	serverConf := flags.GetServer()
-	envOpts := []hello.Option{
-		hello.WithVersion(flags.Version),
-		hello.WithID(flags.Hostname),
-		hello.WithName(serverConf.GetName()),
-		hello.WithEnv(flags.Environment.String()),
-		hello.WithMetadata(serverConf.GetMetadata()),
-	}
-	if serverConf.GetUseRandomID() == "true" {
-		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
-	}
-	hello.SetEnvWithOption(envOpts...)
-
-	helper := klog.NewHelper(klog.With(klog.GetLogger(),
-		"cmd", "run",
-		"service.name", hello.Name(),
-		"service.id", hello.ID(),
-		"caller", klog.DefaultCaller,
-		"trace.id", tracing.TraceID(),
-		"span.id", tracing.SpanID()),
-	)
-
-	app, cleanup, err := wireApp(flags.Bootstrap, helper)
-	if err != nil {
-		klog.Errorw("msg", "wireApp failed", "error", err)
-		return
-	}
-	defer cleanup()
-	if err := app.Run(); err != nil {
-		klog.Errorw("msg", "app run failed", "error", err)
-		return
-	}
+	run.StartServer("all", wireApp)
 }
 
 func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {

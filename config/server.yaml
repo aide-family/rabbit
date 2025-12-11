@@ -1,7 +1,7 @@
 environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
-enableClientConfig: ${MOON_RABBIT_ENABLE_CLIENT_CONFIG:true}
-enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:true}
-enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:true}
+enableClientConfig: ${MOON_RABBIT_ENABLE_CLIENT_CONFIG:false}
+enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:false}
+enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:false}
 useDatabase: ${MOON_RABBIT_USE_DATABASE:false}
 
 server:

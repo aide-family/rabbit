@@ -91,7 +91,7 @@ type Servers []transport.Server
 
 func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
 	if bc.GetEnableSwagger() != "true" {
-		helper.Debugw("msg", "swagger is not enabled", "enableSwagger", bc.GetEnableSwagger())
+		helper.Debug("swagger is not enabled")
 		return
 	}
 
@@ -120,7 +120,7 @@ func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
 
 func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
 	if bc.GetEnableMetrics() != "true" {
-		helper.Debugw("msg", "metrics is not enabled", "enableMetrics", bc.GetEnableMetrics())
+		helper.Debug("metrics is not enabled")
 		return
 	}
 	httSrv, ok := s[0].(*http.Server)
