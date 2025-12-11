@@ -12,7 +12,7 @@ import (
 )
 
 type Flags struct {
-	run.RunFlags
+	*run.RunFlags
 
 	jobTimeout     string
 	jobCoreTimeout string
@@ -31,6 +31,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 }
 
 func (f *Flags) applyToBootstrap() {
+	f.ApplyToBootstrap()
 	if strutil.IsNotEmpty(f.jobTimeout) {
 		if timeout, err := time.ParseDuration(f.jobTimeout); pointer.IsNil(err) {
 			f.Server.Job.Timeout = durationpb.New(timeout)

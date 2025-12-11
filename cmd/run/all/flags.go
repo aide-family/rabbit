@@ -13,7 +13,7 @@ import (
 )
 
 type Flags struct {
-	run.RunFlags
+	*run.RunFlags
 
 	httpTimeout            string
 	grpcTimeout            string
@@ -63,6 +63,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 }
 
 func (f *Flags) applyToBootstrap() {
+	f.ApplyToBootstrap()
 	if strutil.IsNotEmpty(f.httpTimeout) {
 		if timeout, err := time.ParseDuration(f.httpTimeout); pointer.IsNil(err) {
 			f.Server.Http.Timeout = durationpb.New(timeout)

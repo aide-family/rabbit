@@ -14,7 +14,7 @@ import (
 )
 
 type Flags struct {
-	cmd.GlobalFlags
+	*cmd.GlobalFlags
 	configPath string
 	forceGen   bool
 	username   string

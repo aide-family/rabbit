@@ -12,7 +12,7 @@ import (
 )
 
 type Flags struct {
-	run.RunFlags
+	*run.RunFlags
 	grpcTimeout string
 }
 
@@ -26,6 +26,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 }
 
 func (f *Flags) applyToBootstrap() {
+	f.ApplyToBootstrap()
 	if strutil.IsNotEmpty(f.grpcTimeout) {
 		if timeout, err := time.ParseDuration(f.grpcTimeout); pointer.IsNil(err) {
 			f.Server.Grpc.Timeout = durationpb.New(timeout)

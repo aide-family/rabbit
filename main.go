@@ -6,6 +6,7 @@ package main
 
 import (
 	_ "embed"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -27,11 +28,13 @@ import (
 )
 
 var (
-	Version   = "latest"
-	BuildTime = "now"
-	Author    = "Aide Family"
-	Email     = ""
-	Repo      = "https://github.com/aide-family/rabbit"
+	Name        = "moon.rabbit"
+	Version     = "latest"
+	BuildTime   = "now"
+	Author      = "Aide Family"
+	Email       = "aidecloud@163.com"
+	Repo        = "https://github.com/aide-family/rabbit"
+	hostname, _ = os.Hostname()
 )
 
 //go:embed description.txt
@@ -42,6 +45,8 @@ var defaultServerConfig []byte
 
 func main() {
 	cmd.SetGlobalFlags(
+		cmd.WithGlobalFlagsName(Name),
+		cmd.WithGlobalFlagsHostname(hostname),
 		cmd.WithGlobalFlagsVersion(Version),
 		cmd.WithGlobalFlagsBuildTime(BuildTime),
 		cmd.WithGlobalFlagsAuthor(Author),

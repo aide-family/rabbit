@@ -16,8 +16,8 @@ type GlobalFlags struct {
 	Description string `json:"description" yaml:"description"`
 	Version     string `json:"version" yaml:"version"`
 	Built       string `json:"built" yaml:"built"`
-	Hostname    string `json:"-" yaml:"-"`
 
+	Hostname         string `json:"-" yaml:"-"`
 	Namespace        string `json:"-" yaml:"-"`
 	RabbitConfigPath string `json:"-" yaml:"-"`
 	LogFormat        string `json:"-" yaml:"-"`
@@ -33,17 +33,10 @@ func (g *GlobalFlags) addFlags(cmd *cobra.Command) {
 
 type GlobalOption func(*GlobalFlags)
 
-var globalFlags GlobalFlags = GlobalFlags{
-	Name:        "moon.rabbit",
-	Author:      "",
-	Email:       "",
-	Repo:        "https://github.com/aide-family/rabbit",
-	Description: "",
-	Hostname:    hostname,
-}
+var globalFlags GlobalFlags
 
-func GetGlobalFlags() GlobalFlags {
-	return globalFlags
+func GetGlobalFlags() *GlobalFlags {
+	return &globalFlags
 }
 
 func SetGlobalFlags(opts ...GlobalOption) {
@@ -85,5 +78,17 @@ func WithGlobalFlagsDescription(description string) GlobalOption {
 func WithGlobalFlagsREPO(repo string) GlobalOption {
 	return func(g *GlobalFlags) {
 		g.Repo = repo
+	}
+}
+
+func WithGlobalFlagsName(name string) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Name = name
+	}
+}
+
+func WithGlobalFlagsHostname(hostname string) GlobalOption {
+	return func(g *GlobalFlags) {
+		g.Hostname = hostname
 	}
 }

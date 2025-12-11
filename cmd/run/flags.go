@@ -2,7 +2,6 @@ package run
 
 import (
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/aide-family/magicbox/hello"
@@ -26,7 +25,7 @@ import (
 
 type RunFlags struct {
 	*conf.Bootstrap
-	cmd.GlobalFlags
+	*cmd.GlobalFlags
 
 	configPaths     []string
 	dataSourcePaths []string
@@ -35,10 +34,7 @@ type RunFlags struct {
 	registryType    string
 }
 
-var (
-	runFlags RunFlags
-	once     sync.Once
-)
+var runFlags RunFlags
 
 func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
@@ -46,7 +42,7 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 
 	c.PersistentFlags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
 
-	c.PersistentFlags().StringVar(&f.environment, "environment", f.environment, `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
+	c.PersistentFlags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
 	c.PersistentFlags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
 	c.PersistentFlags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
 	c.PersistentFlags().StringVar(&f.Jwt.Issuer, "jwt-issuer", f.Jwt.Issuer, `Example: --jwt-issuer="xxx"`)
@@ -57,68 +53,65 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
 	c.PersistentFlags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
 	c.PersistentFlags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
-	c.PersistentFlags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="etcd"`)
+	c.PersistentFlags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="ETCD"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Password, "etcd-password", f.Etcd.Password, `Example: --etcd-password="123456"`)
 	c.PersistentFlags().StringVar(&f.Kubernetes.Namespace, "kubernetes-namespace", f.Kubernetes.Namespace, `Example: --kubernetes-namespace="moon"`)
 	c.PersistentFlags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
 	c.PersistentFlags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
-	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strings.Split(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
+	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strutil.SplitSkipEmpty(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
 	c.PersistentFlags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
 }
 
-func (f *RunFlags) applyToBootstrap() {
-	once.Do(func() {
-		metadata := f.Server.Metadata
-		if pointer.IsNil(metadata) {
-			metadata = make(map[string]string)
-		}
-		metadata["repository"] = f.Repo
-		metadata["author"] = f.Author
-		metadata["email"] = f.Email
-		f.Server.Metadata = metadata
+func (f *RunFlags) ApplyToBootstrap() {
+	metadata := f.Server.Metadata
+	if pointer.IsNil(metadata) {
+		metadata = make(map[string]string)
+	}
+	metadata["repository"] = f.Repo
+	metadata["author"] = f.Author
+	metadata["email"] = f.Email
+	f.Server.Metadata = metadata
 
-		if strutil.IsNotEmpty(f.environment) {
-			f.Environment = enum.Environment(enum.Environment_value[f.environment])
-		}
+	if strutil.IsNotEmpty(f.environment) {
+		f.Environment = enum.Environment(enum.Environment_value[f.environment])
+	}
 
-		if strutil.IsNotEmpty(f.jwtExpire) {
-			if expire, err := time.ParseDuration(f.jwtExpire); pointer.IsNil(err) {
-				f.Jwt.Expire = durationpb.New(expire)
+	if strutil.IsNotEmpty(f.jwtExpire) {
+		if expire, err := time.ParseDuration(f.jwtExpire); pointer.IsNil(err) {
+			f.Jwt.Expire = durationpb.New(expire)
+		}
+	}
+
+	if strutil.IsNotEmpty(f.registryType) {
+		f.RegistryType = config.RegistryType(config.RegistryType_value[f.registryType])
+	}
+
+	if len(f.configPaths) > 0 {
+		var bc conf.Bootstrap
+		sourceOpts := make([]kconfig.Source, 0, len(f.configPaths))
+		sourceOpts = append(sourceOpts, env.NewSource())
+		for _, configPath := range f.configPaths {
+			if strutil.IsNotEmpty(configPath) {
+				sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
 			}
 		}
-
-		if strutil.IsNotEmpty(f.registryType) {
-			f.RegistryType = config.RegistryType(config.RegistryType_value[f.registryType])
-		}
-
-		if len(f.configPaths) > 0 {
-			var bc conf.Bootstrap
-			sourceOpts := make([]kconfig.Source, 0, len(f.configPaths))
-			sourceOpts = append(sourceOpts, env.NewSource())
-			for _, configPath := range f.configPaths {
-				if strutil.IsNotEmpty(configPath) {
-					sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
-				}
+		if len(sourceOpts) > 0 {
+			if err := conf.Load(&bc, sourceOpts...); err != nil {
+				klog.Errorw("msg", "load config failed", "error", err)
+				return
 			}
-			if len(sourceOpts) > 0 {
-				if err := conf.Load(&bc, sourceOpts...); err != nil {
-					klog.Errorw("msg", "load config failed", "error", err)
-					return
-				}
-				f.Bootstrap = &bc
-			}
+			f.Bootstrap = &bc
 		}
-		if len(f.dataSourcePaths) > 0 {
-			f.DataSourcePaths = strings.Join(f.configPaths, ",")
-		}
-	})
+	}
+	if len(f.dataSourcePaths) > 0 {
+		f.DataSourcePaths = strings.Join(f.configPaths, ",")
+	}
 }
 
-func GetRunFlags() RunFlags {
-	runFlags.applyToBootstrap()
-	return runFlags
+func GetRunFlags() *RunFlags {
+	return &runFlags
 }
 
 type WireApp func(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error)

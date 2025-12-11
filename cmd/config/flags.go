@@ -11,7 +11,7 @@ import (
 )
 
 type Flags struct {
-	cmd.GlobalFlags
+	*cmd.GlobalFlags
 	path     string
 	name     string
 	force    bool

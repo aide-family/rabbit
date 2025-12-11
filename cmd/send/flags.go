@@ -7,7 +7,7 @@ import (
 )
 
 type SendFlags struct {
-	cmd.GlobalFlags
+	*cmd.GlobalFlags
 }
 
 var sendFlags SendFlags
