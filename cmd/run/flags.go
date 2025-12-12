@@ -1,6 +1,7 @@
 package run
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,11 +28,12 @@ type RunFlags struct {
 	*conf.Bootstrap
 	*cmd.GlobalFlags
 
-	configPaths     []string
-	dataSourcePaths []string
-	environment     string
-	jwtExpire       string
-	registryType    string
+	configPaths        []string
+	dataSourcePaths    []string
+	environment        string
+	jwtExpire          string
+	registryType       string
+	enableClientConfig bool
 }
 
 var runFlags RunFlags
@@ -41,6 +43,8 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	f.Bootstrap = bc
 
 	c.PersistentFlags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
+	enableClientConfig, _ := strconv.ParseBool(f.EnableClientConfig)
+	c.PersistentFlags().BoolVar(&f.enableClientConfig, "enable-client-config", enableClientConfig, `Example: --enable-client-config`)
 
 	c.PersistentFlags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
 	c.PersistentFlags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
@@ -65,6 +69,8 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 }
 
 func (f *RunFlags) ApplyToBootstrap() {
+	f.EnableClientConfig = strconv.FormatBool(f.enableClientConfig)
+
 	metadata := f.Server.Metadata
 	if pointer.IsNil(metadata) {
 		metadata = make(map[string]string)
@@ -125,7 +131,7 @@ func StartServer(serviceName string, wireApp WireApp) {
 		hello.WithEnv(runFlags.Environment.String()),
 		hello.WithMetadata(serverConf.GetMetadata()),
 	}
-	if serverConf.GetUseRandomID() == "true" {
+	if strings.EqualFold(serverConf.GetUseRandomID(), "true") {
 		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
 	}
 	hello.SetEnvWithOption(envOpts...)

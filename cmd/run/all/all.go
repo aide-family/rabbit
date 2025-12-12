@@ -5,6 +5,7 @@ import (
 	"github.com/aide-family/magicbox/hello"
 	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -82,11 +83,15 @@ func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.
 		opts = append(opts, kratos.Registrar(registry))
 	}
 
-	srvs.BindSwagger(bc, helper)
-	srvs.BindMetrics(bc, helper)
+	for _, srv := range srvs {
+		if httpSrv, ok := srv.(*http.Server); ok {
+			server.BindSwagger(httpSrv, bc, helper)
+			server.BindMetrics(httpSrv, bc, helper)
+		}
+	}
 
 	// 生成客户端配置
-	if err := generateClientConfig(bc, srvs, helper); err != nil {
+	if err := run.GenerateClientConfig(bc, srvs, helper); err != nil {
 		helper.Warnw("msg", "generate client config failed", "error", err)
 	}
 

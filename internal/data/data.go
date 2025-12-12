@@ -3,6 +3,7 @@ package data
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/aide-family/magicbox/plugin/cache"
@@ -34,7 +35,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		c:           c,
 		dbs:         safety.NewSyncMap(make(map[string]*gorm.DB)),
 		closes:      make(map[string]func() error),
-		useDatabase: strutil.IsNotEmpty(c.GetUseDatabase()) && c.GetUseDatabase() == "true",
+		useDatabase: strutil.IsNotEmpty(c.GetUseDatabase()) && strings.EqualFold(c.GetUseDatabase(), "true"),
 		reloadFuncs: safety.NewSyncMap(make(map[string]func())),
 	}
 

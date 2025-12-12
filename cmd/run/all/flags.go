@@ -19,7 +19,6 @@ type Flags struct {
 	grpcTimeout            string
 	jobTimeout             string
 	jobCoreTimeout         string
-	enableClientConfig     bool
 	enableSwagger          bool
 	enableSwaggerBasicAuth bool
 	enableMetrics          bool
@@ -57,9 +56,6 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	c.Flags().Int32Var(&f.JobCore.WorkerTotal, "job-core-worker-total", f.JobCore.WorkerTotal, `Example: --job-core-worker-total=10"`)
 	c.Flags().StringVar(&f.jobCoreTimeout, "job-core-timeout", f.JobCore.Timeout.AsDuration().String(), `Example: --job-core-timeout="10s", --job-core-timeout="1m", --job-core-timeout="1h", --job-core-timeout="1d"`)
 	c.Flags().Uint32Var(&f.JobCore.BufferSize, "job-core-buffer-size", f.JobCore.BufferSize, `Example: --job-core-buffer-size=1000"`)
-
-	enableClientConfig, _ := strconv.ParseBool(f.EnableClientConfig)
-	c.Flags().BoolVar(&f.enableClientConfig, "enable-client-config", enableClientConfig, `Example: --enable-client-config`)
 }
 
 func (f *Flags) applyToBootstrap() {

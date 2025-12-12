@@ -4,6 +4,7 @@ package server
 import (
 	"embed"
 	nethttp "net/http"
+	"strings"
 
 	"buf.build/go/protoyaml"
 	"github.com/go-kratos/kratos/v2/encoding"
@@ -89,58 +90,52 @@ func init() {
 
 type Servers []transport.Server
 
-func (s Servers) BindSwagger(bc *conf.Bootstrap, helper *klog.Helper) {
-	if bc.GetEnableSwagger() != "true" {
+func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
+	if strings.EqualFold(bc.GetEnableSwagger(), "true") {
 		helper.Debug("swagger is not enabled")
 		return
 	}
 
-	httSrv, ok := s[0].(*http.Server)
-	if !ok {
-		return
-	}
-
-	endpoint, err := httSrv.Endpoint()
+	endpoint, err := httpSrv.Endpoint()
 	if err != nil {
+		helper.Errorw("msg", "get http server endpoint failed", "error", err)
 		return
 	}
 
 	// Create file server handler
 	authHandler := nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS)))
 	basicAuth := bc.GetSwaggerBasicAuth()
-	if basicAuth.GetEnabled() == "true" {
+	if strings.EqualFold(basicAuth.GetEnabled(), "true") {
 		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
 		helper.Debugf("[Swagger] endpoint: %s/doc/swagger (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 	} else {
 		helper.Debugf("[Swagger] endpoint: %s/doc/swagger (No Basic Auth)", endpoint)
 	}
 
-	httSrv.HandlePrefix("/doc/", authHandler)
+	httpSrv.HandlePrefix("/doc/", authHandler)
 }
 
-func (s Servers) BindMetrics(bc *conf.Bootstrap, helper *klog.Helper) {
-	if bc.GetEnableMetrics() != "true" {
+func BindMetrics(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
+	if strings.EqualFold(bc.GetEnableMetrics(), "true") {
 		helper.Debug("metrics is not enabled")
 		return
 	}
-	httSrv, ok := s[0].(*http.Server)
-	if !ok {
+
+	endpoint, err := httpSrv.Endpoint()
+	if err != nil {
+		helper.Errorw("msg", "get http server endpoint failed", "error", err)
 		return
 	}
 
-	endpoint, err := httSrv.Endpoint()
-	if err != nil {
-		return
-	}
 	basicAuth := bc.GetMetricsBasicAuth()
 	authHandler := promhttp.Handler()
-	if basicAuth.GetEnabled() == "true" {
+	if strings.EqualFold(basicAuth.GetEnabled(), "true") {
 		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
 		helper.Debugf("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
 	} else {
 		helper.Debugf("[Metrics] endpoint: %s/metrics (No Basic Auth)", endpoint)
 	}
-	httSrv.Handle("/metrics", authHandler)
+	httpSrv.Handle("/metrics", authHandler)
 }
 
 // RegisterService registers the service.

@@ -77,5 +77,10 @@ func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.
 		opts = append(opts, kratos.Registrar(registry))
 	}
 
+	// 生成客户端配置
+	if err := run.GenerateClientConfig(bc, srvs, helper); err != nil {
+		helper.Warnw("msg", "generate client config failed", "error", err)
+	}
+
 	return kratos.New(opts...), nil
 }

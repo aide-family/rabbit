@@ -19,6 +19,9 @@ RUN make init
 # 复制源代码
 COPY . .
 
+RUN git clone https://github.com/aide-family/magicbox.git ../magicbox
+RUN git clone https://github.com/aide-family/kratos.git ../kratos
+
 # 构建应用
 RUN make build
 
@@ -44,4 +47,4 @@ EXPOSE 8080 9090
 
 # 运行应用
 ENTRYPOINT ["/usr/local/bin/rabbit"]
-CMD ["run"]
+CMD ["run", "all"]
