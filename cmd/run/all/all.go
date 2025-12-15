@@ -2,17 +2,17 @@
 package all
 
 import (
+	"strings"
+	"sync"
+
 	"github.com/aide-family/magicbox/hello"
-	"github.com/go-kratos/kratos/v2"
-	klog "github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/cmd/run"
-	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/internal/data"
-	"github.com/aide-family/rabbit/internal/server"
+	"github.com/aide-family/rabbit/cmd/run/grpc"
+	"github.com/aide-family/rabbit/cmd/run/http"
+	"github.com/aide-family/rabbit/cmd/run/job"
 )
 
 const cmdAllLong = `Start the Rabbit messaging service with all services (HTTP, gRPC, and Job).
@@ -64,36 +64,16 @@ func NewCmd() *cobra.Command {
 
 func runAll(_ *cobra.Command, _ []string) {
 	flags.applyToBootstrap()
-
-	run.StartServer("all", wireApp)
-}
-
-func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
-	defer hello.Hello()
-	opts := []kratos.Option{
-		kratos.Logger(helper.Logger()),
-		kratos.Server(srvs...),
-		kratos.Version(hello.Version()),
-		kratos.ID(hello.ID()),
-		kratos.Name(hello.Name()),
-		kratos.Metadata(hello.Metadata()),
-	}
-
-	if registry := d.Registry(); registry != nil {
-		opts = append(opts, kratos.Registrar(registry))
-	}
-
-	for _, srv := range srvs {
-		if httpSrv, ok := srv.(*http.Server); ok {
-			server.BindSwagger(httpSrv, bc, helper)
-			server.BindMetrics(httpSrv, bc, helper)
-		}
-	}
-
-	// 生成客户端配置
-	if err := run.GenerateClientConfig(bc, srvs, helper); err != nil {
-		helper.Warnw("msg", "generate client config failed", "error", err)
-	}
-
-	return kratos.New(opts...), nil
+	hello.Hello()
+	wg := new(sync.WaitGroup)
+	wg.Go(func() {
+		run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "http"}, "."), http.WireApp)
+	})
+	wg.Go(func() {
+		run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "grpc"}, "."), grpc.WireApp)
+	})
+	wg.Go(func() {
+		run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "job"}, "."), job.WireApp)
+	})
+	wg.Wait()
 }

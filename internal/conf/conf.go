@@ -78,7 +78,7 @@ func (w *noOpWatcher) Stop() error {
 }
 
 func Load(bc any, sources ...config.Source) error {
-	c := config.New(config.WithSource(sources...), config.WithPrintLoadedDebugLog(false))
+	c := config.New(config.WithSource(sources...))
 	if err := c.Load(); err != nil {
 		return merr.ErrorInternal("load config failed").WithCause(err)
 	}

@@ -85,12 +85,5 @@ func (e *Job) Stop(ctx context.Context) error {
 
 // Endpoint implements transport.Server.
 func (e *Job) Endpoint() (*url.URL, error) {
-	endpoint, err := e.server.Endpoint()
-	if err != nil {
-		return nil, err
-	}
-	return &url.URL{
-		Scheme: "moon",
-		Host:   endpoint.Host,
-	}, nil
+	return e.server.Endpoint()
 }

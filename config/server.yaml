@@ -5,7 +5,8 @@ enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:false}
 useDatabase: ${MOON_RABBIT_USE_DATABASE:false}
 
 server:
-  name: ${MOON_RABBIT_NAME:moon.rabbit}
+  name: ${MOON_RABBIT_NAME:rabbit}
+  namespace: ${MOON_RABBIT_NAMESPACE:moon}
   useRandomID: ${MOON_RABBIT_USE_RANDOM_ID:false}
   metadata:
     tag: ${MOON_RABBIT_METADATA_TAG:rabbit}
@@ -63,7 +64,6 @@ etcd:
 
 kubernetes:
   kubeConfig: ${MOON_RABBIT_KUBERNETES_KUBECONFIG:~/.kube/config}
-  namespace: ${MOON_RABBIT_KUBERNETES_NAMESPACE:moon}
 
 swaggerBasicAuth:
   enabled: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED:true}

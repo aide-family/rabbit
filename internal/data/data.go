@@ -152,6 +152,7 @@ func (d *Data) Registry() connect.Registry {
 }
 
 func (d *Data) initRegistry() error {
+	namespace := d.c.GetServer().GetNamespace()
 	switch registryType := d.c.GetRegistryType(); registryType {
 	case config.RegistryType_KUBERNETES:
 		kubeConfig := d.c.GetKubernetes()
@@ -163,7 +164,7 @@ func (d *Data) initRegistry() error {
 			d.helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
 			return err
 		}
-		registrar := kuberegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
+		registrar := kuberegistry.NewRegistry(kubeClient, namespace)
 		d.registry = registrar
 	case config.RegistryType_ETCD:
 		etcdConfig := d.c.GetEtcd()
@@ -180,7 +181,7 @@ func (d *Data) initRegistry() error {
 			d.helper.Errorw("msg", "etcd client initialization failed", "error", err)
 			return err
 		}
-		registrar := etcd.New(client)
+		registrar := etcd.New(client, etcd.Namespace(namespace))
 		d.registry = registrar
 		d.closes["etcdClient"] = func() error { return client.Close() }
 	}

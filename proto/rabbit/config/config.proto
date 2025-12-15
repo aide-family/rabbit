@@ -44,8 +44,7 @@ message MySQLConfig {
 }
 
 message KubernetesConfig {
-	string namespace = 1;
-	string kubeConfig = 2;
+	string kubeConfig = 1;
 }
 
 enum RegistryType {

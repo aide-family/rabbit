@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +29,8 @@ type RunFlags struct {
 	*conf.Bootstrap
 	*cmd.GlobalFlags
 
+	metadata           []string
+	useRandomID        bool
 	configPaths        []string
 	dataSourcePaths    []string
 	environment        string
@@ -46,6 +49,14 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	enableClientConfig, _ := strconv.ParseBool(f.EnableClientConfig)
 	c.PersistentFlags().BoolVar(&f.enableClientConfig, "enable-client-config", enableClientConfig, `Example: --enable-client-config`)
 
+	c.PersistentFlags().StringVar(&f.Server.Name, "server-name", f.Server.Name, `Example: --server-name="rabbit"`)
+	useRandomID, _ := strconv.ParseBool(f.Server.UseRandomID)
+	c.PersistentFlags().BoolVar(&f.useRandomID, "use-random-node-id", useRandomID, `Example: --use-random-node-id`)
+	metadataStr := make([]string, 0, len(f.Server.Metadata))
+	for key, value := range f.Server.Metadata {
+		metadataStr = append(metadataStr, fmt.Sprintf("%s=%s", key, value))
+	}
+	c.PersistentFlags().StringSliceVar(&f.metadata, "server-metadata", metadataStr, `Example: --server-metadata="tag=rabbit" --server-metadata="email=aidecloud@163.com"`)
 	c.PersistentFlags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
 	c.PersistentFlags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
 	c.PersistentFlags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
@@ -61,7 +72,6 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Password, "etcd-password", f.Etcd.Password, `Example: --etcd-password="123456"`)
-	c.PersistentFlags().StringVar(&f.Kubernetes.Namespace, "kubernetes-namespace", f.Kubernetes.Namespace, `Example: --kubernetes-namespace="moon"`)
 	c.PersistentFlags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
 	c.PersistentFlags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
 	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strutil.SplitSkipEmpty(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
@@ -69,16 +79,33 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 }
 
 func (f *RunFlags) ApplyToBootstrap() {
+	if strutil.IsEmpty(f.Server.Name) {
+		f.Server.Name = f.Name
+	}
+	if strutil.IsEmpty(f.Server.Namespace) {
+		f.Server.Namespace = f.Namespace
+	}
 	f.EnableClientConfig = strconv.FormatBool(f.enableClientConfig)
 
 	metadata := f.Server.Metadata
 	if pointer.IsNil(metadata) {
 		metadata = make(map[string]string)
 	}
+
 	metadata["repository"] = f.Repo
 	metadata["author"] = f.Author
 	metadata["email"] = f.Email
+	metadata["built"] = f.Built
+
+	for _, m := range f.metadata {
+		parts := strings.SplitN(m, "=", 2)
+		if len(parts) == 2 {
+			metadata[parts[0]] = parts[1]
+		}
+	}
+
 	f.Server.Metadata = metadata
+	f.Server.UseRandomID = strconv.FormatBool(f.useRandomID)
 
 	if strutil.IsNotEmpty(f.environment) {
 		f.Environment = enum.Environment(enum.Environment_value[f.environment])
@@ -120,14 +147,13 @@ func GetRunFlags() *RunFlags {
 	return &runFlags
 }
 
-type WireApp func(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error)
+type WireApp func(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error)
 
 func StartServer(serviceName string, wireApp WireApp) {
 	serverConf := runFlags.GetServer()
 	envOpts := []hello.Option{
 		hello.WithVersion(runFlags.Version),
 		hello.WithID(runFlags.Hostname),
-		hello.WithName(serverConf.GetName()),
 		hello.WithEnv(runFlags.Environment.String()),
 		hello.WithMetadata(serverConf.GetMetadata()),
 	}
@@ -136,15 +162,14 @@ func StartServer(serviceName string, wireApp WireApp) {
 	}
 	hello.SetEnvWithOption(envOpts...)
 	helper := klog.NewHelper(klog.With(klog.GetLogger(),
-		"cmd", serviceName,
-		"service.name", hello.Name(),
+		"service.name", serviceName,
 		"service.id", hello.ID(),
 		"caller", klog.DefaultCaller,
 		"trace.id", tracing.TraceID(),
 		"span.id", tracing.SpanID()),
 	)
 
-	app, cleanup, err := wireApp(runFlags.Bootstrap, helper)
+	app, cleanup, err := wireApp(serviceName, runFlags.Bootstrap, helper)
 	if err != nil {
 		klog.Errorw("msg", "wireApp failed", "error", err)
 		return

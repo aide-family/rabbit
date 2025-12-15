@@ -22,7 +22,7 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	c := config.New(config.WithSource(
 		env.NewSource(),
 		conf.NewBytesSource(defaultServerConfigBytes),
-	), config.WithPrintLoadedDebugLog(false))
+	))
 	if err := c.Load(); err != nil {
 		klog.Errorw("msg", "load config failed", "error", err)
 		panic(err)

@@ -25,7 +25,7 @@ type GlobalFlags struct {
 }
 
 func (g *GlobalFlags) addFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&g.Namespace, "namespace", "n", "", "The namespace of the service")
+	cmd.PersistentFlags().StringVarP(&g.Namespace, "namespace", "n", "moon", "The namespace of the service")
 	cmd.PersistentFlags().StringVar(&g.RabbitConfigPath, "rabbit-config", "./.rabbit/", "The config file of the rabbit")
 	cmd.PersistentFlags().StringVar(&g.LogFormat, "log-format", "TEXT", "The format of the log")
 	cmd.PersistentFlags().StringVar(&g.LogLevel, "log-level", "INFO", "The level of the log")
