@@ -1,7 +1,7 @@
 environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
-enableClientConfig: ${MOON_RABBIT_ENABLE_CLIENT_CONFIG:true}
-enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:true}
-enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:true}
+enableClientConfig: ${MOON_RABBIT_ENABLE_CLIENT_CONFIG:false}
+enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:false}
+enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:false}
 useDatabase: ${MOON_RABBIT_USE_DATABASE:false}
 
 server:
@@ -20,10 +20,10 @@ server:
     address: "${MOON_RABBIT_GRPC_ADDRESS:0.0.0.0:9090}"
     network: "${MOON_RABBIT_GRPC_NETWORK:tcp}"
     timeout: "${MOON_RABBIT_GRPC_TIMEOUT:10s}"
-  eventBus:
-    address: "${MOON_RABBIT_EVENT_BUS_ADDRESS:0.0.0.0:9091}"
-    network: "${MOON_RABBIT_EVENT_BUS_NETWORK:grpc}"
-    timeout: "${MOON_RABBIT_EVENT_BUS_TIMEOUT:10s}"
+  job:
+    address: "${MOON_RABBIT_JOB_ADDRESS:0.0.0.0:9091}"
+    network: "${MOON_RABBIT_JOB_NETWORK:grpc}"
+    timeout: "${MOON_RABBIT_JOB_TIMEOUT:10s}"
 
 jwt:
   secret: "${MOON_RABBIT_JWT_SECRET:xxx}"
@@ -43,10 +43,10 @@ main:
     parseTime: "true"
     loc: Asia/Shanghai
 
-eventBusCore:
-  workerTotal: ${MOON_RABBIT_EVENT_BUS_CORE_WORKER_TOTAL:10}
-  timeout: "${MOON_RABBIT_EVENT_BUS_CORE_TIMEOUT:10s}"
-  bufferSize: ${MOON_RABBIT_EVENT_BUS_CORE_BUFFER_SIZE:1000}
+jobCore:
+  workerTotal: ${MOON_RABBIT_JOB_CORE_WORKER_TOTAL:10}
+  timeout: "${MOON_RABBIT_JOB_CORE_TIMEOUT:10s}"
+  bufferSize: ${MOON_RABBIT_JOB_CORE_BUFFER_SIZE:1000}
   
 registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 

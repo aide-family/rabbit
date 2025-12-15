@@ -3,6 +3,7 @@ package connect
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
@@ -22,14 +23,14 @@ func NewGorm(mysqlConf *config.MySQLConfig, logger *klog.Helper) (*gorm.DB, erro
 	gormConfig := &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 	}
-	if mysqlConf.UseSystemLogger == "true" {
+	if strings.EqualFold(mysqlConf.UseSystemLogger, "true") {
 		gormConfig.Logger = gormlog.New(logger.Logger())
 	}
 	db, err := gorm.Open(mysql.Open(dsn), gormConfig)
 	if err != nil {
 		return nil, fmt.Errorf("open mysql connection failed: %w, dsn: %s", err, dsn)
 	}
-	if mysqlConf.Debug == "true" {
+	if strings.EqualFold(mysqlConf.Debug, "true") {
 		db = db.Debug()
 	}
 

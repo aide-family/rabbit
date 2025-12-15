@@ -2,8 +2,6 @@
 package feishu
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -31,7 +29,7 @@ configured through configuration files or API. Sent messages are processed immed
 making it suitable for testing and urgent scenarios.`
 
 func NewCmd() *cobra.Command {
-	return &cobra.Command{
+	feishuCmd := &cobra.Command{
 		Use:   "feishu",
 		Short: "Send Feishu messages",
 		Long:  cmdLong,
@@ -40,8 +38,10 @@ func NewCmd() *cobra.Command {
 		},
 		Run: run,
 	}
+	feishuFlags.addFlags(feishuCmd)
+	return feishuCmd
 }
 
 func run(cmd *cobra.Command, args []string) {
-	fmt.Println("feishu called")
+	cmd.Help()
 }

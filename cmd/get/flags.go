@@ -7,7 +7,7 @@ import (
 )
 
 type Flags struct {
-	cmd.GlobalFlags
+	*cmd.GlobalFlags
 }
 
 var flags Flags

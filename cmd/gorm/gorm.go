@@ -74,7 +74,7 @@ func initDB() (*gorm.DB, error) {
 		c := config.New(config.WithSource(
 			env.NewSource(),
 			file.NewSource(flags.configPath),
-		))
+		), config.WithPrintLoadedDebugLog(false))
 		if err := c.Load(); err != nil {
 			klog.Errorw("msg", "load config failed", "error", err)
 			return nil, err

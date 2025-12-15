@@ -15,12 +15,12 @@ import (
 
 func NewMessageLog(
 	messageLogRepo repository.MessageLog,
-	eventBusBiz *EventBus,
+	jobBiz *Job,
 	helper *klog.Helper,
 ) *MessageLog {
 	return &MessageLog{
 		messageLogRepo: messageLogRepo,
-		eventBusBiz:    eventBusBiz,
+		jobBiz:         jobBiz,
 		helper:         klog.NewHelper(klog.With(helper.Logger(), "biz", "messageLog")),
 	}
 }
@@ -28,7 +28,7 @@ func NewMessageLog(
 type MessageLog struct {
 	helper         *klog.Helper
 	messageLogRepo repository.MessageLog
-	eventBusBiz    *EventBus
+	jobBiz         *Job
 }
 
 func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*bo.MessageLogItemBo], error) {
@@ -68,7 +68,7 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	if messageLog.Status.IsSent() || messageLog.Status.IsSending() || messageLog.Status.IsCancelled() {
 		return nil
 	}
-	if err := m.eventBusBiz.appendMessage(ctx, uid); err != nil {
+	if err := m.jobBiz.appendMessage(ctx, uid); err != nil {
 		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("append message failed")
 	}

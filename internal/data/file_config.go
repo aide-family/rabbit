@@ -1,6 +1,7 @@
 package data
 
 import (
+	"strings"
 	sync "sync"
 
 	"github.com/aide-family/magicbox/load"
@@ -46,29 +47,29 @@ func (d *Data) LoadFileConfig(bc *conf.Bootstrap, helper *klog.Helper) error {
 	}
 	var err error
 	fileConfigOnce.Do(func() {
-		if bc.GetUseDatabase() == "true" {
+		if strings.EqualFold(bc.GetUseDatabase(), "true") {
 			helper.Debugw("msg", "database mode is enabled, skipping file config loading")
 			return
 		}
-		configPaths := bc.GetConfigPaths()
-		if len(configPaths) == 0 {
-			helper.Debugw("msg", "no configPaths specified, skipping file config loading")
+		dataSourcePaths := bc.GetDataSourcePaths()
+		if len(dataSourcePaths) == 0 {
+			helper.Debugw("msg", "no dataSourcePaths specified, skipping file config loading")
 			return
 		}
 
 		// Collect all file paths
-		fileSources := make([]config.Source, 0, len(configPaths))
+		fileSources := make([]config.Source, 0, len(dataSourcePaths))
 		fileSources = append(fileSources, env.NewSource())
-		for _, configPath := range strutil.SplitSkipEmpty(configPaths, ",") {
-			fileSources = append(fileSources, file.NewSource(load.ExpandHomeDir(configPath)))
+		for _, dataSourcePath := range strutil.SplitSkipEmpty(dataSourcePaths, ",") {
+			fileSources = append(fileSources, file.NewSource(load.ExpandHomeDir(dataSourcePath)))
 		}
 
 		if len(fileSources) == 0 {
-			helper.Debugw("msg", "no config files found in configPaths")
+			helper.Debugw("msg", "no dataSource files found in dataSourcePaths")
 			return
 		}
 
-		c := config.New(config.WithSource(fileSources...))
+		c := config.New(config.WithSource(fileSources...), config.WithPrintLoadedDebugLog(false))
 		if err = c.Load(); err != nil {
 			helper.Errorw("msg", "load config failed", "error", err)
 			return

@@ -6,12 +6,16 @@ import (
 	"github.com/aide-family/rabbit/cmd"
 )
 
-type Flags struct {
-	cmd.GlobalFlags
+type SendFlags struct {
+	*cmd.GlobalFlags
 }
 
-var flags Flags
+var sendFlags SendFlags
 
-func (f *Flags) addFlags(c *cobra.Command) {
+func (f *SendFlags) addFlags(c *cobra.Command) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
+}
+
+func GetSendFlags() SendFlags {
+	return sendFlags
 }

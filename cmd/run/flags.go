@@ -1,83 +1,76 @@
 package run
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/hello"
+	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/pointer"
+	"github.com/aide-family/magicbox/strutil"
+	"github.com/go-kratos/kratos/v2"
+	kconfig "github.com/go-kratos/kratos/v2/config"
+	"github.com/go-kratos/kratos/v2/config/env"
+	"github.com/go-kratos/kratos/v2/config/file"
+	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/aide-family/magicbox/pointer"
-	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/enum"
 )
 
-type Flags struct {
-	cmd.GlobalFlags
-	configPaths []string
-	useEnv      bool
-
+type RunFlags struct {
 	*conf.Bootstrap
-	environment         string
-	httpTimeout         string
-	grpcTimeout         string
-	eventBusTimeout     string
-	jwtExpire           string
-	eventBusCoreTimeout string
-	registryType        string
+	*cmd.GlobalFlags
+
+	configPaths        []string
+	dataSourcePaths    []string
+	environment        string
+	jwtExpire          string
+	registryType       string
+	enableClientConfig bool
 }
 
-var flags Flags
+var runFlags RunFlags
 
-func (f *Flags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
+func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
+	f.GlobalFlags = cmd.GetGlobalFlags()
 	f.Bootstrap = bc
-	c.Flags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
-	c.Flags().BoolVar(&f.useEnv, "use-env", false, `Example: --use-env or --use-env=true`)
 
-	c.Flags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
-	c.Flags().StringVar(&f.Server.Http.Address, "http-address", f.Server.Http.Address, `Example: --http-address="0.0.0.0:8080", --http-address=":8080"`)
-	c.Flags().StringVar(&f.Server.Http.Network, "http-network", f.Server.Http.Network, `Example: --http-network="tcp"`)
-	c.Flags().StringVar(&f.httpTimeout, "http-timeout", f.Server.Http.Timeout.AsDuration().String(), `Example: --http-timeout="10s", --http-timeout="1m", --http-timeout="1h", --http-timeout="1d"`)
-	c.Flags().StringVar(&f.Server.Grpc.Address, "grpc-address", f.Server.Grpc.Address, `Example: --grpc-address="0.0.0.0:9090", --grpc-address=":9090"`)
-	c.Flags().StringVar(&f.Server.Grpc.Network, "grpc-network", f.Server.Grpc.Network, `Example: --grpc-network="tcp"`)
-	c.Flags().StringVar(&f.grpcTimeout, "grpc-timeout", f.Server.Grpc.Timeout.AsDuration().String(), `Example: --grpc-timeout="10s", --grpc-timeout="1m", --grpc-timeout="1h", --grpc-timeout="1d"`)
-	c.Flags().StringVar(&f.Server.EventBus.Address, "event-bus-address", f.Server.EventBus.Address, `Example: --event-bus-address="0.0.0.0:9091", --event-bus-address=":9091"`)
-	c.Flags().StringVar(&f.Server.EventBus.Network, "event-bus-network", f.Server.EventBus.Network, `Example: --event-bus-network="tcp"`)
-	c.Flags().StringVar(&f.eventBusTimeout, "event-bus-timeout", f.Server.EventBus.Timeout.AsDuration().String(), `Example: --event-bus-timeout="10s", --event-bus-timeout="1m", --event-bus-timeout="1h", --event-bus-timeout="1d"`)
-	c.Flags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
-	c.Flags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
-	c.Flags().StringVar(&f.Jwt.Issuer, "jwt-issuer", f.Jwt.Issuer, `Example: --jwt-issuer="xxx"`)
-	c.Flags().StringVar(&f.Main.Username, "main-username", f.Main.Username, `Example: --main-username="root"`)
-	c.Flags().StringVar(&f.Main.Password, "main-password", f.Main.Password, `Example: --main-password="123456"`)
-	c.Flags().StringVar(&f.Main.Host, "main-host", f.Main.Host, `Example: --main-host="localhost"`)
-	c.Flags().Int32Var(&f.Main.Port, "main-port", f.Main.Port, `Example: --main-port=3306"`)
-	c.Flags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
-	c.Flags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
-	c.Flags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
-	c.Flags().Int32Var(&f.EventBusCore.WorkerTotal, "event-bus-core-worker-total", f.EventBusCore.WorkerTotal, `Example: --event-bus-core-worker-total=10"`)
-	c.Flags().StringVar(&f.eventBusCoreTimeout, "event-bus-core-timeout", f.EventBusCore.Timeout.AsDuration().String(), `Example: --event-bus-core-timeout="10s", --event-bus-core-timeout="1m", --event-bus-core-timeout="1h", --event-bus-core-timeout="1d"`)
-	c.Flags().Uint32Var(&f.EventBusCore.BufferSize, "event-bus-core-buffer-size", f.EventBusCore.BufferSize, `Example: --event-bus-core-buffer-size=1000"`)
-	c.Flags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="etcd"`)
-	c.Flags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
-	c.Flags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
-	c.Flags().StringVar(&f.Etcd.Password, "etcd-password", f.Etcd.Password, `Example: --etcd-password="123456"`)
-	c.Flags().StringVar(&f.Kubernetes.Namespace, "kubernetes-namespace", f.Kubernetes.Namespace, `Example: --kubernetes-namespace="moon"`)
-	c.Flags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
-	c.Flags().StringVar(&f.SwaggerBasicAuth.Username, "swagger-basic-auth-username", f.SwaggerBasicAuth.Username, `Example: --swagger-basic-auth-username="root"`)
-	c.Flags().StringVar(&f.SwaggerBasicAuth.Password, "swagger-basic-auth-password", f.SwaggerBasicAuth.Password, `Example: --swagger-basic-auth-password="123456"`)
-	c.Flags().StringVar(&f.MetricsBasicAuth.Username, "metrics-basic-auth-username", f.MetricsBasicAuth.Username, `Example: --metrics-basic-auth-username="root"`)
-	c.Flags().StringVar(&f.MetricsBasicAuth.Password, "metrics-basic-auth-password", f.MetricsBasicAuth.Password, `Example: --metrics-basic-auth-password="123456"`)
-	c.Flags().StringVar(&f.EnableClientConfig, "enable-client-config", f.EnableClientConfig, `Example: --enable-client-config="true"`)
-	c.Flags().StringVar(&f.EnableSwagger, "enable-swagger", f.EnableSwagger, `Example: --enable-swagger="true"`)
-	c.Flags().StringVar(&f.EnableMetrics, "enable-metrics", f.EnableMetrics, `Example: --enable-metrics="true"`)
-	c.Flags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
-	c.Flags().StringVar(&f.ConfigPaths, "config-paths", f.ConfigPaths, `Example: --config-paths="./datasource" --config-paths="./config,./datasource"`)
-	c.Flags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
+	c.PersistentFlags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
+	enableClientConfig, _ := strconv.ParseBool(f.EnableClientConfig)
+	c.PersistentFlags().BoolVar(&f.enableClientConfig, "enable-client-config", enableClientConfig, `Example: --enable-client-config`)
+
+	c.PersistentFlags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
+	c.PersistentFlags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
+	c.PersistentFlags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
+	c.PersistentFlags().StringVar(&f.Jwt.Issuer, "jwt-issuer", f.Jwt.Issuer, `Example: --jwt-issuer="xxx"`)
+	c.PersistentFlags().StringVar(&f.Main.Username, "main-username", f.Main.Username, `Example: --main-username="root"`)
+	c.PersistentFlags().StringVar(&f.Main.Password, "main-password", f.Main.Password, `Example: --main-password="123456"`)
+	c.PersistentFlags().StringVar(&f.Main.Host, "main-host", f.Main.Host, `Example: --main-host="localhost"`)
+	c.PersistentFlags().Int32Var(&f.Main.Port, "main-port", f.Main.Port, `Example: --main-port=3306"`)
+	c.PersistentFlags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
+	c.PersistentFlags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
+	c.PersistentFlags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
+	c.PersistentFlags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="ETCD"`)
+	c.PersistentFlags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
+	c.PersistentFlags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
+	c.PersistentFlags().StringVar(&f.Etcd.Password, "etcd-password", f.Etcd.Password, `Example: --etcd-password="123456"`)
+	c.PersistentFlags().StringVar(&f.Kubernetes.Namespace, "kubernetes-namespace", f.Kubernetes.Namespace, `Example: --kubernetes-namespace="moon"`)
+	c.PersistentFlags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
+	c.PersistentFlags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
+	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strutil.SplitSkipEmpty(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
+	c.PersistentFlags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
 }
 
-func (f *Flags) applyToBootstrap() {
+func (f *RunFlags) ApplyToBootstrap() {
+	f.EnableClientConfig = strconv.FormatBool(f.enableClientConfig)
+
 	metadata := f.Server.Metadata
 	if pointer.IsNil(metadata) {
 		metadata = make(map[string]string)
@@ -86,21 +79,6 @@ func (f *Flags) applyToBootstrap() {
 	metadata["author"] = f.Author
 	metadata["email"] = f.Email
 	f.Server.Metadata = metadata
-	if strutil.IsNotEmpty(f.httpTimeout) {
-		if timeout, err := time.ParseDuration(f.httpTimeout); pointer.IsNil(err) {
-			f.Server.Http.Timeout = durationpb.New(timeout)
-		}
-	}
-	if strutil.IsNotEmpty(f.grpcTimeout) {
-		if timeout, err := time.ParseDuration(f.grpcTimeout); pointer.IsNil(err) {
-			f.Server.Grpc.Timeout = durationpb.New(timeout)
-		}
-	}
-	if strutil.IsNotEmpty(f.eventBusTimeout) {
-		if timeout, err := time.ParseDuration(f.eventBusTimeout); pointer.IsNil(err) {
-			f.Server.EventBus.Timeout = durationpb.New(timeout)
-		}
-	}
 
 	if strutil.IsNotEmpty(f.environment) {
 		f.Environment = enum.Environment(enum.Environment_value[f.environment])
@@ -111,13 +89,69 @@ func (f *Flags) applyToBootstrap() {
 			f.Jwt.Expire = durationpb.New(expire)
 		}
 	}
-	if strutil.IsNotEmpty(f.eventBusCoreTimeout) {
-		if timeout, err := time.ParseDuration(f.eventBusCoreTimeout); pointer.IsNil(err) {
-			f.EventBusCore.Timeout = durationpb.New(timeout)
-		}
-	}
 
 	if strutil.IsNotEmpty(f.registryType) {
 		f.RegistryType = config.RegistryType(config.RegistryType_value[f.registryType])
+	}
+
+	if len(f.configPaths) > 0 {
+		var bc conf.Bootstrap
+		sourceOpts := make([]kconfig.Source, 0, len(f.configPaths))
+		sourceOpts = append(sourceOpts, env.NewSource())
+		for _, configPath := range f.configPaths {
+			if strutil.IsNotEmpty(configPath) {
+				sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
+			}
+		}
+		if len(sourceOpts) > 0 {
+			if err := conf.Load(&bc, sourceOpts...); err != nil {
+				klog.Errorw("msg", "load config failed", "error", err)
+				return
+			}
+			f.Bootstrap = &bc
+		}
+	}
+	if len(f.dataSourcePaths) > 0 {
+		f.DataSourcePaths = strings.Join(f.configPaths, ",")
+	}
+}
+
+func GetRunFlags() *RunFlags {
+	return &runFlags
+}
+
+type WireApp func(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error)
+
+func StartServer(serviceName string, wireApp WireApp) {
+	serverConf := runFlags.GetServer()
+	envOpts := []hello.Option{
+		hello.WithVersion(runFlags.Version),
+		hello.WithID(runFlags.Hostname),
+		hello.WithName(serverConf.GetName()),
+		hello.WithEnv(runFlags.Environment.String()),
+		hello.WithMetadata(serverConf.GetMetadata()),
+	}
+	if strings.EqualFold(serverConf.GetUseRandomID(), "true") {
+		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
+	}
+	hello.SetEnvWithOption(envOpts...)
+	helper := klog.NewHelper(klog.With(klog.GetLogger(),
+		"cmd", serviceName,
+		"service.name", hello.Name(),
+		"service.id", hello.ID(),
+		"caller", klog.DefaultCaller,
+		"trace.id", tracing.TraceID(),
+		"span.id", tracing.SpanID()),
+	)
+
+	app, cleanup, err := wireApp(runFlags.Bootstrap, helper)
+	if err != nil {
+		klog.Errorw("msg", "wireApp failed", "error", err)
+		return
+	}
+	defer cleanup()
+	if err := app.Run(); err != nil {
+		klog.Errorw("msg", "app run failed", "error", err)
+		return
 	}
 }

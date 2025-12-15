@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	clientV3 "go.etcd.io/etcd/client/v3"
 
-	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/config"
@@ -25,7 +24,6 @@ import (
 )
 
 func run(_ *cobra.Command, _ []string) {
-	flags.GlobalFlags = cmd.GetGlobalFlags()
 	var bc config.ClientConfig
 	if err := conf.Load(&bc, env.NewSource(), file.NewSource(flags.RabbitConfigPath)); err != nil {
 		klog.Errorw("msg", "load config failed", "error", err)

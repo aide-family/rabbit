@@ -11,7 +11,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
-	"github.com/aide-family/rabbit/internal/biz/do"
+	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/internal/conf"
@@ -30,7 +30,7 @@ func NewMessageRepository(
 	messageLogRepo repository.MessageLog,
 	helper *klog.Helper,
 ) repository.Message {
-	eventBusCoreConf := bc.GetEventBusCore()
+	jobCoreConf := bc.GetJobCore()
 	clusterConfig := bc.GetCluster()
 	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 	clusterProtocol := clusterConfig.GetProtocol()
@@ -40,19 +40,18 @@ func NewMessageRepository(
 		d:               d,
 		transactionRepo: transactionRepo,
 		messageLogRepo:  messageLogRepo,
-		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message_bus")),
-		messageChan:     make(chan *messageTask, eventBusCoreConf.GetBufferSize()),
+		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message")),
+		messageChan:     make(chan *messageTask, jobCoreConf.GetBufferSize()),
 		senders:         safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
 		stopChan:        make(chan struct{}),
 		wg:              sync.WaitGroup{},
-		workerTotal:     int(eventBusCoreConf.GetWorkerTotal()),
-		timeout:         eventBusCoreConf.GetTimeout().AsDuration(),
+		workerTotal:     int(jobCoreConf.GetWorkerTotal()),
+		timeout:         jobCoreConf.GetTimeout().AsDuration(),
 		clusters:        make([]sender.Sender, 0, len(clusterEndpoints)),
 	}
 
 	// 注册发送器
-	messageRepo.senders.Set(vobj.MessageTypeEmail, sender.NewEmailSender(helper))
-	messageRepo.senders.Set(vobj.MessageTypeWebhook, sender.NewWebhookSender(helper))
+	messageRepo.registerSenders(sender.NewEmailSender(helper), sender.NewWebhookSender(helper))
 
 	safety.Go(context.Background(), "message_repository_init_clusters", func(ctx context.Context) error {
 		time.Sleep(3 * time.Second)
@@ -161,7 +160,7 @@ func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageU
 
 func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	// 在事务中使用 SELECT FOR UPDATE 获取分布式锁
-	var newMessage *do.MessageLog
+	var newMessage *bo.MessageLogItemBo
 	err := m.transactionRepo.Transaction(ctx, func(transactionCtx context.Context) error {
 		// 使用 SELECT FOR UPDATE 获取行锁，确保同一时间只有一个节点能处理该消息
 		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, messageUID)
@@ -187,7 +186,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 			return nil
 		}
 
-		newMessage = lockedMessage
+		newMessage = bo.NewMessageLogItemBo(lockedMessage)
 		return nil
 	})
 	if err != nil {
@@ -204,7 +203,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 }
 
 // processMessage 处理消息
-func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *do.MessageLog) error {
+func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.MessageLogItemBo) error {
 	if message.Status.IsSent() || message.Status.IsSending() {
 		return nil
 	}
@@ -285,5 +284,11 @@ func (m *messageRepositoryImpl) initClusters(clusterEndpoints []string, clusterP
 			m.d.AppendClose("httpClient", func() error { return httpClient.Close() })
 			m.clusters = append(m.clusters, sender.NewClusterSender(nil, httpClient, clusterProtocol))
 		}
+	}
+}
+
+func (m *messageRepositoryImpl) registerSenders(senders ...repository.MessageSender) {
+	for _, sender := range senders {
+		m.senders.Set(sender.Type(), sender)
 	}
 }

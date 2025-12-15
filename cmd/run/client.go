@@ -7,29 +7,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/strutil"
+	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/v2/encoding"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	jwtv5 "github.com/golang-jwt/jwt/v5"
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/strutil"
-	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/server"
 	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/middler"
 )
 
-const (
-	defaultClientUsername = "root"
-	defaultClientUserUID  = 1
-)
-
-// generateClientConfig 生成 ClientConfig 并写入 .rabbit/config.yaml
-func generateClientConfig(
+// GenerateClientConfig 生成 ClientConfig 并写入 指定路径 默认.rabbit/config.yaml
+func GenerateClientConfig(
 	bc *conf.Bootstrap,
 	srvs server.Servers,
 	helper *klog.Helper,
@@ -38,19 +31,22 @@ func generateClientConfig(
 		helper.Debugw("msg", "client config is not enabled")
 		return nil
 	}
-	// 获取服务器 endpoint
-	var httpEndpoint, grpcEndpoint string
+	var clusterEndpoint string
+	var clusterProtocol config.ClusterConfig_Protocol
 	for _, srv := range srvs {
-		switch s := srv.(type) {
-		case *http.Server:
-			endpoint, err := s.Endpoint()
+		if grpcSrv, ok := srv.(*grpc.Server); ok {
+			endpoint, err := grpcSrv.Endpoint()
 			if err == nil {
-				httpEndpoint = endpoint.String()
+				clusterEndpoint = endpoint.String()
+				clusterProtocol = config.ClusterConfig_GRPC
+				break
 			}
-		case *grpc.Server:
-			endpoint, err := s.Endpoint()
+		}
+		if httpSrv, ok := srv.(*http.Server); ok {
+			endpoint, err := httpSrv.Endpoint()
 			if err == nil {
-				grpcEndpoint = endpoint.String()
+				clusterEndpoint = endpoint.String()
+				clusterProtocol = config.ClusterConfig_HTTP
 			}
 		}
 	}
@@ -76,43 +72,24 @@ func generateClientConfig(
 	} else {
 		// 如果没有配置，使用默认值
 		var endpoint string
-		var protocol config.ClusterConfig_Protocol
 		if registryType == config.RegistryType_ETCD || registryType == config.RegistryType_KUBERNETES {
 			// 如果使用 etcd 或 k8s 注册，使用 discovery:///服务名称 格式
 			endpoint = strings.Join([]string{"discovery://", serverName}, "/")
-			protocol = config.ClusterConfig_GRPC
 		} else {
-			protocol = config.ClusterConfig_GRPC
-			endpoint = normalizeAddress(grpcEndpoint)
-			if endpoint == "" {
-				endpoint = normalizeAddress(httpEndpoint)
-				protocol = config.ClusterConfig_HTTP
-			}
+			endpoint = normalizeAddress(clusterEndpoint)
 		}
 		clientConfig.Cluster = &config.ClusterConfig{
 			Name:      serverName,
 			Endpoints: endpoint,
-			Protocol:  protocol,
+			Protocol:  clusterProtocol,
 			Timeout:   durationpb.New(10 * time.Second),
 		}
 	}
 
-	// 2. 生成 root jwtToken
-	jwtConf := bc.GetJwt()
-	if jwtConf != nil {
-		rootClaims := middler.NewJwtClaims(jwtConf, middler.BaseInfo{
-			UserID:   defaultClientUserUID,
-			Username: defaultClientUsername,
-		})
-		// 设置较长的过期时间（1年）
-		rootClaims.ExpiresAt = jwtv5.NewNumericDate(time.Now().Add(365 * 24 * time.Hour))
-		if token, err := rootClaims.GenerateToken(); err == nil {
-			clientConfig.JwtToken = strings.Join([]string{cnst.HTTPHeaderBearerPrefix, token}, " ")
-		}
-	}
+	clientConfig.JwtToken = strings.Join([]string{cnst.HTTPHeaderBearerPrefix, "<jwt-token>"}, " ")
 
 	// 写入配置文件到当前目录的 .rabbit/client_config.yaml
-	configDir := filepath.Dir(load.ExpandHomeDir(flags.RabbitConfigPath))
+	configDir := filepath.Dir(load.ExpandHomeDir(runFlags.RabbitConfigPath))
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		return fmt.Errorf("create config directory failed: %w", err)
 	}
@@ -139,17 +116,15 @@ func normalizeAddress(addr string) string {
 	if addr == "" {
 		return addr
 	}
-	// 移除协议前缀
-	protocols := []string{"https://", "http://", "grpcs://", "grpc://"}
-	for _, protocol := range protocols {
-		if strings.HasPrefix(addr, protocol) {
-			addr = strings.TrimPrefix(addr, protocol)
-			break
-		}
+	// 移除协议前缀：去除 // 前面的所有字符
+	if idx := strings.Index(addr, "//"); idx != -1 {
+		addr = addr[idx+2:]
 	}
+	// 移除末尾的 / 字符
+	addr = strings.TrimSpace(strings.TrimSuffix(addr, "/"))
 	// 将 0.0.0.0 转换为 localhost
-	if strings.HasPrefix(addr, "0.0.0.0:") {
-		addr = strings.Replace(addr, "0.0.0.0:", "localhost:", 1)
+	if strings.HasPrefix(addr, "0.0.0.0") {
+		addr = strings.Replace(addr, "0.0.0.0", "localhost", 1)
 	}
 	return addr
 }

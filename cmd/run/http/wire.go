@@ -1,8 +1,8 @@
 //go:build wireinject
 // +build wireinject
 
-// Package run is the run command for the Rabbit service
-package run
+// Package http is the http command for the Rabbit service
+package http
 
 import (
 	"github.com/go-kratos/kratos/v2"
@@ -19,7 +19,7 @@ import (
 
 func wireApp(bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error) {
 	panic(wire.Build(
-		server.ProviderSetServer,
+		server.ProviderSetServerHTTP,
 		service.ProviderSetService,
 		biz.ProviderSetBiz,
 		impl.ProviderSetImpl,

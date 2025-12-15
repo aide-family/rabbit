@@ -76,7 +76,6 @@ func NewCmd() *cobra.Command {
 			filterLogger := klog.NewFilter(logger, klog.FilterLevel(klog.ParseLevel(globalFlags.LogLevel)))
 			helper := klog.NewHelper(filterLogger)
 			klog.SetLogger(helper.Logger())
-			helper.Debugw("msg", "logger initialized", "log-format", globalFlags.LogFormat, "log-level", globalFlags.LogLevel)
 		},
 	}
 	globalFlags.addFlags(rootCmd)

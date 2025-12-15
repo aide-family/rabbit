@@ -9,29 +9,29 @@ import (
 	"github.com/aide-family/rabbit/internal/biz/repository"
 )
 
-func NewEventBus(
+func NewJob(
 	messageRepo repository.Message,
 	helper *klog.Helper,
-) *EventBus {
-	return &EventBus{
+) *Job {
+	return &Job{
 		messageRepo: messageRepo,
-		helper:      klog.NewHelper(klog.With(helper.Logger(), "biz", "eventBus")),
+		helper:      klog.NewHelper(klog.With(helper.Logger(), "biz", "job")),
 	}
 }
 
-type EventBus struct {
+type Job struct {
 	helper      *klog.Helper
 	messageRepo repository.Message
 }
 
-func (e *EventBus) appendMessage(ctx context.Context, messageUID snowflake.ID) error {
+func (e *Job) appendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	return e.messageRepo.AppendMessage(ctx, messageUID)
 }
 
-func (e *EventBus) Start(ctx context.Context) error {
+func (e *Job) Start(ctx context.Context) error {
 	return e.messageRepo.Start(ctx)
 }
 
-func (e *EventBus) Stop(ctx context.Context) error {
+func (e *Job) Stop(ctx context.Context) error {
 	return e.messageRepo.Stop(ctx)
 }

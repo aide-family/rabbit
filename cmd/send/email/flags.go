@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/cmd/send"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/go-kratos/kratos/v2/encoding"
@@ -12,7 +12,7 @@ import (
 )
 
 type Flags struct {
-	cmd.GlobalFlags
+	send.SendFlags
 
 	UID         int64    `json:"uid" yaml:"uid"`
 	Subject     string   `json:"subject" yaml:"subject"`
@@ -29,6 +29,7 @@ type Flags struct {
 var flags Flags
 
 func (f *Flags) addFlags(c *cobra.Command) {
+	f.SendFlags = send.GetSendFlags()
 	c.Flags().Int64VarP(&f.UID, "uid", "u", 0, "The uid of the email")
 	c.Flags().StringVarP(&f.Subject, "subject", "s", "", "The subject of the email")
 	c.Flags().StringVarP(&f.Body, "body", "b", "", "The body of the email")
