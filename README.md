@@ -1,5 +1,11 @@
 # Rabbit (Jade Rabbit) 🐰
 
+<div align="right">
+
+[English](README.md) | [中文](README-zh_CN.md)
+
+</div>
+
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Kratos](https://img.shields.io/badge/Kratos-v2-00ADD8?style=flat&logo=go)](https://github.com/go-kratos/kratos)
@@ -271,26 +277,29 @@ Rabbit supports configuration through environment variables. All environment var
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--config`, `-c` | `` | Configuration file path (can be used multiple times) |
+| `--enable-client-config` | `false` | Enable client configuration |
+| `--server-name` | `rabbit` | Server name |
+| `--use-random-node-id` | `false` | Use random node ID |
+| `--server-metadata` | `` | Server metadata (format: key=value, can be used multiple times) |
 | `--environment` | `PROD` | Environment: DEV, TEST, PREVIEW, PROD |
-| `--use-database` | `false` | Enable database storage mode (mutually exclusive with --datasource-paths) |
-| `--datasource-paths` | `` | Data source file paths (comma-separated, mutually exclusive with --use-database) |
-| `--message-log-path` | `` | Message log file path |
 | `--jwt-secret` | `xxx` | JWT secret key |
 | `--jwt-expire` | `600s` | JWT expiration time |
 | `--jwt-issuer` | `rabbit` | JWT issuer |
+| `--main-username` | `root` | MySQL username |
+| `--main-password` | `123456` | MySQL password |
 | `--main-host` | `localhost` | MySQL host |
 | `--main-port` | `3306` | MySQL port |
 | `--main-database` | `rabbit` | Database name |
-| `--main-username` | `root` | MySQL username |
-| `--main-password` | `123456` | MySQL password |
 | `--main-debug` | `false` | Enable database debug mode |
 | `--main-use-system-logger` | `true` | Use system logger for database |
-| `--registry-type` | `` | Registry type: etcd, kubernetes |
+| `--registry-type` | `` | Registry type: ETCD, KUBERNETES |
 | `--etcd-endpoints` | `127.0.0.1:2379` | etcd endpoints |
 | `--etcd-username` | `` | etcd username |
 | `--etcd-password` | `` | etcd password |
-| `--kubernetes-namespace` | `moon` | Kubernetes namespace |
 | `--kubernetes-kubeconfig` | `~/.kube/config` | Kubernetes kubeconfig path |
+| `--use-database` | `false` | Enable database storage mode (mutually exclusive with --datasource-paths) |
+| `--datasource-paths` | `` | Data source file paths (comma-separated, mutually exclusive with --use-database) |
+| `--message-log-path` | `` | Message log file path |
 
 #### Run All Command Flags
 

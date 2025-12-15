@@ -1,5 +1,11 @@
 # Rabbit (玉兔) 🐰
 
+<div align="right">
+
+[English](README.md) | [中文](README-zh_CN.md)
+
+</div>
+
 [![Go 版本](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![许可证](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Kratos](https://img.shields.io/badge/Kratos-v2-00ADD8?style=flat&logo=go)](https://github.com/go-kratos/kratos)
@@ -271,26 +277,29 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | 参数 | 默认值 | 说明 |
 |------|--------|------|
 | `--config`, `-c` | `` | 配置文件路径（可多次使用） |
+| `--enable-client-config` | `false` | 启用客户端配置 |
+| `--server-name` | `rabbit` | 服务名称 |
+| `--use-random-node-id` | `false` | 使用随机节点 ID |
+| `--server-metadata` | `` | 服务元数据（格式：key=value，可多次使用） |
 | `--environment` | `PROD` | 环境：DEV, TEST, PREVIEW, PROD |
-| `--use-database` | `false` | 启用数据库存储模式（与 --datasource-paths 互斥） |
-| `--datasource-paths` | `` | 数据源文件路径（逗号分隔，与 --use-database 互斥） |
-| `--message-log-path` | `` | 消息日志文件路径 |
 | `--jwt-secret` | `xxx` | JWT 密钥 |
 | `--jwt-expire` | `600s` | JWT 过期时间 |
 | `--jwt-issuer` | `rabbit` | JWT 签发者 |
+| `--main-username` | `root` | MySQL 用户名 |
+| `--main-password` | `123456` | MySQL 密码 |
 | `--main-host` | `localhost` | MySQL 主机地址 |
 | `--main-port` | `3306` | MySQL 端口 |
 | `--main-database` | `rabbit` | 数据库名称 |
-| `--main-username` | `root` | MySQL 用户名 |
-| `--main-password` | `123456` | MySQL 密码 |
 | `--main-debug` | `false` | 启用数据库调试模式 |
 | `--main-use-system-logger` | `true` | 数据库使用系统日志 |
-| `--registry-type` | `` | 注册中心类型：etcd, kubernetes |
+| `--registry-type` | `` | 注册中心类型：ETCD, KUBERNETES |
 | `--etcd-endpoints` | `127.0.0.1:2379` | etcd 端点 |
 | `--etcd-username` | `` | etcd 用户名 |
 | `--etcd-password` | `` | etcd 密码 |
-| `--kubernetes-namespace` | `moon` | Kubernetes 命名空间 |
 | `--kubernetes-kubeconfig` | `~/.kube/config` | Kubernetes kubeconfig 路径 |
+| `--use-database` | `false` | 启用数据库存储模式（与 --datasource-paths 互斥） |
+| `--datasource-paths` | `` | 数据源文件路径（逗号分隔，与 --use-database 互斥） |
+| `--message-log-path` | `` | 消息日志文件路径 |
 
 #### Run All 命令参数
 
