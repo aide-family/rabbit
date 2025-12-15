@@ -85,13 +85,13 @@ docker-compose up -d
 rabbit config --path ./config --name server.yaml
 
 # Or with custom path
-rabbit config -p ./config -n server.yaml
+rabbit config -p ./config -N server.yaml
 
 # Force overwrite existing file
-rabbit config -p ./config -n server.yaml --force
+rabbit config -p ./config -N server.yaml --force
 
 # Generate client configuration file
-rabbit config -p ./config -n client.yaml --client
+rabbit config -p ./config -N client.yaml --client
 ```
 
 ## 📦 Deployment
@@ -268,8 +268,8 @@ Rabbit supports configuration through environment variables. All environment var
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
 | `--path`, `-p` | | `.` | Output path for the config file |
-| `--name` | | `config.yaml` | Output file name |
-| `--force`, `-f` | | `false` | Overwrite existing file if it exists |
+| `--name`, `-N` | | `config.yaml` | Output file name |
+| `--force`, `-f` | | `false` | Overwrite existing file if it exists (default is to rename with timestamp) |
 | `--client` | | `false` | Generate client config file instead of server config |
 
 #### Run Command Flags
