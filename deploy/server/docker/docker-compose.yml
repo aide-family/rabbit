@@ -43,7 +43,7 @@ services:
     # command: ["config", "--path", "/moon/config"]
     # command: ["run", "--config", "/moon/config/server.yaml"]
     # command: ["run", "--use-database", "true", "--main-host", "mysql"]
-    command: [ "run" ]
+    command: [ "run", "all" ]
     healthcheck:
       test: [ "CMD", "/usr/local/bin/rabbit", "version" ]
       interval: 30s

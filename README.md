@@ -7,7 +7,7 @@
 </div>
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Kratos](https://img.shields.io/badge/Kratos-v2-00ADD8?style=flat&logo=go)](https://github.com/go-kratos/kratos)
 
 > A distributed messaging platform built on the Kratos framework, providing unified message delivery and management capabilities.
@@ -94,32 +94,47 @@ rabbit config -p ./config -N server.yaml --force
 rabbit config -p ./config -N client.yaml --client
 ```
 
+## 📦 Image Build
+
+```bash
+docker build -t rabbit-local:latest .
+```
+
 ## 📦 Deployment
 
 ### Docker Deployment
 
+See [Docker Deployment Documentation](deploy/server/docker/README-docker.md) for detailed instructions.
+
+```bash
+docker run -d \
+  --name rabbit \
+  -p 8080:8080 \
+  -p 9090:9090 \
+  -v $(pwd)/config:/moon/config \
+  -v $(pwd)/datasource:/moon/datasource \
+  --restart=always \
+  rabbit-local:latest run all
+```
+
+### docker-compose Deployment
+
 See [Docker Compose Documentation](deploy/server/docker/README-docker-compose.md) for detailed instructions.
 
 ```bash
-cd deploy/server/docker
-docker-compose up -d
+docker build -t rabbit-local:latest .
+docker-compose -f deploy/server/docker/docker-compose.yml up -d
 ```
 
 ### Kubernetes Deployment
 
-See [Kubernetes Deployment Guide](deploy/server/k8s/README.md) for detailed instructions.
+See [Kubernetes Deployment Documentation](deploy/server/k8s/README.md) for detailed instructions.
 
 #### Quick Deploy
 
 ```bash
 cd deploy/server/k8s
-./deploy.sh
-```
-
-#### Using Kustomize
-
-```bash
-kubectl apply -k deploy/server/k8s/
+kubectl apply -f deploy/server/k8s/rabbit.yaml
 ```
 
 ### Manual Deployment
@@ -161,8 +176,8 @@ Rabbit supports configuration through environment variables. All environment var
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MOON_RABBIT_ENVIRONMENT` | `PROD` | Environment: DEV, TEST, PREVIEW, PROD |
-| `MOON_RABBIT_NAME` | `moon.rabbit` | Service name |
-| `MOON_RABBIT_USE_RANDOM_ID` | `false` | Use random service ID |
+| `MOON_RABBIT_SERVER_NAME` | `moon.rabbit` | Service name |
+| `MOON_RABBIT_USE_RANDOM_NODE_ID` | `false` | Use random service ID |
 | `MOON_RABBIT_METADATA_TAG` | `rabbit` | Service metadata tag |
 | `MOON_RABBIT_METADATA_REPOSITORY` | `https://github.com/aide-family/rabbit` | Service metadata repository |
 | `MOON_RABBIT_METADATA_AUTHOR` | `Aide Family` | Service metadata author |
@@ -565,7 +580,7 @@ When reporting issues, please include:
 
 ## 📄 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 

@@ -7,7 +7,7 @@
 </div>
 
 [![Go 版本](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://golang.org/)
-[![许可证](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![许可证](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Kratos](https://img.shields.io/badge/Kratos-v2-00ADD8?style=flat&logo=go)](https://github.com/go-kratos/kratos)
 
 > 基于 Kratos 框架构建的分布式消息服务平台，提供统一的消息发送和管理能力。
@@ -94,32 +94,47 @@ rabbit config -p ./config -N server.yaml --force
 rabbit config -p ./config -N client.yaml --client
 ```
 
+## 📦 镜像构建
+
+```bash
+docker build -t rabbit-local:latest .
+```
+
 ## 📦 部署
 
 ### Docker 部署
 
+详细说明请参考 [Docker 部署文档](deploy/server/docker/README-docker.md)。
+
+```bash
+docker run -d \
+  --name rabbit \
+  -p 8080:8080 \
+  -p 9090:9090 \
+  -v $(pwd)/config:/moon/config \
+  -v $(pwd)/datasource:/moon/datasource \
+  --restart=always \
+  rabbit-local:latest run all
+```
+
+### docker-compose 部署
+
 详细说明请参考 [Docker Compose 文档](deploy/server/docker/README-docker-compose.md)。
 
 ```bash
-cd deploy/server/docker
-docker-compose up -d
+docker build -t rabbit-local:latest .
+docker-compose -f deploy/server/docker/docker-compose.yml up -d
 ```
 
 ### Kubernetes 部署
 
-详细说明请参考 [Kubernetes 部署指南](deploy/server/k8s/README.md)。
+详细说明请参考 [Kubernetes 部署文档](deploy/server/k8s/README.md)。
 
 #### 快速部署
 
 ```bash
 cd deploy/server/k8s
-./deploy.sh
-```
-
-#### 使用 Kustomize
-
-```bash
-kubectl apply -k deploy/server/k8s/
+kubectl apply -f deploy/server/k8s/rabbit.yaml
 ```
 
 ### 手动部署
@@ -161,8 +176,8 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `MOON_RABBIT_ENVIRONMENT` | `PROD` | 环境：DEV, TEST, PREVIEW, PROD |
-| `MOON_RABBIT_NAME` | `moon.rabbit` | 服务名称 |
-| `MOON_RABBIT_USE_RANDOM_ID` | `false` | 使用随机服务 ID |
+| `MOON_RABBIT_SERVER_NAME` | `moon.rabbit` | 服务名称 |
+| `MOON_RABBIT_USE_RANDOM_NODE_ID` | `false` | 使用随机服务 ID |
 | `MOON_RABBIT_METADATA_TAG` | `rabbit` | 服务元数据标签 |
 | `MOON_RABBIT_METADATA_REPOSITORY` | `https://github.com/aide-family/rabbit` | 服务元数据仓库 |
 | `MOON_RABBIT_METADATA_AUTHOR` | `Aide Family` | 服务元数据作者 |
@@ -564,7 +579,7 @@ Closes #123
 
 ## 📄 许可证
 
-本项目采用 Apache License 2.0 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
 ## 🙏 致谢
 

@@ -12,19 +12,19 @@ import (
 	"github.com/aide-family/rabbit/internal/service"
 )
 
-var _ transport.Server = (*Job)(nil)
+var _ Server = (*JobServer)(nil)
 
-type JobServer interface {
+type Server interface {
 	transport.Server
 	transport.Endpointer
 }
 
-func NewJob(bc *conf.Bootstrap, namespaceService *service.NamespaceService, helper *klog.Helper) *Job {
-	return newJob(bc.GetServer().GetJob(), bc.GetJwt(), namespaceService, helper)
+func NewJobServer(bc *conf.Bootstrap, namespaceService *service.NamespaceService, helper *klog.Helper) *JobServer {
+	return newJobServer(bc.GetServer().GetJob(), bc.GetJwt(), namespaceService, helper)
 }
 
-func newJob(jobConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) *Job {
-	var server JobServer
+func newJobServer(jobConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) *JobServer {
+	var server Server
 	serverConf := &conf.Server_ServerConfig{
 		Address: jobConf.GetAddress(),
 		Timeout: jobConf.GetTimeout(),
@@ -34,24 +34,24 @@ func newJob(jobConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService 
 	} else {
 		server = newGRPCServer(serverConf, jwtConf, namespaceService, helper)
 	}
-	return &Job{
+	return &JobServer{
 		helper: klog.NewHelper(klog.With(helper.Logger(), "server", "job")),
 		server: server,
 	}
 }
 
-type Job struct {
+type JobServer struct {
 	jobService *service.JobService
-	server     JobServer
+	server     Server
 	helper     *klog.Helper
 }
 
-func (e *Job) RegisterHandler(jobService *service.JobService) {
+func (e *JobServer) RegisterHandler(jobService *service.JobService) {
 	e.jobService = jobService
 }
 
 // Start implements transport.Server.
-func (e *Job) Start(ctx context.Context) error {
+func (e *JobServer) Start(ctx context.Context) error {
 	if err := e.jobService.Start(ctx); err != nil {
 		e.helper.Errorw("msg", "start job failed", "error", err)
 		return err
@@ -70,7 +70,7 @@ func (e *Job) Start(ctx context.Context) error {
 }
 
 // Stop implements transport.Server.
-func (e *Job) Stop(ctx context.Context) error {
+func (e *JobServer) Stop(ctx context.Context) error {
 	if err := e.server.Stop(ctx); err != nil {
 		e.helper.Errorw("msg", "stop server failed", "error", err)
 		return err
@@ -84,6 +84,6 @@ func (e *Job) Stop(ctx context.Context) error {
 }
 
 // Endpoint implements transport.Server.
-func (e *Job) Endpoint() (*url.URL, error) {
+func (e *JobServer) Endpoint() (*url.URL, error) {
 	return e.server.Endpoint()
 }
