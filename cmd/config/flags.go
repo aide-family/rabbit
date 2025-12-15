@@ -23,7 +23,7 @@ var flags Flags
 func (f *Flags) addFlags(c *cobra.Command) {
 	f.GlobalFlags = cmd.GetGlobalFlags()
 	c.Flags().StringVarP(&f.path, "path", "p", ".", "output path for the config file (default is current directory)")
-	c.Flags().StringVar(&f.name, "name", "config.yaml", "output file name (default is config.yaml)")
+	c.Flags().StringVarP(&f.name, "name", "N", "config.yaml", "output file name (default is config.yaml)")
 	c.Flags().BoolVarP(&f.force, "force", "f", false, "overwrite existing file if it exists (default is to rename with timestamp)")
 	c.Flags().BoolVar(&f.isClient, "client", false, "generate client config file (default is server config file)")
 }

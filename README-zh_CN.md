@@ -85,13 +85,13 @@ docker-compose up -d
 rabbit config --path ./config --name server.yaml
 
 # 或使用自定义路径
-rabbit config -p ./config -n server.yaml
+rabbit config -p ./config -N server.yaml
 
 # 强制覆盖已存在的文件
-rabbit config -p ./config -n server.yaml --force
+rabbit config -p ./config -N server.yaml --force
 
 # 生成客户端配置文件
-rabbit config -p ./config -n client.yaml --client
+rabbit config -p ./config -N client.yaml --client
 ```
 
 ## 📦 部署
@@ -268,8 +268,8 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | 参数 | 简写 | 默认值 | 说明 |
 |------|------|--------|------|
 | `--path`, `-p` | | `.` | 配置文件输出路径 |
-| `--name` | | `config.yaml` | 输出文件名 |
-| `--force`, `-f` | | `false` | 强制覆盖已存在的文件 |
+| `--name`, `-N` | | `config.yaml` | 输出文件名 |
+| `--force`, `-f` | | `false` | 强制覆盖已存在的文件（默认为使用时间戳重命名） |
 | `--client` | | `false` | 生成客户端配置文件而非服务器配置 |
 
 #### Run 命令参数
