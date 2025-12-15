@@ -72,10 +72,10 @@ func (c *protoYAMLCodec) Name() string {
 }
 
 var (
-	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewJob)
+	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewJobServer)
 	ProviderSetServerHTTP = wire.NewSet(NewHTTPServer, RegisterHTTPService)
 	ProviderSetServerGRPC = wire.NewSet(NewGRPCServer, RegisterGRPCService)
-	ProviderSetServerJob  = wire.NewSet(NewJob, RegisterJobService)
+	ProviderSetServerJob  = wire.NewSet(NewJobServer, RegisterJobService)
 )
 
 // init initializes the json.MarshalOptions.
@@ -143,7 +143,7 @@ func RegisterService(
 	c *conf.Bootstrap,
 	httpSrv *http.Server,
 	grpcSrv *grpc.Server,
-	jobSrv *Job,
+	jobSrv *JobServer,
 	healthService *service.HealthService,
 	emailService *service.EmailService,
 	webhookService *service.WebhookService,
@@ -226,7 +226,7 @@ func RegisterGRPCService(
 // RegisterJobService registers only Job service.
 func RegisterJobService(
 	c *conf.Bootstrap,
-	jobSrv *Job,
+	jobSrv *JobServer,
 	jobService *service.JobService,
 ) Servers {
 	jobSrv.RegisterHandler(jobService)

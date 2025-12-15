@@ -174,7 +174,7 @@ dev:
 
 .PHONY: test
 # run the tests
-test:
+test: all
 	@echo "Running tests"
 	go test ./...
 
