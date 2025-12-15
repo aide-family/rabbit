@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/gormlog"
+	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
@@ -18,6 +20,7 @@ import (
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 const cmdLong = `GORM code generation and database migration tools for Rabbit service.
@@ -44,6 +47,19 @@ Use Cases:
 
 Use 'rabbit gorm gen' to generate model and repository code, and 'rabbit gorm migrate'
 to migrate the database schema.`
+
+func init() {
+	logger, err := log.NewLogger(stdio.LoggerDriver())
+	if err != nil {
+		panic(merr.ErrorInternal("new logger failed with error: %v", err).WithCause(err))
+	}
+	logger = klog.With(logger,
+		"ts", klog.DefaultTimestamp,
+	)
+	filterLogger := klog.NewFilter(logger, klog.FilterLevel(klog.LevelInfo))
+	helper := klog.NewHelper(filterLogger)
+	klog.SetLogger(helper.Logger())
+}
 
 func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
@@ -74,7 +90,7 @@ func initDB() (*gorm.DB, error) {
 		c := config.New(config.WithSource(
 			env.NewSource(),
 			file.NewSource(flags.configPath),
-		), config.WithPrintLoadedDebugLog(false))
+		))
 		if err := c.Load(); err != nil {
 			klog.Errorw("msg", "load config failed", "error", err)
 			return nil, err

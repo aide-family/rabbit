@@ -19,8 +19,8 @@ RUN make init
 # 复制源代码
 COPY . .
 
-RUN git clone https://github.com/aide-family/magicbox.git ../magicbox
-RUN git clone https://github.com/aide-family/kratos.git ../kratos
+# RUN git clone https://github.com/aide-family/magicbox.git ../magicbox
+# RUN git clone https://github.com/aide-family/kratos.git ../kratos
 
 # 构建应用
 RUN make build

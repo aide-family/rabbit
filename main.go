@@ -28,7 +28,7 @@ import (
 )
 
 var (
-	Name        = "moon.rabbit"
+	Name        = "moon"
 	Version     = "latest"
 	BuildTime   = "now"
 	Author      = "Aide Family"

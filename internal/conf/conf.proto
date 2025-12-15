@@ -37,11 +37,12 @@ message Server {
 	}
 	
 	string name = 1;
-	map<string, string> metadata = 2;
-	ServerConfig http = 3;
-	ServerConfig grpc = 4;
-	ServerConfig job = 5;
-	string useRandomID = 6;
+	string namespace = 2;
+	map<string, string> metadata = 3;
+	ServerConfig http = 4;
+	ServerConfig grpc = 5;
+	ServerConfig job = 6;
+	string useRandomID = 7;
 }
 	
 message JWT {

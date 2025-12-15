@@ -69,7 +69,7 @@ func (d *Data) LoadFileConfig(bc *conf.Bootstrap, helper *klog.Helper) error {
 			return
 		}
 
-		c := config.New(config.WithSource(fileSources...), config.WithPrintLoadedDebugLog(false))
+		c := config.New(config.WithSource(fileSources...))
 		if err = c.Load(); err != nil {
 			helper.Errorw("msg", "load config failed", "error", err)
 			return

@@ -64,6 +64,8 @@ github.com/PuerkitoBio/purell v1.1.1 h1:WEQqlqaGbrPkxLJWfBwQmfEAE1Z7ONdDLqrN38tN
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
+github.com/aide-family/magicbox v0.0.4 h1:OREj1GVST4X3x3n/OkjgFFkNSUg16XDBSG6Qa61tyiY=
+github.com/aide-family/magicbox v0.0.4/go.mod h1:PkFsi8ADP8Esbw8F2BX1fHq/7A8Ep6wRrsLWG77cCnA=
 github.com/alicebob/miniredis/v2 v2.35.0 h1:QwLphYqCEAo1eu1TqPRN2jgVMPBweeQcR21jeqDCONI=
 github.com/alicebob/miniredis/v2 v2.35.0/go.mod h1:TcL7YfarKPGDAthEtl5NBeHZfeUQj6OXMm/+iu5cLMM=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
@@ -138,6 +140,8 @@ github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20251015020953-cdff2
 github.com/go-kratos/kratos/contrib/registry/etcd/v2 v2.0.0-20251015020953-cdff24709025/go.mod h1:m6EZSMUBZDxtGxzIFaR5lrr8GRp/8llV3wI2ywYvEnk=
 github.com/go-kratos/kratos/contrib/registry/kubernetes/v2 v2.0.0-20251015020953-cdff24709025 h1:NB9w3VPlIrdxhvyP2kYr2M69oRVW1Wi0iXtRGjO0GeY=
 github.com/go-kratos/kratos/contrib/registry/kubernetes/v2 v2.0.0-20251015020953-cdff24709025/go.mod h1:JOseK7NaDUPM2LEOiBm4BfoWjmE14630qZNGCkR9zY8=
+github.com/go-kratos/kratos/v2 v2.9.1 h1:EGif6/S/aK/RCR5clIbyhioTNyoSrii3FC118jG40Z0=
+github.com/go-kratos/kratos/v2 v2.9.1/go.mod h1:a1MQLjMhIh7R0kcJS9SzJYR43BRI7EPzzN0J1Ksu2bA=
 github.com/go-logr/logr v0.1.0/go.mod h1:ixOQHD9gLJUVQQ2ZOR7zLEifBX6tGkNJF4QyIY7sIas=
 github.com/go-logr/logr v0.2.0/go.mod h1:z6/tIYblkpsD+a4lm/fGIIU9mZ+XfAiaFtq7xTgseGU=
 github.com/go-logr/logr v1.2.0/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=

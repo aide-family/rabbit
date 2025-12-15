@@ -2,6 +2,8 @@
 package job
 
 import (
+	"strings"
+
 	"github.com/aide-family/magicbox/hello"
 	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -62,19 +64,18 @@ func NewCmd() *cobra.Command {
 
 func runJobServer(_ *cobra.Command, _ []string) {
 	flags.applyToBootstrap()
-
-	run.StartServer("job", wireApp)
+	hello.Hello()
+	run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "job"}, "."), WireApp)
 }
 
-func newApp(d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
-	defer hello.Hello()
+func newApp(serviceName string, d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
 	opts := []kratos.Option{
+		kratos.Name(serviceName),
+		kratos.ID(hello.ID()),
+		kratos.Version(hello.Version()),
+		kratos.Metadata(hello.Metadata()),
 		kratos.Logger(helper.Logger()),
 		kratos.Server(srvs...),
-		kratos.Version(hello.Version()),
-		kratos.ID(hello.ID()),
-		kratos.Name(hello.Name()),
-		kratos.Metadata(hello.Metadata()),
 	}
 
 	if registry := d.Registry(); registry != nil {

@@ -67,7 +67,7 @@ func run(_ *cobra.Command, _ []string) {
 			klog.Errorw("msg", "kubernetes client initialization failed", "error", err)
 			return
 		}
-		discovery = kubeRegistry.NewRegistry(kubeClient, kubeConfig.GetNamespace())
+		discovery = kubeRegistry.NewRegistry(kubeClient, flags.Namespace)
 	}
 
 	clusterConfig := bc.GetCluster()
