@@ -23,7 +23,7 @@ server:
     timeout: "${MOON_RABBIT_GRPC_TIMEOUT:10s}"
   job:
     address: "${MOON_RABBIT_JOB_ADDRESS:0.0.0.0:9091}"
-    network: "${MOON_RABBIT_JOB_NETWORK:grpc}"
+    network: "${MOON_RABBIT_JOB_NETWORK:tcp}"
     timeout: "${MOON_RABBIT_JOB_TIMEOUT:10s}"
 
 jwt:
@@ -54,7 +54,6 @@ registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
 cluster:
   name: ${MOON_RABBIT_CLUSTER_NAME:moon.rabbit}
   endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:}
-  protocol: ${MOON_RABBIT_CLUSTER_PROTOCOL:GRPC}
   timeout: ${MOON_RABBIT_CLUSTER_TIMEOUT:10s}
 
 etcd:

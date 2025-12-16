@@ -13,7 +13,6 @@ import (
 	"github.com/go-kratos/kratos/v2/encoding"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
-	"github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/rabbit/internal/conf"
@@ -32,21 +31,12 @@ func GenerateClientConfig(
 		return nil
 	}
 	var clusterEndpoint string
-	var clusterProtocol config.ClusterConfig_Protocol
 	for _, srv := range srvs {
 		if grpcSrv, ok := srv.(*grpc.Server); ok {
 			endpoint, err := grpcSrv.Endpoint()
 			if err == nil {
 				clusterEndpoint = endpoint.String()
-				clusterProtocol = config.ClusterConfig_GRPC
 				break
-			}
-		}
-		if httpSrv, ok := srv.(*http.Server); ok {
-			endpoint, err := httpSrv.Endpoint()
-			if err == nil {
-				clusterEndpoint = endpoint.String()
-				clusterProtocol = config.ClusterConfig_HTTP
 			}
 		}
 	}
@@ -81,7 +71,6 @@ func GenerateClientConfig(
 		clientConfig.Cluster = &config.ClusterConfig{
 			Name:      serverName,
 			Endpoints: endpoint,
-			Protocol:  clusterProtocol,
 			Timeout:   durationpb.New(10 * time.Second),
 		}
 	}

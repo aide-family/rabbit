@@ -3,7 +3,10 @@ package service
 import (
 	"context"
 
+	"github.com/bwmarrin/snowflake"
+
 	"github.com/aide-family/rabbit/internal/biz"
+	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
 func NewJobService(jobBiz *biz.Job) *JobService {
@@ -13,13 +16,14 @@ func NewJobService(jobBiz *biz.Job) *JobService {
 }
 
 type JobService struct {
+	apiv1.UnimplementedJobServer
+
 	jobBiz *biz.Job
 }
 
-func (s *JobService) Start(ctx context.Context) error {
-	return s.jobBiz.Start(ctx)
-}
-
-func (s *JobService) Stop(ctx context.Context) error {
-	return s.jobBiz.Stop(ctx)
+func (s *JobService) SendMessage(ctx context.Context, req *apiv1.JobSendMessageRequest) (*apiv1.JobSendReply, error) {
+	if err := s.jobBiz.AppendMessage(ctx, snowflake.ParseInt64(req.Uid)); err != nil {
+		return nil, err
+	}
+	return &apiv1.JobSendReply{Message: "success"}, nil
 }
