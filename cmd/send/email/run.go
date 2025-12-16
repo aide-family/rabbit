@@ -55,7 +55,7 @@ func run(_ *cobra.Command, _ []string) {
 			klog.Errorw("msg", "etcd client initialization failed", "error", err)
 			return
 		}
-		discovery = etcd.New(client)
+		discovery = etcd.New(client, etcd.Namespace(bc.Namespace))
 	case config.RegistryType_KUBERNETES:
 		kubeConfig := bc.GetKubernetes()
 		if pointer.IsNil(kubeConfig) {
@@ -67,7 +67,7 @@ func run(_ *cobra.Command, _ []string) {
 			klog.Errorw("msg", "kubernetes client initialization failed", "error", err)
 			return
 		}
-		discovery = kubeRegistry.NewRegistry(kubeClient, flags.Namespace)
+		discovery = kubeRegistry.NewRegistry(kubeClient, bc.Namespace)
 	}
 
 	clusterConfig := bc.GetCluster()
@@ -85,7 +85,7 @@ func run(_ *cobra.Command, _ []string) {
 		reply, err := sender.SendEmail(context.Background(), req)
 		if err != nil {
 			klog.Warnw("msg", "send email failed", "cluster", clusterName, "error", err)
-			return
+			continue
 		}
 
 		klog.Debugw("msg", "send email success", "cluster", clusterName, "reply", reply)

@@ -12,6 +12,7 @@ message ClientConfig {
 	ETCDConfig etcd = 3;
 	KubernetesConfig kubernetes = 4;
 	RegistryType registryType = 5;
+	string namespace = 6;
 }
 
 message ClusterConfig {

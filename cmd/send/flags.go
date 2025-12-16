@@ -3,6 +3,7 @@ package send
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/rabbit/cmd"
 )
 
@@ -17,5 +18,9 @@ func (f *SendFlags) addFlags(c *cobra.Command) {
 }
 
 func GetSendFlags() SendFlags {
+	if pointer.IsNil(sendFlags.GlobalFlags) {
+		sendFlags.GlobalFlags = cmd.GetGlobalFlags()
+	}
+
 	return sendFlags
 }
