@@ -37,6 +37,7 @@ type RunFlags struct {
 	jwtExpire          string
 	registryType       string
 	enableClientConfig bool
+	clusterTimeout     time.Duration
 }
 
 var runFlags RunFlags
@@ -76,6 +77,10 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
 	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strutil.SplitSkipEmpty(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
 	c.PersistentFlags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
+
+	c.PersistentFlags().StringVar(&f.Cluster.Endpoints, "cluster-endpoints", f.Cluster.Endpoints, `Example: --cluster-endpoints="127.0.0.1:2379"`)
+	c.PersistentFlags().StringVar(&f.Cluster.Name, "cluster-name", f.Cluster.Name, `Example: --cluster-name="moon.rabbit"`)
+	c.PersistentFlags().DurationVar(&f.clusterTimeout, "cluster-timeout", f.Cluster.Timeout.AsDuration(), `Example: --cluster-timeout="10s"`)
 }
 
 func (f *RunFlags) ApplyToBootstrap() {
@@ -140,6 +145,10 @@ func (f *RunFlags) ApplyToBootstrap() {
 	}
 	if len(f.dataSourcePaths) > 0 {
 		f.DataSourcePaths = strings.Join(f.configPaths, ",")
+	}
+
+	if f.clusterTimeout > 0 {
+		f.Cluster.Timeout = durationpb.New(f.clusterTimeout)
 	}
 }
 

@@ -33,10 +33,9 @@ func NewMessageRepository(
 	jobCoreConf := bc.GetJobCore()
 	clusterConfig := bc.GetCluster()
 	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
-	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
-	clusterName := clusterConfig.GetName()
 	messageRepo := &messageRepositoryImpl{
 		d:               d,
+		bc:              bc,
 		transactionRepo: transactionRepo,
 		messageLogRepo:  messageLogRepo,
 		helper:          klog.NewHelper(klog.With(helper.Logger(), "impl", "message")),
@@ -51,12 +50,6 @@ func NewMessageRepository(
 
 	// 注册发送器
 	messageRepo.registerSenders(sender.NewEmailSender(helper), sender.NewWebhookSender(helper))
-
-	messageRepo.wg.Go(func() {
-		time.Sleep(3 * time.Second)
-		defer messageRepo.helper.Debug("message repository init clusters done")
-		messageRepo.initClusters(clusterEndpoints, clusterName, clusterTimeout)
-	})
 
 	messageRepo.Start(context.Background())
 
@@ -76,6 +69,7 @@ type messageTask struct {
 
 type messageRepositoryImpl struct {
 	d               *data.Data
+	bc              *conf.Bootstrap
 	transactionRepo repository.Transaction
 	messageLogRepo  repository.MessageLog
 	helper          *klog.Helper
@@ -86,7 +80,8 @@ type messageRepositoryImpl struct {
 	workerTotal     int // 工作协程数量,默认1个
 	timeout         time.Duration
 
-	clusters []sender.Sender
+	clusters        []sender.Sender
+	clusterInitOnce sync.Once
 }
 
 // start 启动后台处理goroutine
@@ -148,6 +143,7 @@ func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageU
 	}
 	// notice: 没有使用外部存储，不允许使用集群模式， 避免消息无法共享到其他节点
 	if m.d.UseDatabase() {
+		m.initClusters()
 		rand.Shuffle(len(m.clusters), func(i, j int) {
 			m.clusters[i], m.clusters[j] = m.clusters[j], m.clusters[i]
 		})
@@ -276,21 +272,27 @@ func (m *messageRepositoryImpl) AppendMessage(ctx context.Context, messageUID sn
 	}
 }
 
-func (m *messageRepositoryImpl) initClusters(clusterEndpoints []string, clusterName string, clusterTimeout time.Duration) {
-	for _, clusterEndpoint := range clusterEndpoints {
-		opts := []connect.InitOption{
-			connect.WithProtocol(config.ClusterConfig_GRPC.String()),
-			connect.WithDiscovery(m.d.Registry()),
+func (m *messageRepositoryImpl) initClusters() {
+	m.clusterInitOnce.Do(func() {
+		clusterConfig := m.bc.GetCluster()
+		clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
+		clusterTimeout := clusterConfig.GetTimeout().AsDuration()
+		clusterName := clusterConfig.GetName()
+		for _, clusterEndpoint := range clusterEndpoints {
+			opts := []connect.InitOption{
+				connect.WithProtocol(config.ClusterConfig_GRPC.String()),
+				connect.WithDiscovery(m.d.Registry()),
+			}
+			initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
+			grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
+			if err != nil {
+				m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
+				continue
+			}
+			m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
+			m.clusters = append(m.clusters, sender.NewClusterSender(grpcClient))
 		}
-		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
-		grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
-		if err != nil {
-			m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
-			continue
-		}
-		m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
-		m.clusters = append(m.clusters, sender.NewClusterSender(grpcClient))
-	}
+	})
 }
 
 func (m *messageRepositoryImpl) registerSenders(senders ...repository.MessageSender) {

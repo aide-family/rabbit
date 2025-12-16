@@ -42,12 +42,14 @@ func GenerateClientConfig(
 	}
 
 	// 构建 ClientConfig
-	clientConfig := &config.ClientConfig{}
+	clientConfig := &config.ClientConfig{
+		Namespace: runFlags.Server.Namespace,
+	}
 
 	// 1. 添加集群连接信息
 	clusterConfig := bc.GetCluster()
 	registryType := bc.GetRegistryType()
-	serverName := bc.GetServer().GetName()
+	serverName := strings.Join([]string{runFlags.Name, runFlags.Server.Name, "grpc"}, ".")
 
 	clientConfig.RegistryType = registryType
 	switch registryType {
