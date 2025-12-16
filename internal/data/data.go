@@ -34,7 +34,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		helper:      helper,
 		c:           c,
 		dbs:         safety.NewSyncMap(make(map[string]*gorm.DB)),
-		closes:      make(map[string]func() error),
+		closes:      safety.NewSyncMap(make(map[string]func() error)),
 		useDatabase: strutil.IsNotEmpty(c.GetUseDatabase()) && strings.EqualFold(c.GetUseDatabase(), "true"),
 		reloadFuncs: safety.NewSyncMap(make(map[string]func())),
 	}
@@ -48,7 +48,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 			return nil, d.close, err
 		}
 		d.mainDB = mainDB
-		d.closes["mainDB"] = func() error { return connect.CloseDB(mainDB) }
+		d.closes.Set("mainDB", func() error { return connect.CloseDB(mainDB) })
 
 		for namespace, biz := range d.c.GetBiz() {
 			db, err := connect.NewGorm(biz, d.helper)
@@ -60,7 +60,10 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 				d.dbs.Set(ns, db)
 			}
 
-			d.closes["bizDB.["+namespace+"]"] = func() error { return connect.CloseDB(db) }
+			// 使用局部变量避免闭包捕获问题
+			namespaceKey := "bizDB.[" + namespace + "]"
+			dbToClose := db
+			d.closes.Set(namespaceKey, func() error { return connect.CloseDB(dbToClose) })
 		}
 	} else {
 		if err := d.LoadFileConfig(d.c, d.helper); err != nil {
@@ -75,7 +78,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		return nil, d.close, err
 	}
 	d.cache = cache
-	d.closes["cache"] = func() error { return cache.Close() }
+	d.closes.Set("cache", func() error { return cache.Close() })
 
 	return d, d.close, nil
 }
@@ -87,24 +90,25 @@ type Data struct {
 	mainDB      *gorm.DB
 	registry    connect.Registry
 	cache       cache.Interface
-	closes      map[string]func() error
+	closes      *safety.SyncMap[string, func() error] // 使用SyncMap保证并发安全
 	useDatabase bool
 	fileConfig  conf.Config
 	reloadFuncs *safety.SyncMap[string, func()]
 }
 
 func (d *Data) AppendClose(name string, close func() error) {
-	d.closes[name] = close
+	d.closes.Set(name, close)
 }
 
 func (d *Data) close() {
-	for name, close := range d.closes {
+	d.closes.Range(func(name string, close func() error) bool {
 		if err := close(); err != nil {
 			d.helper.Errorw("msg", "close db failed", "name", name, "error", err)
-			continue
+			return true // 继续遍历
 		}
 		d.helper.Debugw("msg", "close success", "name", name)
-	}
+		return true // 继续遍历
+	})
 }
 
 func (d *Data) UseDatabase() bool {
@@ -183,7 +187,7 @@ func (d *Data) initRegistry() error {
 		}
 		registrar := etcd.New(client, etcd.Namespace(namespace))
 		d.registry = registrar
-		d.closes["etcdClient"] = func() error { return client.Close() }
+		d.closes.Set("etcdClient", func() error { return client.Close() })
 	}
 	return nil
 }

@@ -82,6 +82,8 @@ type messageRepositoryImpl struct {
 
 	clusters        []sender.Sender
 	clusterInitOnce sync.Once
+	stopOnce        sync.Once    // 确保Stop只执行一次
+	clustersMu      sync.RWMutex // 保护clusters的并发访问
 }
 
 // start 启动后台处理goroutine
@@ -99,18 +101,33 @@ func (m *messageRepositoryImpl) Start(ctx context.Context) error {
 
 // Stop 停止事件总线
 func (m *messageRepositoryImpl) Stop(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		m.helper.Debug("msg", "message bus stopped by context done")
-		return nil
-	case <-m.stopChan:
-		m.helper.Debug("msg", "message bus stopped by stop channel")
-		return nil
-	default:
+	var stopped bool
+	m.stopOnce.Do(func() {
+		stopped = true
 		close(m.stopChan)
 		m.wg.Wait()
 		close(m.messageChan)
 		m.helper.Debug("msg", "message bus stopped")
+	})
+
+	if !stopped {
+		// 如果已经停止，等待context或直接返回
+		select {
+		case <-ctx.Done():
+			m.helper.Debug("msg", "message bus already stopped, context done")
+			return nil
+		case <-m.stopChan:
+			m.helper.Debug("msg", "message bus already stopped")
+			return nil
+		}
+	}
+
+	// 检查context是否已取消
+	select {
+	case <-ctx.Done():
+		m.helper.Debug("msg", "message bus stopped by context done")
+		return nil
+	default:
 		return nil
 	}
 }
@@ -144,12 +161,22 @@ func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageU
 	// notice: 没有使用外部存储，不允许使用集群模式， 避免消息无法共享到其他节点
 	if m.d.UseDatabase() {
 		m.initClusters()
-		rand.Shuffle(len(m.clusters), func(i, j int) {
-			m.clusters[i], m.clusters[j] = m.clusters[j], m.clusters[i]
+
+		clustersIdx := make([]int, 0, len(m.clusters))
+		for i := range m.clusters {
+			clustersIdx = append(clustersIdx, i)
+		}
+
+		// 打乱副本，避免修改原始slice
+		rand.Shuffle(len(clustersIdx), func(i, j int) {
+			clustersIdx[i], clustersIdx[j] = clustersIdx[j], clustersIdx[i]
 		})
 
 		// 按打乱后的顺序尝试发送，失败则重试下一个节点
-		for _, cluster := range m.clusters {
+		for _, clusterIdx := range clustersIdx {
+			m.clustersMu.RLock()
+			cluster := m.clusters[clusterIdx]
+			m.clustersMu.RUnlock()
 			reply, err := cluster.SendMessage(ctx, req)
 			if err != nil {
 				m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID, "reply", reply, "cluster", cluster)
@@ -262,6 +289,10 @@ func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.
 func (m *messageRepositoryImpl) AppendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	// 将消息放入channel异步处理
 	select {
+	case <-m.stopChan:
+		// channel已关闭，返回错误
+		m.helper.Debugw("msg", "message channel is closed, cannot append message", "uid", messageUID)
+		return merr.ErrorInternal("message channel is closed")
 	case m.messageChan <- &messageTask{ctx: safety.CopyValueCtx(ctx), messageUID: messageUID}:
 		m.helper.Debugw("msg", "message appended to channel", "uid", messageUID)
 		return nil
@@ -278,6 +309,7 @@ func (m *messageRepositoryImpl) initClusters() {
 		clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 		clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 		clusterName := clusterConfig.GetName()
+		var clusters []sender.Sender
 		for _, clusterEndpoint := range clusterEndpoints {
 			opts := []connect.InitOption{
 				connect.WithProtocol(config.ClusterConfig_GRPC.String()),
@@ -290,8 +322,12 @@ func (m *messageRepositoryImpl) initClusters() {
 				continue
 			}
 			m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
-			m.clusters = append(m.clusters, sender.NewClusterSender(grpcClient))
+			clusters = append(clusters, sender.NewClusterSender(grpcClient))
 		}
+		// 加锁更新clusters
+		m.clustersMu.Lock()
+		m.clusters = clusters
+		m.clustersMu.Unlock()
 	})
 }
 
