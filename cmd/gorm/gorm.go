@@ -136,13 +136,13 @@ func initDB() (*gorm.DB, error) {
 		}
 		databases = append(databases, database)
 	}
+	defer rows.Close()
 	klog.Debugw("msg", "show databases success", "databases", databases)
 	if !slices.Contains(databases, flags.database) {
 		// create database
 		klog.Warnw("msg", "database not exists", "database", flags.database)
 		klog.Debugw("msg", "create database", "database", flags.database)
-		_, err := sqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", flags.database))
-		if err != nil {
+		if _, err := sqlDB.Exec(fmt.Sprintf("CREATE DATABASE %s", flags.database)); err != nil {
 			klog.Errorw("msg", "create database failed", "error", err, "database", flags.database)
 			return nil, err
 		}
