@@ -49,7 +49,7 @@ func (e *Email) AppendEmailMessage(ctx context.Context, req *bo.SendEmailBo) err
 		return merr.ErrorInternal("create message log failed").WithCause(err)
 	}
 
-	if err := e.jobBiz.appendMessage(ctx, messageLog.UID); err != nil {
+	if err := e.jobBiz.AppendMessage(ctx, messageLog.UID); err != nil {
 		e.helper.Errorw("msg", "append email message failed", "error", err, "uid", messageLog.UID)
 		return merr.ErrorInternal("append email message failed").WithCause(err)
 	}

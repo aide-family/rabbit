@@ -1056,6 +1056,19 @@ components:
                 timestamp:
                     type: string
                     format: date-time
+        rabbit.api.v1.JobSendMessageRequest:
+            type: object
+            properties:
+                uid:
+                    type: string
+        rabbit.api.v1.JobSendReply:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    format: int32
+                message:
+                    type: string
         rabbit.api.v1.ListEmailConfigReply:
             type: object
             properties:
@@ -1523,6 +1536,7 @@ components:
 tags:
     - name: Email
     - name: Health
+    - name: Job
     - name: MessageLog
     - name: Namespace
     - name: Sender

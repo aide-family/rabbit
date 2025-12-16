@@ -33,7 +33,6 @@ var clientConfig = &config.ClientConfig{
 	Cluster: &config.ClusterConfig{
 		Name:      "rabbit",
 		Endpoints: "localhost:8080",
-		Protocol:  config.ClusterConfig_GRPC,
 		Timeout:   durationpb.New(10 * time.Second),
 	},
 	JwtToken: "Bearer <jwt-token>",

@@ -55,7 +55,7 @@ func (w *Webhook) AppendWebhookMessage(ctx context.Context, req *bo.SendWebhookB
 		return merr.ErrorInternal("create message log failed").WithCause(err)
 	}
 
-	if err := w.jobBiz.appendMessage(ctx, messageLog.UID); err != nil {
+	if err := w.jobBiz.AppendMessage(ctx, messageLog.UID); err != nil {
 		w.helper.Errorw("msg", "append webhook message failed", "error", err, "uid", messageLog.UID)
 		return merr.ErrorInternal("append webhook message failed").WithCause(err)
 	}

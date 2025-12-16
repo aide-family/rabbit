@@ -2,7 +2,7 @@ package impl
 
 import (
 	"context"
-	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -33,14 +33,13 @@ func NewMessageRepository(
 	jobCoreConf := bc.GetJobCore()
 	clusterConfig := bc.GetCluster()
 	clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
-	clusterProtocol := clusterConfig.GetProtocol()
 	clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 	clusterName := clusterConfig.GetName()
 	messageRepo := &messageRepositoryImpl{
 		d:               d,
 		transactionRepo: transactionRepo,
 		messageLogRepo:  messageLogRepo,
-		helper:          klog.NewHelper(klog.With(helper.Logger(), "component", "message")),
+		helper:          klog.NewHelper(klog.With(helper.Logger(), "impl", "message")),
 		messageChan:     make(chan *messageTask, jobCoreConf.GetBufferSize()),
 		senders:         safety.NewSyncMap(make(map[vobj.MessageType]repository.MessageSender)),
 		stopChan:        make(chan struct{}),
@@ -53,11 +52,19 @@ func NewMessageRepository(
 	// 注册发送器
 	messageRepo.registerSenders(sender.NewEmailSender(helper), sender.NewWebhookSender(helper))
 
-	safety.Go(context.Background(), "message_repository_init_clusters", func(ctx context.Context) error {
+	messageRepo.wg.Go(func() {
 		time.Sleep(3 * time.Second)
-		messageRepo.initClusters(clusterEndpoints, clusterProtocol, clusterName, clusterTimeout)
-		return nil
-	}, helper.Logger())
+		defer messageRepo.helper.Debug("message repository init clusters done")
+		messageRepo.initClusters(clusterEndpoints, clusterName, clusterTimeout)
+	})
+
+	messageRepo.Start(context.Background())
+
+	messageRepo.d.AppendClose("messageRepository", func() error {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		return messageRepo.Stop(ctx)
+	})
 
 	return messageRepo
 }
@@ -90,12 +97,7 @@ func (m *messageRepositoryImpl) Start(ctx context.Context) error {
 
 	// 启动多个worker goroutine
 	for workerID := 0; workerID < m.workerTotal; workerID++ {
-		m.wg.Add(1)
-		safety.Go(ctx, fmt.Sprintf("message_bus_worker_%d", workerID), func(ctx context.Context) error {
-			defer m.wg.Done()
-			m.worker(ctx, workerID)
-			return nil
-		}, m.helper.Logger())
+		m.worker(ctx, workerID)
 	}
 	return nil
 }
@@ -120,39 +122,48 @@ func (m *messageRepositoryImpl) Stop(ctx context.Context) error {
 
 // worker 处理消息的工作协程
 func (m *messageRepositoryImpl) worker(ctx context.Context, workerID int) {
-	for {
-		select {
-		case task, ok := <-m.messageChan:
-			if !ok {
-				m.helper.Debugw("msg", "message bus worker stopped by message channel closed", "worker", workerID)
+	m.wg.Go(func() {
+		for {
+			select {
+			case task, ok := <-m.messageChan:
+				if !ok {
+					m.helper.Debugw("msg", "message bus worker stopped by message channel closed", "worker", workerID)
+					return
+				}
+				m.waitProcessMessage(task.ctx, task.messageUID)
+			case <-m.stopChan:
+				m.helper.Debugw("msg", "message bus worker stopped by stop channel", "worker", workerID)
+				return
+			case <-ctx.Done():
+				m.helper.Debugw("msg", "message bus worker stopped by context done", "worker", workerID)
 				return
 			}
-			m.waitProcessMessage(task.ctx, task.messageUID)
-		case <-m.stopChan:
-			m.helper.Debugw("msg", "message bus worker stopped by stop channel", "worker", workerID)
-			return
-		case <-ctx.Done():
-			m.helper.Debugw("msg", "message bus worker stopped by context done", "worker", workerID)
-			return
 		}
-	}
+	})
 }
 
 func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageUID snowflake.ID) {
-	req := &apiv1.SendMessageRequest{
+	req := &apiv1.JobSendMessageRequest{
 		Uid: messageUID.Int64(),
 	}
 	// notice: 没有使用外部存储，不允许使用集群模式， 避免消息无法共享到其他节点
 	if m.d.UseDatabase() {
+		rand.Shuffle(len(m.clusters), func(i, j int) {
+			m.clusters[i], m.clusters[j] = m.clusters[j], m.clusters[i]
+		})
+
+		// 按打乱后的顺序尝试发送，失败则重试下一个节点
 		for _, cluster := range m.clusters {
 			reply, err := cluster.SendMessage(ctx, req)
 			if err != nil {
-				m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID, "reply", reply)
+				m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID, "reply", reply, "cluster", cluster)
 				continue
 			}
 			return
 		}
+		m.helper.Debugw("msg", "no cluster available to send message, use local node", "uid", messageUID)
 	}
+	// 如果未启用数据库或者全部节点都失败，则直接使用当前节点发送消息
 	if err := m.SendMessage(ctx, messageUID); err != nil {
 		m.helper.Errorw("msg", "send message failed", "error", err, "uid", messageUID)
 	}
@@ -166,6 +177,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 		lockedMessage, err := m.messageLogRepo.GetMessageLogWithLock(transactionCtx, messageUID)
 		if err != nil {
 			if merr.IsNotFound(err) {
+				m.helper.Debugw("msg", "message log not found", "uid", messageUID)
 				return nil
 			}
 			return merr.ErrorInternal("get message log with lock failed").WithCause(err)
@@ -173,6 +185,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 
 		// 如果消息已经发送或正在发送，直接返回
 		if lockedMessage.Status.IsSent() || lockedMessage.Status.IsSending() {
+			m.helper.Debugw("msg", "message status is not sent or sending, skip update status", "uid", messageUID, "status", lockedMessage.Status)
 			return nil
 		}
 
@@ -183,6 +196,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 			return merr.ErrorInternal("update message status to sending failed").WithCause(err)
 		}
 		if !result {
+			m.helper.Debugw("msg", "message already processed or status update failed", "uid", messageUID)
 			return nil
 		}
 
@@ -190,6 +204,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 		return nil
 	})
 	if err != nil {
+		m.helper.Errorw("msg", "transaction failed", "error", err, "uid", messageUID)
 		return err
 	}
 
@@ -205,6 +220,7 @@ func (m *messageRepositoryImpl) SendMessage(ctx context.Context, messageUID snow
 // processMessage 处理消息
 func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.MessageLogItemBo) error {
 	if message.Status.IsSent() || message.Status.IsSending() {
+		m.helper.Debugw("msg", "message already sent or sending", "uid", message.UID)
 		return nil
 	}
 	message.Status = vobj.MessageStatusSending
@@ -214,11 +230,11 @@ func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.
 	senderType := message.Type
 	sender, ok := m.senders.Get(senderType)
 	if !ok {
-		m.helper.Errorw("msg", "sender not found", "type", senderType, "uid", message.UID)
+		m.helper.Debugw("msg", "sender not found", "type", senderType, "uid", message.UID)
 		if _, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, message.UID, vobj.MessageStatusSending, vobj.MessageStatusFailed); err != nil {
 			m.helper.Errorw("msg", "update message status to failed failed", "error", err, "uid", message.UID)
 		}
-		return merr.ErrorParams("sender not found")
+		return merr.ErrorParams("sender not supported")
 	}
 
 	// 发送消息
@@ -229,7 +245,7 @@ func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.
 			m.helper.Errorw("msg", "update message status to failed failed", "error", updateErr, "uid", message.UID)
 		}
 		if !success {
-			m.helper.Warnw("msg", "message status is not sending, message sent failed", "uid", message.UID, "type", senderType)
+			m.helper.Debugw("msg", "message status is not sending, message sent failed", "uid", message.UID, "type", senderType)
 		}
 		return merr.ErrorInternal("send message failed").WithCause(err)
 	}
@@ -241,7 +257,7 @@ func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.
 		return merr.ErrorInternal("update message status to sent failed")
 	}
 	if !success {
-		m.helper.Warnw("msg", "message status is not sending, message sent successfully", "uid", message.UID, "type", senderType)
+		m.helper.Debugw("msg", "message status is not sending, message sent successfully", "uid", message.UID, "type", senderType)
 	}
 	return nil
 }
@@ -251,39 +267,29 @@ func (m *messageRepositoryImpl) AppendMessage(ctx context.Context, messageUID sn
 	// 将消息放入channel异步处理
 	select {
 	case m.messageChan <- &messageTask{ctx: safety.CopyValueCtx(ctx), messageUID: messageUID}:
+		m.helper.Debugw("msg", "message appended to channel", "uid", messageUID)
 		return nil
 	default:
 		// channel满了,返回错误
-		m.helper.Errorw("msg", "message channel is full", "uid", messageUID)
+		m.helper.Debugw("msg", "message channel is full", "uid", messageUID)
 		return merr.ErrorInternal("message channel is full")
 	}
 }
 
-func (m *messageRepositoryImpl) initClusters(clusterEndpoints []string, clusterProtocol config.ClusterConfig_Protocol, clusterName string, clusterTimeout time.Duration) {
+func (m *messageRepositoryImpl) initClusters(clusterEndpoints []string, clusterName string, clusterTimeout time.Duration) {
 	for _, clusterEndpoint := range clusterEndpoints {
 		opts := []connect.InitOption{
-			connect.WithProtocol(clusterProtocol.String()),
+			connect.WithProtocol(config.ClusterConfig_GRPC.String()),
 			connect.WithDiscovery(m.d.Registry()),
 		}
 		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
-		switch clusterProtocol {
-		case config.ClusterConfig_GRPC:
-			grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
-			if err != nil {
-				m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
-				continue
-			}
-			m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
-			m.clusters = append(m.clusters, sender.NewClusterSender(grpcClient, nil, clusterProtocol))
-		case config.ClusterConfig_HTTP:
-			httpClient, err := connect.InitHTTPClient(initConfig, opts...)
-			if err != nil {
-				m.helper.Errorw("msg", "create HTTP client failed", "error", err)
-				continue
-			}
-			m.d.AppendClose("httpClient", func() error { return httpClient.Close() })
-			m.clusters = append(m.clusters, sender.NewClusterSender(nil, httpClient, clusterProtocol))
+		grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
+		if err != nil {
+			m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
+			continue
 		}
+		m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
+		m.clusters = append(m.clusters, sender.NewClusterSender(grpcClient))
 	}
 }
 

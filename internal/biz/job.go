@@ -24,14 +24,6 @@ type Job struct {
 	messageRepo repository.Message
 }
 
-func (e *Job) appendMessage(ctx context.Context, messageUID snowflake.ID) error {
+func (e *Job) AppendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	return e.messageRepo.AppendMessage(ctx, messageUID)
-}
-
-func (e *Job) Start(ctx context.Context) error {
-	return e.messageRepo.Start(ctx)
-}
-
-func (e *Job) Stop(ctx context.Context) error {
-	return e.messageRepo.Stop(ctx)
 }

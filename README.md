@@ -189,7 +189,7 @@ Rabbit supports configuration through environment variables. All environment var
 | `MOON_RABBIT_GRPC_NETWORK` | `tcp` | gRPC server network |
 | `MOON_RABBIT_GRPC_TIMEOUT` | `10s` | gRPC request timeout |
 | `MOON_RABBIT_JOB_ADDRESS` | `0.0.0.0:9091` | Job server address |
-| `MOON_RABBIT_JOB_NETWORK` | `grpc` | Job server network |
+| `MOON_RABBIT_JOB_NETWORK` | `tcp` | Job server network |
 | `MOON_RABBIT_JOB_TIMEOUT` | `10s` | Job request timeout |
 
 #### Database Configuration
@@ -230,7 +230,6 @@ Rabbit supports configuration through environment variables. All environment var
 |----------|---------|-------------|
 | `MOON_RABBIT_CLUSTER_NAME` | `moon.rabbit` | Cluster name |
 | `MOON_RABBIT_CLUSTER_ENDPOINTS` | `` | Cluster endpoints |
-| `MOON_RABBIT_CLUSTER_PROTOCOL` | `GRPC` | Cluster protocol: GRPC, HTTP |
 | `MOON_RABBIT_CLUSTER_TIMEOUT` | `10s` | Cluster request timeout |
 
 #### Job Configuration
@@ -327,7 +326,7 @@ Rabbit supports configuration through environment variables. All environment var
 | `--grpc-network` | `tcp` | gRPC server network |
 | `--grpc-timeout` | `10s` | gRPC request timeout |
 | `--job-address` | `0.0.0.0:9091` | Job server address |
-| `--job-network` | `grpc` | Job server network |
+| `--job-network` | `tcp` | Job server network |
 | `--job-timeout` | `10s` | Job request timeout |
 | `--job-core-worker-total` | `10` | Total number of job workers |
 | `--job-core-timeout` | `10s` | Job core timeout |

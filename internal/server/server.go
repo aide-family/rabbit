@@ -229,7 +229,7 @@ func RegisterJobService(
 	jobSrv *JobServer,
 	jobService *service.JobService,
 ) Servers {
-	jobSrv.RegisterHandler(jobService)
+	apiv1.RegisterJobServer(jobSrv.server, jobService)
 	return Servers{jobSrv}
 }
 

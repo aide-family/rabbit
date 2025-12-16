@@ -189,7 +189,7 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | `MOON_RABBIT_GRPC_NETWORK` | `tcp` | gRPC 服务器网络 |
 | `MOON_RABBIT_GRPC_TIMEOUT` | `10s` | gRPC 请求超时时间 |
 | `MOON_RABBIT_JOB_ADDRESS` | `0.0.0.0:9091` | Job 服务器地址 |
-| `MOON_RABBIT_JOB_NETWORK` | `grpc` | Job 服务器网络 |
+| `MOON_RABBIT_JOB_NETWORK` | `tcp` | Job 服务器网络 |
 | `MOON_RABBIT_JOB_TIMEOUT` | `10s` | Job 请求超时时间 |
 
 #### 数据库配置
@@ -230,7 +230,6 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 |------|--------|------|
 | `MOON_RABBIT_CLUSTER_NAME` | `moon.rabbit` | 集群名称 |
 | `MOON_RABBIT_CLUSTER_ENDPOINTS` | `` | 集群端点 |
-| `MOON_RABBIT_CLUSTER_PROTOCOL` | `GRPC` | 集群协议：GRPC, HTTP |
 | `MOON_RABBIT_CLUSTER_TIMEOUT` | `10s` | 集群请求超时时间 |
 
 #### Job 配置
@@ -327,7 +326,7 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | `--grpc-network` | `tcp` | gRPC 服务器网络 |
 | `--grpc-timeout` | `10s` | gRPC 请求超时时间 |
 | `--job-address` | `0.0.0.0:9091` | Job 服务器地址 |
-| `--job-network` | `grpc` | Job 服务器网络 |
+| `--job-network` | `tcp` | Job 服务器网络 |
 | `--job-timeout` | `10s` | Job 请求超时时间 |
 | `--job-core-worker-total` | `10` | Job 工作线程总数 |
 | `--job-core-timeout` | `10s` | Job 核心超时时间 |
