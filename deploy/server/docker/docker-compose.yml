@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Rabbit 消息服务
   rabbit:
