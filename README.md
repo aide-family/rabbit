@@ -561,8 +561,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Email**: aidecloud@163.com
 - **Feishu**: 
 
-  | ![](./docs/imgs/aide.png) | ![](./docs/imgs/enterprise.png) | ![](./docs/imgs/members.png) | ![](./docs/imgs/discuss.png) |
-  | ------------------------- | ---- | ---- | ---- |
+  | ![](./docs/imgs/aide.png) | ![](./docs/imgs/enterprise.png) |
+  | ------------------------- | ---- |
 
   
 
