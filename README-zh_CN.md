@@ -561,8 +561,8 @@ Closes #123
 - **邮箱**: aidecloud@163.com
 - **飞书**:
 
-  | ![](./docs/imgs/aide.png) | ![](./docs/imgs/enterprise.png) | ![](./docs/imgs/members.png) | ![](./docs/imgs/discuss.png) |
-  | ------------------------- | ---- | ---- | ---- |
+  | ![](./docs/imgs/aide.png) | ![](./docs/imgs/enterprise.png) |
+  | ------------------------- | ---- |
 
 ---
 
