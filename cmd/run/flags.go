@@ -30,16 +30,19 @@ type RunFlags struct {
 	*conf.Bootstrap
 	*cmd.GlobalFlags
 
-	metadata           []string
-	useRandomID        bool
-	configPaths        []string
-	dataSourcePaths    []string
-	environment        string
-	jwtExpire          string
-	registryType       string
-	enableClientConfig bool
-	clusterTimeout     time.Duration
-	clusterProtocol    string
+	metadata            []string
+	useRandomID         bool
+	useDatabase         bool
+	mainDebug           bool
+	mainUseSystemLogger bool
+	configPaths         []string
+	dataSourcePaths     []string
+	environment         string
+	jwtExpire           string
+	registryType        string
+	enableClientConfig  bool
+	clusterTimeout      time.Duration
+	clusterProtocol     string
 }
 
 var runFlags RunFlags
@@ -69,17 +72,19 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringVar(&f.Main.Host, "main-host", f.Main.Host, `Example: --main-host="localhost"`)
 	c.PersistentFlags().Int32Var(&f.Main.Port, "main-port", f.Main.Port, `Example: --main-port=3306"`)
 	c.PersistentFlags().StringVar(&f.Main.Database, "main-database", f.Main.Database, `Example: --main-database="rabbit"`)
-	c.PersistentFlags().StringVar(&f.Main.Debug, "main-debug", f.Main.Debug, `Example: --main-debug="false"`)
-	c.PersistentFlags().StringVar(&f.Main.UseSystemLogger, "main-use-system-logger", f.Main.UseSystemLogger, `Example: --main-use-system-logger="true"`)
+	mainDebug, _ := strconv.ParseBool(f.Main.Debug)
+	c.PersistentFlags().BoolVar(&f.mainDebug, "main-debug", mainDebug, `Example: --main-debug=false`)
+	mainUseSystemLogger, _ := strconv.ParseBool(f.Main.UseSystemLogger)
+	c.PersistentFlags().BoolVar(&f.mainUseSystemLogger, "main-use-system-logger", mainUseSystemLogger, `Example: --main-use-system-logger=true`)
 	c.PersistentFlags().StringVar(&f.registryType, "registry-type", f.RegistryType.String(), `Example: --registry-type="ETCD"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Endpoints, "etcd-endpoints", f.Etcd.Endpoints, `Example: --etcd-endpoints="127.0.0.1:2379"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Username, "etcd-username", f.Etcd.Username, `Example: --etcd-username="root"`)
 	c.PersistentFlags().StringVar(&f.Etcd.Password, "etcd-password", f.Etcd.Password, `Example: --etcd-password="123456"`)
 	c.PersistentFlags().StringVar(&f.Kubernetes.KubeConfig, "kubernetes-kubeconfig", f.Kubernetes.KubeConfig, `Example: --kubernetes-kubeconfig="~/.kube/config"`)
-	c.PersistentFlags().StringVar(&f.UseDatabase, "use-database", f.UseDatabase, `Example: --use-database="true"`)
+	useDatabase, _ := strconv.ParseBool(f.UseDatabase)
+	c.PersistentFlags().BoolVar(&f.useDatabase, "use-database", useDatabase, `Example: --use-database`)
 	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strutil.SplitSkipEmpty(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
 	c.PersistentFlags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
-
 	c.PersistentFlags().StringVar(&f.Cluster.Endpoints, "cluster-endpoints", f.Cluster.Endpoints, `Example: --cluster-endpoints="127.0.0.1:2379"`)
 	c.PersistentFlags().StringVar(&f.Cluster.Name, "cluster-name", f.Cluster.Name, `Example: --cluster-name="moon.rabbit"`)
 	c.PersistentFlags().DurationVar(&f.clusterTimeout, "cluster-timeout", f.Cluster.Timeout.AsDuration(), `Example: --cluster-timeout="10s"`)
@@ -87,6 +92,9 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 }
 
 func (f *RunFlags) ApplyToBootstrap() error {
+	f.UseDatabase = strconv.FormatBool(f.useDatabase)
+	f.Main.Debug = strconv.FormatBool(f.mainDebug)
+	f.Main.UseSystemLogger = strconv.FormatBool(f.mainUseSystemLogger)
 	if strutil.IsEmpty(f.Server.Name) {
 		f.Server.Name = f.Name
 	}
