@@ -33,7 +33,7 @@ Rabbit (玉兔) 是一个高性能、高可用、高扩展的分布式消息服�
 
 - Go 1.25+ (从源码构建)
 - Docker & Docker Compose (容器化部署)
-- MySQL 5.7+ (可选，用于数据库存储模式)
+- MySQL 8.0+ (可选，用于数据库存储模式)
 - etcd (可选，用于服务注册)
 
 ### 安装
@@ -76,6 +76,35 @@ docker run -d \
 ```bash
 cd deploy/server/docker
 docker-compose up -d
+```
+
+```bash
+docker-compose -f deploy/server/docker/docker-compose.yml up
+Attaching to rabbit
+rabbit  | Moon service starting...
+rabbit  | 
+rabbit  | ┌───────────────────────────────────────────────────────────────────────────────────────┐
+rabbit  | │                                                                                       │
+rabbit  | │                        ███╗   ███╗ ██████╗  ██████╗ ███╗   ██╗                        │
+rabbit  | │                        ████╗ ████║██╔═══██╗██╔═══██╗████╗  ██║                        │
+rabbit  | │                        ██╔████╔██║██║   ██║██║   ██║██╔██╗ ██║                        │
+rabbit  | │                        ██║╚██╔╝██║██║   ██║██║   ██║██║╚██╗██║                        │
+rabbit  | │                        ██║ ╚═╝ ██║╚██████╔╝╚██████╔╝██║ ╚████║                        │
+rabbit  | │                        ╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝                        │
+rabbit  | │                                  good luck and no bug                                 │
+rabbit  | ├── Name:    Moon                                                                       │
+rabbit  | ├── Version: latest                                                                     │
+rabbit  | ├── ID:      b789d98d95c8                                                               │
+rabbit  | ├── Env:     PREVIEW                                                                    │
+rabbit  | ├── NodeID:  722                                                                        │
+rabbit  | ├── Metadata:                                                                           │
+rabbit  | │   ├── author: Aide Family                                                             │
+rabbit  | │   └── email: 1058165620@qq.com                                                        │
+rabbit  | └───────────────────────────────────────────────────────────────────────────────────────┘
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.job service.id=b789d98d95c8 caller=server/job.go:74 trace.id= span.id= server=job msg=[Job] started address=grpc://172.20.0.2:10070
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.job service.id=b789d98d95c8 caller=grpc/server.go:231 trace.id= span.id= msg=[gRPC] server listening on: [::]:10070
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.grpc service.id=b789d98d95c8 caller=grpc/server.go:231 trace.id= span.id= msg=[gRPC] server listening on: [::]:10090
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.http service.id=b789d98d95c8 caller=http/server.go:330 trace.id= span.id= msg=[HTTP] server listening on: [::]:10080
 ```
 
 ### 生成配置文件
