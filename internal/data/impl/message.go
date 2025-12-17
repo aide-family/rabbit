@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -18,7 +19,6 @@ import (
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/internal/data/impl/sender"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
@@ -309,20 +309,43 @@ func (m *messageRepositoryImpl) initClusters() {
 		clusterEndpoints := strutil.SplitSkipEmpty(clusterConfig.GetEndpoints(), ",")
 		clusterTimeout := clusterConfig.GetTimeout().AsDuration()
 		clusterName := clusterConfig.GetName()
-		var clusters []sender.Sender
-		for _, clusterEndpoint := range clusterEndpoints {
+		protocol := clusterConfig.GetProtocol().String()
+		clusters := make([]sender.Sender, 0, len(clusterEndpoints))
+		for idx, clusterEndpoint := range clusterEndpoints {
 			opts := []connect.InitOption{
-				connect.WithProtocol(config.ClusterConfig_GRPC.String()),
 				connect.WithDiscovery(m.d.Registry()),
 			}
-			initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
-			grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
-			if err != nil {
-				m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
+			initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout, protocol)
+
+			var clusterSender sender.Sender
+			var closeFunc func() error
+
+			switch protocol {
+			case connect.ProtocolHTTP:
+				httpClient, err := connect.InitHTTPClient(initConfig, opts...)
+				if err != nil {
+					m.helper.Errorw("msg", "create HTTP client failed", "endpoint", clusterEndpoint, "error", err)
+					continue
+				}
+				closeFunc = func() error { return httpClient.Close() }
+				clusterSender = sender.NewClusterHTTPSender(httpClient)
+			case connect.ProtocolGRPC:
+				grpcClient, err := connect.InitGRPCClient(initConfig, opts...)
+				if err != nil {
+					m.helper.Errorw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
+					continue
+				}
+				closeFunc = func() error { return grpcClient.Close() }
+				clusterSender = sender.NewClusterSender(grpcClient)
+			default:
+				m.helper.Errorw("msg", "unknown protocol", "endpoint", clusterEndpoint, "protocol", protocol)
 				continue
 			}
-			m.d.AppendClose("grpcClient", func() error { return grpcClient.Close() })
-			clusters = append(clusters, sender.NewClusterSender(grpcClient))
+
+			// 为每个端点生成唯一的键，避免覆盖之前的关闭函数
+			closeKey := fmt.Sprintf("jobClient.%d.%s", idx, clusterEndpoint)
+			m.d.AppendClose(closeKey, closeFunc)
+			clusters = append(clusters, clusterSender)
 		}
 		// 加锁更新clusters
 		m.clustersMu.Lock()

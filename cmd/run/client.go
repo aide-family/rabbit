@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/aide-family/magicbox/load"
-	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/v2/encoding"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/go-kratos/kratos/v2/transport/http"
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/rabbit/internal/conf"
@@ -26,55 +26,51 @@ func GenerateClientConfig(
 	srvs server.Servers,
 	helper *klog.Helper,
 ) error {
-	if bc.GetEnableClientConfig() != "true" {
+	if !strings.EqualFold(bc.GetEnableClientConfig(), "true") {
 		helper.Debugw("msg", "client config is not enabled")
 		return nil
-	}
-	var clusterEndpoint string
-	for _, srv := range srvs {
-		if grpcSrv, ok := srv.(*grpc.Server); ok {
-			endpoint, err := grpcSrv.Endpoint()
-			if err == nil {
-				clusterEndpoint = endpoint.String()
-				break
-			}
-		}
 	}
 
 	// 构建 ClientConfig
 	clientConfig := &config.ClientConfig{
-		Namespace: runFlags.Server.Namespace,
+		Namespace:    runFlags.Server.Namespace,
+		Etcd:         bc.GetEtcd(),
+		Kubernetes:   bc.GetKubernetes(),
+		RegistryType: bc.GetRegistryType(),
 	}
 
-	// 1. 添加集群连接信息
-	clusterConfig := bc.GetCluster()
-	registryType := bc.GetRegistryType()
-	serverName := strings.Join([]string{runFlags.Name, runFlags.Server.Name, "grpc"}, ".")
-
-	clientConfig.RegistryType = registryType
-	switch registryType {
-	case config.RegistryType_ETCD:
-		clientConfig.Etcd = bc.GetEtcd()
-	case config.RegistryType_KUBERNETES:
-		clientConfig.Kubernetes = bc.GetKubernetes()
-	}
-
-	if clusterConfig != nil && strutil.IsNotEmpty(clusterConfig.GetEndpoints()) {
-		clientConfig.Cluster = clusterConfig
+	protocol := bc.GetCluster().GetProtocol()
+	var endpoint string
+	if clientConfig.RegistryType == config.RegistryType_ETCD || clientConfig.RegistryType == config.RegistryType_KUBERNETES {
+		// 如果使用 etcd 或 k8s 注册，使用 discovery:///服务名称 格式
+		serverName := strings.Join([]string{runFlags.Name, runFlags.Server.Name, "grpc"}, ".")
+		endpoint = strings.Join([]string{"discovery://", serverName}, "/")
 	} else {
-		// 如果没有配置，使用默认值
-		var endpoint string
-		if registryType == config.RegistryType_ETCD || registryType == config.RegistryType_KUBERNETES {
-			// 如果使用 etcd 或 k8s 注册，使用 discovery:///服务名称 格式
-			endpoint = strings.Join([]string{"discovery://", serverName}, "/")
-		} else {
-			endpoint = normalizeAddress(clusterEndpoint)
+		protocol := bc.GetCluster().GetProtocol()
+		var clusterEndpoint string
+		for _, srv := range srvs {
+			if grpcSrv, ok := srv.(*grpc.Server); protocol == config.ClusterConfig_GRPC && ok {
+				endpoint, err := grpcSrv.Endpoint()
+				if err == nil {
+					clusterEndpoint = endpoint.String()
+					break
+				}
+			}
+			if httpSrv, ok := srv.(*http.Server); protocol == config.ClusterConfig_HTTP && ok {
+				endpoint, err := httpSrv.Endpoint()
+				if err == nil {
+					clusterEndpoint = endpoint.String()
+					break
+				}
+			}
 		}
-		clientConfig.Cluster = &config.ClusterConfig{
-			Name:      serverName,
-			Endpoints: endpoint,
-			Timeout:   durationpb.New(10 * time.Second),
-		}
+		endpoint = normalizeAddress(clusterEndpoint)
+	}
+	clientConfig.Cluster = &config.ClusterConfig{
+		Name:      runFlags.Server.Name,
+		Endpoints: endpoint,
+		Timeout:   durationpb.New(10 * time.Second),
+		Protocol:  protocol,
 	}
 
 	clientConfig.JwtToken = strings.Join([]string{cnst.HTTPHeaderBearerPrefix, "<jwt-token>"}, " ")

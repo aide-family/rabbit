@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/aide-family/magicbox/hello"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -63,7 +64,10 @@ func NewCmd() *cobra.Command {
 }
 
 func runAll(_ *cobra.Command, _ []string) {
-	flags.applyToBootstrap()
+	if err := flags.applyToBootstrap(); err != nil {
+		klog.Errorw("msg", "apply to bootstrap failed", "error", err)
+		return
+	}
 	hello.Hello()
 	wg := new(sync.WaitGroup)
 	wg.Go(func() {

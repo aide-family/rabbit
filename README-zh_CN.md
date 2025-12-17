@@ -133,8 +133,12 @@ docker-compose -f deploy/server/docker/docker-compose.yml up -d
 #### 快速部署
 
 ```bash
+# 创建命名空间（如果不存在）
+kubectl create namespace moon --dry-run=client -o yaml | kubectl apply -f -
+
+# 部署 Rabbit 服务
 cd deploy/server/k8s
-kubectl apply -f deploy/server/k8s/rabbit.yaml
+kubectl apply -f rabbit.yaml
 ```
 
 ### 手动部署
@@ -191,6 +195,7 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | `MOON_RABBIT_JOB_ADDRESS` | `0.0.0.0:9091` | Job 服务器地址 |
 | `MOON_RABBIT_JOB_NETWORK` | `tcp` | Job 服务器网络 |
 | `MOON_RABBIT_JOB_TIMEOUT` | `10s` | Job 请求超时时间 |
+| `MOON_RABBIT_JOB_PROTOCOL` | `GRPC` | Job 协议：GRPC, HTTP |
 
 #### 数据库配置
 
@@ -231,6 +236,7 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 | `MOON_RABBIT_CLUSTER_NAME` | `moon.rabbit` | 集群名称 |
 | `MOON_RABBIT_CLUSTER_ENDPOINTS` | `` | 集群端点 |
 | `MOON_RABBIT_CLUSTER_TIMEOUT` | `10s` | 集群请求超时时间 |
+| `MOON_RABBIT_CLUSTER_PROTOCOL` | `GRPC` | 集群协议：GRPC, HTTP, JOB |
 
 #### Job 配置
 

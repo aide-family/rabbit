@@ -76,7 +76,7 @@ func run(_ *cobra.Command, _ []string) {
 	clusterName := clusterConfig.GetName()
 
 	for _, clusterEndpoint := range clusterEndpoints {
-		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout)
+		initConfig := connect.NewDefaultConfig(clusterName, clusterEndpoint, clusterTimeout, clusterConfig.GetProtocol().String())
 		sender, err := NewSender(initConfig, bc.GetJwtToken(), discovery)
 		if err != nil {
 			continue
@@ -133,17 +133,32 @@ func NewSender(cluster connect.InitConfig, jwtToken string, discovery connect.Re
 		},
 	}
 	opts := []connect.InitOption{
-		connect.WithProtocol(config.ClusterConfig_GRPC.String()),
 		connect.WithDiscovery(discovery),
 	}
-	grpcClient, err := connect.InitGRPCClient(cluster, opts...)
-	if err != nil {
-		klog.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "error", err)
-		return nil, merr.ErrorInternalServer("failed to initialize GRPC client").WithCause(err)
-	}
-	newSender.close = grpcClient.Close
-	newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
-		return apiv1.NewSenderClient(grpcClient).SendEmail(ctx, in)
+	switch cluster.GetProtocol() {
+	case connect.ProtocolHTTP:
+		httpClient, err := connect.InitHTTPClient(cluster, opts...)
+		if err != nil {
+			klog.Errorw("msg", "cluster HTTP client initialization failed", "cluster", name, "error", err)
+			return nil, merr.ErrorInternalServer("failed to initialize HTTP client").WithCause(err)
+		}
+		newSender.close = httpClient.Close
+		newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
+			return apiv1.NewSenderHTTPClient(httpClient).SendEmail(ctx, in)
+		}
+	case connect.ProtocolGRPC:
+		grpcClient, err := connect.InitGRPCClient(cluster, opts...)
+		if err != nil {
+			klog.Errorw("msg", "cluster GRPC client initialization failed", "cluster", name, "error", err)
+			return nil, merr.ErrorInternalServer("failed to initialize GRPC client").WithCause(err)
+		}
+		newSender.close = grpcClient.Close
+		newSender.call = func(ctx context.Context, in *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
+			return apiv1.NewSenderClient(grpcClient).SendEmail(ctx, in)
+		}
+	default:
+		klog.Errorw("msg", "unknown protocol", "cluster", name)
+		return nil, merr.ErrorInternalServer("cluster %s unknown protocol", name)
 	}
 	return newSender, nil
 }

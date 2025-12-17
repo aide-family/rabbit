@@ -2,7 +2,6 @@
 package run
 
 import (
-	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
@@ -19,17 +18,8 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 		Long:  cmdRunLong,
 	}
 	var bc conf.Bootstrap
-	c := config.New(config.WithSource(
-		env.NewSource(),
-		conf.NewBytesSource(defaultServerConfigBytes),
-	))
-	if err := c.Load(); err != nil {
+	if err := conf.Load(&bc, env.NewSource(), conf.NewBytesSource(defaultServerConfigBytes)); err != nil {
 		klog.Errorw("msg", "load config failed", "error", err)
-		panic(err)
-	}
-
-	if err := c.Scan(&bc); err != nil {
-		klog.Errorw("msg", "scan config failed", "error", err)
 		panic(err)
 	}
 	runFlags.addFlags(runCmd, &bc)

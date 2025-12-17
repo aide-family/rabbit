@@ -14,17 +14,20 @@ server:
     author: ${MOON_RABBIT_METADATA_AUTHOR:Aide Family}
     email: ${MOON_RABBIT_METADATA_EMAIL:aidecloud@163.com}
   http:
-    address: "${MOON_RABBIT_HTTP_ADDRESS:0.0.0.0:8080}"
+    address: "${MOON_RABBIT_HTTP_ADDRESS:0.0.0.0:10080}"
     network: "${MOON_RABBIT_HTTP_NETWORK:tcp}"
     timeout: "${MOON_RABBIT_HTTP_TIMEOUT:10s}"
+    protocol: HTTP
   grpc:
-    address: "${MOON_RABBIT_GRPC_ADDRESS:0.0.0.0:9090}"
+    address: "${MOON_RABBIT_GRPC_ADDRESS:0.0.0.0:10090}"
     network: "${MOON_RABBIT_GRPC_NETWORK:tcp}"
     timeout: "${MOON_RABBIT_GRPC_TIMEOUT:10s}"
+    protocol: GRPC
   job:
-    address: "${MOON_RABBIT_JOB_ADDRESS:0.0.0.0:9091}"
+    address: "${MOON_RABBIT_JOB_ADDRESS:0.0.0.0:10070}"
     network: "${MOON_RABBIT_JOB_NETWORK:tcp}"
     timeout: "${MOON_RABBIT_JOB_TIMEOUT:10s}"
+    protocol: ${MOON_RABBIT_JOB_PROTOCOL:GRPC}
 
 jwt:
   secret: "${MOON_RABBIT_JWT_SECRET:xxx}"
@@ -55,6 +58,7 @@ cluster:
   name: ${MOON_RABBIT_CLUSTER_NAME:moon.rabbit}
   endpoints: ${MOON_RABBIT_CLUSTER_ENDPOINTS:}
   timeout: ${MOON_RABBIT_CLUSTER_TIMEOUT:10s}
+  protocol: ${MOON_RABBIT_CLUSTER_PROTOCOL:GRPC}
 
 etcd:
   endpoints: ${MOON_RABBIT_ETCD_ENDPOINTS:127.0.0.1:2379}

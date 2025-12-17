@@ -23,6 +23,7 @@ import (
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type RunFlags struct {
@@ -38,6 +39,7 @@ type RunFlags struct {
 	registryType       string
 	enableClientConfig bool
 	clusterTimeout     time.Duration
+	clusterProtocol    string
 }
 
 var runFlags RunFlags
@@ -81,9 +83,10 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringVar(&f.Cluster.Endpoints, "cluster-endpoints", f.Cluster.Endpoints, `Example: --cluster-endpoints="127.0.0.1:2379"`)
 	c.PersistentFlags().StringVar(&f.Cluster.Name, "cluster-name", f.Cluster.Name, `Example: --cluster-name="moon.rabbit"`)
 	c.PersistentFlags().DurationVar(&f.clusterTimeout, "cluster-timeout", f.Cluster.Timeout.AsDuration(), `Example: --cluster-timeout="10s"`)
+	c.PersistentFlags().StringVar(&f.clusterProtocol, "cluster-protocol", f.Cluster.Protocol.String(), `Example: --cluster-protocol="GRPC"`)
 }
 
-func (f *RunFlags) ApplyToBootstrap() {
+func (f *RunFlags) ApplyToBootstrap() error {
 	if strutil.IsEmpty(f.Server.Name) {
 		f.Server.Name = f.Name
 	}
@@ -137,19 +140,27 @@ func (f *RunFlags) ApplyToBootstrap() {
 		}
 		if len(sourceOpts) > 0 {
 			if err := conf.Load(&bc, sourceOpts...); err != nil {
-				klog.Errorw("msg", "load config failed", "error", err)
-				return
+				klog.Warnw("msg", "load config failed", "error", err)
+				return err
 			}
 			f.Bootstrap = &bc
 		}
 	}
 	if len(f.dataSourcePaths) > 0 {
-		f.DataSourcePaths = strings.Join(f.configPaths, ",")
+		f.DataSourcePaths = strings.Join(f.dataSourcePaths, ",")
 	}
 
 	if f.clusterTimeout > 0 {
 		f.Cluster.Timeout = durationpb.New(f.clusterTimeout)
 	}
+	if strutil.IsNotEmpty(f.clusterProtocol) {
+		protocolValue, ok := config.ClusterConfig_Protocol_value[strings.ToUpper(f.clusterProtocol)]
+		if !ok || protocolValue == int32(config.ClusterConfig_PROTOCOL_UNKNOWN) {
+			return merr.ErrorInternal("invalid cluster protocol: %s", f.clusterProtocol)
+		}
+		f.Cluster.Protocol = config.ClusterConfig_Protocol(protocolValue)
+	}
+	return nil
 }
 
 func GetRunFlags() *RunFlags {
