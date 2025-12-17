@@ -30,16 +30,12 @@ docker push your-registry/rabbit:latest
 创建 Kubernetes 部署配置文件 `rabbit.yaml`：
 
 ```yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: rabbit
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rabbit-config
-  namespace: rabbit
+  namespace: moon
 data:
   server.yaml: |
     environment: PROD
@@ -67,7 +63,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: rabbit-secret
-  namespace: rabbit
+  namespace: moon
 type: Opaque
 stringData:
   jwt-secret: "your-jwt-secret-key"
@@ -77,7 +73,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rabbit
-  namespace: rabbit
+  namespace: moon
   labels:
     app: rabbit
 spec:
@@ -155,7 +151,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rabbit
-  namespace: rabbit
+  namespace: moon
   labels:
     app: rabbit
 spec:
@@ -176,7 +172,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: rabbit-ingress
-  namespace: rabbit
+  namespace: moon
   annotations:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /
@@ -194,36 +190,46 @@ spec:
               number: 8080
 ```
 
-### 3. 部署服务
+### 3. 创建命名空间
+
+```bash
+# 创建命名空间（如果不存在）
+kubectl create namespace moon --dry-run=client -o yaml | kubectl apply -f -
+
+# 或者直接创建
+kubectl create namespace moon
+```
+
+### 4. 部署服务
 
 ```bash
 kubectl apply -f deploy/server/k8s/rabbit.yaml
 ```
 
-### 4. 检查部署状态
+### 5. 检查部署状态
 
 ```bash
 # 查看命名空间
-kubectl get namespace rabbit
+kubectl get namespace moon
 
 # 查看 Pod 状态
-kubectl get pods -n rabbit
+kubectl get pods -n moon
 
 # 查看服务状态
-kubectl get svc -n rabbit
+kubectl get svc -n moon
 
 # 查看部署状态
-kubectl get deployment -n rabbit
+kubectl get deployment -n moon
 
 # 查看详细日志
-kubectl logs -f deployment/rabbit -n rabbit
+kubectl logs -f deployment/rabbit -n moon
 ```
 
 ## 配置说明
 
 ### 命名空间
 
-所有资源都部署在 `rabbit` 命名空间中，便于管理和隔离。
+所有资源都部署在 `moon` 命名空间中，便于管理和隔离。
 
 ### ConfigMap
 
@@ -231,10 +237,10 @@ kubectl logs -f deployment/rabbit -n rabbit
 
 ```bash
 # 编辑 ConfigMap
-kubectl edit configmap rabbit-config -n rabbit
+kubectl edit configmap rabbit-config -n moon
 
 # 查看 ConfigMap
-kubectl get configmap rabbit-config -n rabbit -o yaml
+kubectl get configmap rabbit-config -n moon -o yaml
 ```
 
 ### Secret
@@ -246,10 +252,10 @@ kubectl get configmap rabbit-config -n rabbit -o yaml
 kubectl create secret generic rabbit-secret \
   --from-literal=jwt-secret=your-secret \
   --from-literal=mysql-password=your-password \
-  -n rabbit
+  -n moon
 
 # 查看 Secret
-kubectl get secret rabbit-secret -n rabbit
+kubectl get secret rabbit-secret -n moon
 ```
 
 ### Deployment
@@ -278,7 +284,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: rabbit
+  namespace: moon
 spec:
   replicas: 1
   selector:
@@ -307,7 +313,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: rabbit
+  namespace: moon
 spec:
   selector:
     app: mysql
@@ -343,10 +349,10 @@ env:
 
 ```bash
 # 扩展到 3 个副本
-kubectl scale deployment rabbit --replicas=3 -n rabbit
+kubectl scale deployment rabbit --replicas=3 -n moon
 
 # 查看副本状态
-kubectl get deployment rabbit -n rabbit
+kubectl get deployment rabbit -n moon
 ```
 
 ### 自动扩缩容（HPA）
@@ -356,7 +362,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: rabbit-hpa
-  namespace: rabbit
+  namespace: moon
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -383,7 +389,7 @@ spec:
 
 ```bash
 kubectl apply -f rabbit-hpa.yaml
-kubectl get hpa -n rabbit
+kubectl get hpa -n moon
 ```
 
 ## 服务管理
@@ -392,35 +398,35 @@ kubectl get hpa -n rabbit
 
 ```bash
 # 更新镜像
-kubectl set image deployment/rabbit rabbit=your-registry/rabbit:v1.1.0 -n rabbit
+kubectl set image deployment/rabbit rabbit=your-registry/rabbit:v1.1.0 -n moon
 
 # 查看滚动更新状态
-kubectl rollout status deployment/rabbit -n rabbit
+kubectl rollout status deployment/rabbit -n moon
 
 # 回滚到上一个版本
-kubectl rollout undo deployment/rabbit -n rabbit
+kubectl rollout undo deployment/rabbit -n moon
 
 # 查看更新历史
-kubectl rollout history deployment/rabbit -n rabbit
+kubectl rollout history deployment/rabbit -n moon
 ```
 
 ### 查看日志
 
 ```bash
 # 查看所有 Pod 日志
-kubectl logs -f -l app=rabbit -n rabbit
+kubectl logs -f -l app=rabbit -n moon
 
 # 查看特定 Pod 日志
-kubectl logs -f rabbit-xxxxx -n rabbit
+kubectl logs -f rabbit-xxxxx -n moon
 
 # 查看前 100 行日志
-kubectl logs --tail=100 rabbit-xxxxx -n rabbit
+kubectl logs --tail=100 rabbit-xxxxx -n moon
 ```
 
 ### 进入容器
 
 ```bash
-kubectl exec -it deployment/rabbit -n rabbit -- sh
+kubectl exec -it deployment/rabbit -n moon -- sh
 ```
 
 ### 删除部署
@@ -430,7 +436,7 @@ kubectl exec -it deployment/rabbit -n rabbit -- sh
 kubectl delete -f deploy/server/k8s/rabbit.yaml
 
 # 或删除命名空间（会删除命名空间下的所有资源）
-kubectl delete namespace rabbit
+kubectl delete namespace moon
 ```
 
 ## 监控和健康检查
@@ -444,10 +450,10 @@ kubectl delete namespace rabbit
 
 ```bash
 # 查看 Pod 详细信息
-kubectl describe pod rabbit-xxxxx -n rabbit
+kubectl describe pod rabbit-xxxxx -n moon
 
 # 查看事件
-kubectl get events -n rabbit --sort-by='.lastTimestamp'
+kubectl get events -n moon --sort-by='.lastTimestamp'
 ```
 
 ## 生产环境建议
@@ -467,7 +473,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: rabbit-data
-  namespace: rabbit
+  namespace: moon
 spec:
   accessModes:
   - ReadWriteOnce
@@ -495,23 +501,23 @@ volumes:
 
 ```bash
 # 查看 Pod 状态
-kubectl get pods -n rabbit
+kubectl get pods -n moon
 
 # 查看 Pod 详细信息
-kubectl describe pod rabbit-xxxxx -n rabbit
+kubectl describe pod rabbit-xxxxx -n moon
 
 # 查看日志
-kubectl logs rabbit-xxxxx -n rabbit
+kubectl logs rabbit-xxxxx -n moon
 ```
 
 ### 服务无法访问
 
 ```bash
 # 检查 Service
-kubectl get svc rabbit -n rabbit
+kubectl get svc rabbit -n moon
 
 # 检查 Endpoints
-kubectl get endpoints rabbit -n rabbit
+kubectl get endpoints rabbit -n moon
 
 # 测试服务连接
 kubectl run -it --rm debug --image=busybox --restart=Never -- sh
@@ -523,10 +529,10 @@ wget -qO- http://rabbit:8080/health
 
 ```bash
 # 查看 ConfigMap
-kubectl get configmap rabbit-config -n rabbit -o yaml
+kubectl get configmap rabbit-config -n moon -o yaml
 
 # 查看环境变量
-kubectl exec rabbit-xxxxx -n rabbit -- env | grep MOON_RABBIT
+kubectl exec rabbit-xxxxx -n moon -- env | grep MOON_RABBIT
 ```
 
 ## 更多信息

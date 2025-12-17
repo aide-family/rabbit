@@ -4,8 +4,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aide-family/magicbox/pointer"
-	"github.com/aide-family/magicbox/strutil"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -15,7 +13,7 @@ import (
 type Flags struct {
 	*run.RunFlags
 
-	httpTimeout            string
+	httpTimeout            time.Duration
 	enableSwagger          bool
 	enableSwaggerBasicAuth bool
 	enableMetrics          bool
@@ -28,7 +26,7 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	f.RunFlags = run.GetRunFlags()
 	c.Flags().StringVar(&f.Server.Http.Address, "http-address", f.Server.Http.Address, `Example: --http-address="0.0.0.0:8080", --http-address=":8080"`)
 	c.Flags().StringVar(&f.Server.Http.Network, "http-network", f.Server.Http.Network, `Example: --http-network="tcp"`)
-	c.Flags().StringVar(&f.httpTimeout, "http-timeout", f.Server.Http.Timeout.AsDuration().String(), `Example: --http-timeout="10s", --http-timeout="1m", --http-timeout="1h", --http-timeout="1d"`)
+	c.Flags().DurationVar(&f.httpTimeout, "http-timeout", f.Server.Http.Timeout.AsDuration(), `Example: --http-timeout="10s", --http-timeout="1m", --http-timeout="1h", --http-timeout="1d"`)
 
 	enableSwagger, _ := strconv.ParseBool(f.SwaggerBasicAuth.Enabled)
 	c.Flags().BoolVar(&f.enableSwagger, "enable-swagger", enableSwagger, `Example: --enable-swagger`)
@@ -44,16 +42,17 @@ func (f *Flags) addFlags(c *cobra.Command) {
 	c.Flags().StringVar(&f.MetricsBasicAuth.Password, "metrics-basic-auth-password", f.MetricsBasicAuth.Password, `Example: --metrics-basic-auth-password="password"`)
 }
 
-func (f *Flags) applyToBootstrap() {
-	f.ApplyToBootstrap()
-	if strutil.IsNotEmpty(f.httpTimeout) {
-		if timeout, err := time.ParseDuration(f.httpTimeout); pointer.IsNil(err) {
-			f.Server.Http.Timeout = durationpb.New(timeout)
-		}
+func (f *Flags) applyToBootstrap() error {
+	if err := f.ApplyToBootstrap(); err != nil {
+		return err
+	}
+	if f.httpTimeout > 0 {
+		f.Server.Http.Timeout = durationpb.New(f.httpTimeout)
 	}
 
 	f.EnableSwagger = strconv.FormatBool(f.enableSwagger)
 	f.SwaggerBasicAuth.Enabled = strconv.FormatBool(f.enableSwaggerBasicAuth)
 	f.EnableMetrics = strconv.FormatBool(f.enableMetrics)
 	f.MetricsBasicAuth.Enabled = strconv.FormatBool(f.enableMetricsBasicAuth)
+	return nil
 }

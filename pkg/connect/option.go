@@ -9,6 +9,7 @@ import (
 	"github.com/go-kratos/kratos/v2/selector/p2c"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
@@ -16,28 +17,31 @@ func init() {
 	selector.SetGlobalSelector(p2c.NewBuilder())
 }
 
-const (
-	ProtocolHTTP = "HTTP"
-	ProtocolGRPC = "GRPC"
+var (
+	ProtocolHTTP = config.ClusterConfig_HTTP.String()
+	ProtocolGRPC = config.ClusterConfig_GRPC.String()
 )
 
 type InitConfig interface {
 	GetName() string
 	GetEndpoint() string
 	GetTimeout() *durationpb.Duration
+	GetProtocol() string
 }
 
 type DefaultConfig struct {
 	name     string
 	endpoint string
 	timeout  time.Duration
+	protocol string
 }
 
-func NewDefaultConfig(name, endpoint string, timeout time.Duration) InitConfig {
+func NewDefaultConfig(name, endpoint string, timeout time.Duration, protocol string) InitConfig {
 	return &DefaultConfig{
 		name:     name,
 		endpoint: endpoint,
 		timeout:  timeout,
+		protocol: protocol,
 	}
 }
 
@@ -51,6 +55,10 @@ func (c *DefaultConfig) GetEndpoint() string {
 
 func (c *DefaultConfig) GetTimeout() *durationpb.Duration {
 	return durationpb.New(c.timeout)
+}
+
+func (c *DefaultConfig) GetProtocol() string {
+	return c.protocol
 }
 
 type initConfig struct {
@@ -67,7 +75,7 @@ func NewInitConfig(config InitConfig, opts ...InitOption) (*initConfig, error) {
 	cfg := &initConfig{
 		name:        config.GetName(),
 		endpoint:    config.GetEndpoint(),
-		protocol:    ProtocolGRPC,
+		protocol:    config.GetProtocol(),
 		timeout:     config.GetTimeout().AsDuration(),
 		nodeFilters: []NodeFilter{},
 	}
@@ -91,13 +99,6 @@ func WithNodeVersion(version string) InitOption {
 func WithDiscovery(discovery registry.Discovery) InitOption {
 	return func(cfg *initConfig) error {
 		cfg.discovery = discovery
-		return nil
-	}
-}
-
-func WithProtocol(protocol string) InitOption {
-	return func(cfg *initConfig) error {
-		cfg.protocol = protocol
 		return nil
 	}
 }

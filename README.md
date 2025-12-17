@@ -133,8 +133,12 @@ See [Kubernetes Deployment Documentation](deploy/server/k8s/README.md) for detai
 #### Quick Deploy
 
 ```bash
+# Create namespace (if not exists)
+kubectl create namespace moon --dry-run=client -o yaml | kubectl apply -f -
+
+# Deploy Rabbit service
 cd deploy/server/k8s
-kubectl apply -f deploy/server/k8s/rabbit.yaml
+kubectl apply -f rabbit.yaml
 ```
 
 ### Manual Deployment
@@ -191,6 +195,7 @@ Rabbit supports configuration through environment variables. All environment var
 | `MOON_RABBIT_JOB_ADDRESS` | `0.0.0.0:9091` | Job server address |
 | `MOON_RABBIT_JOB_NETWORK` | `tcp` | Job server network |
 | `MOON_RABBIT_JOB_TIMEOUT` | `10s` | Job request timeout |
+| `MOON_RABBIT_JOB_PROTOCOL` | `GRPC` | Job protocol: GRPC, HTTP |
 
 #### Database Configuration
 
@@ -231,6 +236,7 @@ Rabbit supports configuration through environment variables. All environment var
 | `MOON_RABBIT_CLUSTER_NAME` | `moon.rabbit` | Cluster name |
 | `MOON_RABBIT_CLUSTER_ENDPOINTS` | `` | Cluster endpoints |
 | `MOON_RABBIT_CLUSTER_TIMEOUT` | `10s` | Cluster request timeout |
+| `MOON_RABBIT_CLUSTER_PROTOCOL` | `GRPC` | Cluster protocol: GRPC, HTTP, JOB |
 
 #### Job Configuration
 

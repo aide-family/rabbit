@@ -22,6 +22,7 @@ import (
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
+	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/middler"
 )
 
@@ -229,7 +230,13 @@ func RegisterJobService(
 	jobSrv *JobServer,
 	jobService *service.JobService,
 ) Servers {
-	apiv1.RegisterJobServer(jobSrv.server, jobService)
+	protocol := jobSrv.protocol
+	switch protocol {
+	case config.ClusterConfig_HTTP:
+		apiv1.RegisterJobHTTPServer(jobSrv.httpSrv, jobService)
+	case config.ClusterConfig_GRPC:
+		apiv1.RegisterJobServer(jobSrv.grpcSrv, jobService)
+	}
 	return Servers{jobSrv}
 }
 

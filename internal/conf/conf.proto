@@ -34,6 +34,7 @@ message Server {
 		string address = 1;
 		string network = 2;
 		google.protobuf.Duration timeout = 3;
+		rabbit.config.ClusterConfig.Protocol protocol = 4;
 	}
 	
 	string name = 1;

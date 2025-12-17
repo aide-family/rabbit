@@ -24,6 +24,7 @@ message ClusterConfig {
 	string name = 1;
 	string endpoints = 2;
 	google.protobuf.Duration timeout = 3;
+	Protocol protocol = 4;
 }
 
 message ETCDConfig {

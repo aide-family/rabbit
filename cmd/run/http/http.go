@@ -60,7 +60,10 @@ func NewCmd() *cobra.Command {
 }
 
 func runHTTPServer(_ *cobra.Command, _ []string) {
-	flags.applyToBootstrap()
+	if err := flags.applyToBootstrap(); err != nil {
+		klog.Errorw("msg", "apply to bootstrap failed", "error", err)
+		return
+	}
 	hello.Hello()
 	run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "http"}, "."), WireApp)
 }

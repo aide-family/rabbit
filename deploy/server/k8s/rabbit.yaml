@@ -1,13 +1,9 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: rabbit
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: rabbit-config
-  namespace: rabbit
+  namespace: moon
 data:
   server.yaml: |
     environment: PROD
@@ -20,15 +16,15 @@ data:
       name: rabbit
       namespace: moon
       http:
-        address: "0.0.0.0:8080"
+        address: "0.0.0.0:10080"
         network: "tcp"
         timeout: "10s"
       grpc:
-        address: "0.0.0.0:9090"
+        address: "0.0.0.0:10090"
         network: "tcp"
         timeout: "10s"
       job:
-        address: "0.0.0.0:9091"
+        address: "0.0.0.0:10070"
         network: "grpc"
         timeout: "10s"
     
@@ -46,7 +42,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: rabbit-secret
-  namespace: rabbit
+  namespace: moon
 type: Opaque
 stringData:
   jwt-secret: "rabbit-jwt-secret-key-change-me"
@@ -56,7 +52,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rabbit
-  namespace: rabbit
+  namespace: moon
   labels:
     app: rabbit
 spec:
@@ -75,18 +71,23 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
-          containerPort: 8080
+          containerPort: 10080
           protocol: TCP
         - name: grpc
-          containerPort: 9090
+          containerPort: 10090
+          protocol: TCP
+        - name: job
+          containerPort: 10070
           protocol: TCP
         env:
         - name: MOON_RABBIT_ENVIRONMENT
           value: "PROD"
         - name: MOON_RABBIT_HTTP_ADDRESS
-          value: "0.0.0.0:8080"
+          value: "0.0.0.0:10080"
         - name: MOON_RABBIT_GRPC_ADDRESS
-          value: "0.0.0.0:9090"
+          value: "0.0.0.0:10090"
+        - name: MOON_RABBIT_JOB_ADDRESS
+          value: "0.0.0.0:10070"
         - name: MOON_RABBIT_USE_DATABASE
           value: "false"
         - name: MOON_RABBIT_JWT_SECRET
@@ -136,19 +137,23 @@ apiVersion: v1
 kind: Service
 metadata:
   name: rabbit
-  namespace: rabbit
+  namespace: moon
   labels:
     app: rabbit
 spec:
   type: ClusterIP
   ports:
   - name: http
-    port: 8080
+    port: 10080
     targetPort: http
     protocol: TCP
   - name: grpc
-    port: 9090
+    port: 10090
     targetPort: grpc
+    protocol: TCP
+  - name: job
+    port: 10070
+    targetPort: job
     protocol: TCP
   selector:
     app: rabbit
