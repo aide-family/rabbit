@@ -545,44 +545,6 @@ When reporting issues, please include:
 8. **Logs**: Relevant log output
 9. **Screenshots**: If applicable
 
-#### Issue Template
-
-```markdown
-**Issue Type**: [Bug/Feature Request/Question]
-
-**Description**:
-<!-- Clear description of the issue -->
-
-**Steps to Reproduce** (for bugs):
-1. 
-2. 
-3. 
-
-**Expected Behavior**:
-<!-- What you expected to happen -->
-
-**Actual Behavior**:
-<!-- What actually happened -->
-
-**Environment**:
-- OS: 
-- Go Version: 
-- Rabbit Version: 
-
-**Configuration**:
-```yaml
-<!-- Relevant configuration (sanitized) -->
-```
-
-**Logs**:
-```
-<!-- Relevant log output -->
-```
-
-**Additional Context**:
-<!-- Any other relevant information -->
-```
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -597,6 +559,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Repository**: https://github.com/aide-family/rabbit
 - **Issues**: https://github.com/aide-family/rabbit/issues
 - **Email**: aidecloud@163.com
+- **Feishu**: 
+
+  | ![](./docs/imgs/aide.png) | ![](./docs/imgs/enterprise.png) | ![](./docs/imgs/members.png) | ![](./docs/imgs/discuss.png) |
+  | ------------------------- | ---- | ---- | ---- |
+
+  
 
 ---
 
