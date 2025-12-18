@@ -51,7 +51,9 @@ func NewMessageRepository(
 	// 注册发送器
 	messageRepo.registerSenders(sender.NewEmailSender(helper), sender.NewWebhookSender(helper))
 
-	messageRepo.Start(context.Background())
+	// 创建可取消的 context 用于 worker 优雅关闭
+	messageRepo.ctx, messageRepo.cancel = context.WithCancel(context.Background())
+	messageRepo.Start(messageRepo.ctx)
 
 	messageRepo.d.AppendClose("messageRepository", func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -84,6 +86,9 @@ type messageRepositoryImpl struct {
 	clusterInitOnce sync.Once
 	stopOnce        sync.Once    // 确保Stop只执行一次
 	clustersMu      sync.RWMutex // 保护clusters的并发访问
+
+	ctx    context.Context    // worker 的 context，用于优雅关闭
+	cancel context.CancelFunc // 取消函数
 }
 
 // start 启动后台处理goroutine
@@ -104,32 +109,44 @@ func (m *messageRepositoryImpl) Stop(ctx context.Context) error {
 	var stopped bool
 	m.stopOnce.Do(func() {
 		stopped = true
+		// 先取消 worker 的 context，通知所有 worker 停止
+		if m.cancel != nil {
+			m.cancel()
+		}
+		// 关闭 stopChan，确保所有 worker 都能收到停止信号
 		close(m.stopChan)
-		m.wg.Wait()
-		close(m.messageChan)
-		m.helper.Debug("msg", "message bus stopped")
+
+		// 使用传入的 context 控制超时，等待所有 worker goroutine 退出
+		done := make(chan struct{})
+		go func() {
+			m.wg.Wait()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			// 所有 worker 已退出，可以安全关闭 messageChan
+			close(m.messageChan)
+			m.helper.Debug("msg", "message bus stopped")
+		case <-ctx.Done():
+			// 超时或取消，但 worker 可能还在运行
+			m.helper.Warnw("msg", "message bus stop timeout, some workers may still be running", "error", ctx.Err())
+			return
+		}
 	})
 
 	if !stopped {
-		// 如果已经停止，等待context或直接返回
+		// 如果已经停止，直接返回
 		select {
-		case <-ctx.Done():
-			m.helper.Debug("msg", "message bus already stopped, context done")
-			return nil
 		case <-m.stopChan:
 			m.helper.Debug("msg", "message bus already stopped")
-			return nil
+		case <-ctx.Done():
+			m.helper.Debug("msg", "message bus already stopped, context done")
 		}
+		return nil
 	}
 
-	// 检查context是否已取消
-	select {
-	case <-ctx.Done():
-		m.helper.Debug("msg", "message bus stopped by context done")
-		return nil
-	default:
-		return nil
-	}
+	return nil
 }
 
 // worker 处理消息的工作协程
@@ -162,10 +179,13 @@ func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageU
 	if m.d.UseDatabase() {
 		m.initClusters()
 
-		clustersIdx := make([]int, 0, len(m.clusters))
-		for i := range m.clusters {
+		m.clustersMu.RLock()
+		clustersLen := len(m.clusters)
+		clustersIdx := make([]int, 0, clustersLen)
+		for i := 0; i < clustersLen; i++ {
 			clustersIdx = append(clustersIdx, i)
 		}
+		m.clustersMu.RUnlock()
 
 		// 打乱副本，避免修改原始slice
 		rand.Shuffle(len(clustersIdx), func(i, j int) {
@@ -175,6 +195,11 @@ func (m *messageRepositoryImpl) waitProcessMessage(ctx context.Context, messageU
 		// 按打乱后的顺序尝试发送，失败则重试下一个节点
 		for _, clusterIdx := range clustersIdx {
 			m.clustersMu.RLock()
+			if clusterIdx >= len(m.clusters) {
+				m.clustersMu.RUnlock()
+				m.helper.Debugw("msg", "cluster index out of range, skip", "uid", messageUID, "index", clusterIdx)
+				continue
+			}
 			cluster := m.clusters[clusterIdx]
 			m.clustersMu.RUnlock()
 			reply, err := cluster.SendMessage(ctx, req)
@@ -246,7 +271,7 @@ func (m *messageRepositoryImpl) processMessage(ctx context.Context, message *bo.
 		m.helper.Debugw("msg", "message already sent or sending", "uid", message.UID)
 		return nil
 	}
-	message.Status = vobj.MessageStatusSending
+	// 注意：状态已在 SendMessage 方法中通过数据库更新为 Sending，这里不需要修改内存状态
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
 	defer cancel()
 
