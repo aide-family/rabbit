@@ -18,7 +18,12 @@ func WithNamespace(ctx context.Context, namespace string) context.Context {
 }
 
 func GetNamespace(ctx context.Context) string {
-	return ctx.Value(namespaceKey{}).(string)
+	if val := ctx.Value(namespaceKey{}); val != nil {
+		if ns, ok := val.(string); ok {
+			return ns
+		}
+	}
+	return ""
 }
 
 func MustNamespace() middleware.Middleware {
