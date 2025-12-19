@@ -92,7 +92,7 @@ func init() {
 type Servers []transport.Server
 
 func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
-	if strings.EqualFold(bc.GetEnableSwagger(), "true") {
+	if !strings.EqualFold(bc.GetEnableSwagger(), "true") {
 		helper.Debug("swagger is not enabled")
 		return
 	}
@@ -117,7 +117,7 @@ func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) 
 }
 
 func BindMetrics(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
-	if strings.EqualFold(bc.GetEnableMetrics(), "true") {
+	if !strings.EqualFold(bc.GetEnableMetrics(), "true") {
 		helper.Debug("metrics is not enabled")
 		return
 	}

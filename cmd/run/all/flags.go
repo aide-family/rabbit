@@ -73,5 +73,9 @@ func (f *Flags) applyToBootstrap() error {
 	if f.jobCoreTimeout > 0 {
 		f.JobCore.Timeout = durationpb.New(f.jobCoreTimeout)
 	}
+	f.EnableSwagger = strconv.FormatBool(f.enableSwagger)
+	f.SwaggerBasicAuth.Enabled = strconv.FormatBool(f.enableSwaggerBasicAuth)
+	f.EnableMetrics = strconv.FormatBool(f.enableMetrics)
+	f.MetricsBasicAuth.Enabled = strconv.FormatBool(f.enableMetricsBasicAuth)
 	return nil
 }
