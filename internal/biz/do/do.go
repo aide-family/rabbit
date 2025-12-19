@@ -64,7 +64,7 @@ type NamespaceModel struct {
 }
 
 func (n *NamespaceModel) BeforeCreate(tx *gorm.DB) (err error) {
-	if n.BaseModel.BeforeCreate(tx) != nil {
+	if err = n.BaseModel.BeforeCreate(tx); err != nil {
 		return
 	}
 	if strutil.IsEmpty(n.Namespace) {

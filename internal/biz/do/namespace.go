@@ -19,7 +19,7 @@ func (Namespace) TableName() string {
 }
 
 func (n *Namespace) BeforeCreate(tx *gorm.DB) (err error) {
-	if n.BaseModel.BeforeCreate(tx) != nil {
+	if err = n.BaseModel.BeforeCreate(tx); err != nil {
 		return
 	}
 	if !n.Status.Exist() || n.Status.IsUnknown() {
