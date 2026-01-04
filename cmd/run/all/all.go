@@ -2,18 +2,11 @@
 package all
 
 import (
-	"strings"
-	"sync"
-
-	"github.com/aide-family/magicbox/hello"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/cmd/run"
-	"github.com/aide-family/rabbit/cmd/run/grpc"
-	"github.com/aide-family/rabbit/cmd/run/http"
-	"github.com/aide-family/rabbit/cmd/run/job"
 )
 
 const cmdAllLong = `Start the Rabbit messaging service with all services (HTTP, gRPC, and Job).
@@ -44,9 +37,9 @@ Note: For production environments requiring service separation, consider using t
 commands to start services independently for better scalability and resource management.
 
 After starting the service, Rabbit will listen on the configured ports:
-  • HTTP: Default 0.0.0.0:8080 (configurable via --http-address)
-  • gRPC: Default 0.0.0.0:9090 (configurable via --grpc-address)
-  • Job: Default 0.0.0.0:9091 (configurable via --job-address)`
+  • HTTP: Default 0.0.0.0:10080 (configurable via --http-address)
+  • gRPC: Default 0.0.0.0:10090 (configurable via --grpc-address)
+  • Job: Default 0.0.0.0:10070 (configurable via --job-address)`
 
 func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{
@@ -56,28 +49,15 @@ func NewCmd() *cobra.Command {
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},
-		Run: runAll,
+		Run: func(_ *cobra.Command, _ []string) {
+			if err := flags.applyToBootstrap(); err != nil {
+				klog.Errorw("msg", "apply to bootstrap failed", "error", err)
+				return
+			}
+			run.NewEngine(run.NewEndpoint("all", WireApp)).Start()
+		},
 	}
 
 	flags.addFlags(runCmd)
 	return runCmd
-}
-
-func runAll(_ *cobra.Command, _ []string) {
-	if err := flags.applyToBootstrap(); err != nil {
-		klog.Errorw("msg", "apply to bootstrap failed", "error", err)
-		return
-	}
-	hello.Hello()
-	wg := new(sync.WaitGroup)
-	wg.Go(func() {
-		run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "http"}, "."), http.WireApp)
-	})
-	wg.Go(func() {
-		run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "grpc"}, "."), grpc.WireApp)
-	})
-	wg.Go(func() {
-		run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "job"}, "."), job.WireApp)
-	})
-	wg.Wait()
 }

@@ -21,12 +21,11 @@ message Bootstrap {
 	rabbit.config.KubernetesConfig kubernetes = 10;
 	rabbit.config.BasicAuthConfig swaggerBasicAuth = 11;
 	rabbit.config.BasicAuthConfig metricsBasicAuth = 12;
-	string enableClientConfig = 13;
-	string enableSwagger = 14;
-	string enableMetrics = 15;
-	string useDatabase = 16;
-	string dataSourcePaths = 17;
-	string messageLogPath = 18;
+	string enableSwagger = 13;
+	string enableMetrics = 14;
+	string useDatabase = 15;
+	string dataSourcePaths = 16;
+	string messageLogPath = 17;
 }
 
 message Server {

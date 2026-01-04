@@ -279,7 +279,6 @@ Rabbit supports configuration through environment variables. All environment var
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MOON_RABBIT_ENABLE_CLIENT_CONFIG` | `false` | Enable client configuration |
 | `MOON_RABBIT_ENABLE_SWAGGER` | `false` | Enable Swagger UI |
 | `MOON_RABBIT_ENABLE_METRICS` | `false` | Enable metrics endpoint |
 | `MOON_RABBIT_DATASOURCE_PATHS` | `` | Data source file paths (comma-separated, mutually exclusive with MOON_RABBIT_USE_DATABASE) |

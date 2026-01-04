@@ -6,16 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/go-kratos/kratos/v2"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/env"
 	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 
@@ -40,7 +37,6 @@ type RunFlags struct {
 	environment         string
 	jwtExpire           string
 	registryType        string
-	enableClientConfig  bool
 	clusterTimeout      time.Duration
 	clusterProtocol     string
 }
@@ -52,8 +48,6 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	f.Bootstrap = bc
 
 	c.PersistentFlags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
-	enableClientConfig, _ := strconv.ParseBool(f.EnableClientConfig)
-	c.PersistentFlags().BoolVar(&f.enableClientConfig, "enable-client-config", enableClientConfig, `Example: --enable-client-config`)
 
 	c.PersistentFlags().StringVar(&f.Server.Name, "server-name", f.Server.Name, `Example: --server-name="rabbit"`)
 	useRandomID, _ := strconv.ParseBool(f.Server.UseRandomID)
@@ -101,7 +95,6 @@ func (f *RunFlags) ApplyToBootstrap() error {
 	if strutil.IsEmpty(f.Server.Namespace) {
 		f.Server.Namespace = f.Namespace
 	}
-	f.EnableClientConfig = strconv.FormatBool(f.enableClientConfig)
 
 	metadata := f.Server.Metadata
 	if pointer.IsNil(metadata) {
@@ -173,38 +166,4 @@ func (f *RunFlags) ApplyToBootstrap() error {
 
 func GetRunFlags() *RunFlags {
 	return &runFlags
-}
-
-type WireApp func(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error)
-
-func StartServer(serviceName string, wireApp WireApp) {
-	serverConf := runFlags.GetServer()
-	envOpts := []hello.Option{
-		hello.WithVersion(runFlags.Version),
-		hello.WithID(runFlags.Hostname),
-		hello.WithEnv(runFlags.Environment.String()),
-		hello.WithMetadata(serverConf.GetMetadata()),
-	}
-	if strings.EqualFold(serverConf.GetUseRandomID(), "true") {
-		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
-	}
-	hello.SetEnvWithOption(envOpts...)
-	helper := klog.NewHelper(klog.With(klog.GetLogger(),
-		"service.name", serviceName,
-		"service.id", hello.ID(),
-		"caller", klog.DefaultCaller,
-		"trace.id", tracing.TraceID(),
-		"span.id", tracing.SpanID()),
-	)
-
-	app, cleanup, err := wireApp(serviceName, runFlags.Bootstrap, helper)
-	if err != nil {
-		klog.Errorw("msg", "wireApp failed", "error", err)
-		return
-	}
-	defer cleanup()
-	if err := app.Run(); err != nil {
-		klog.Errorw("msg", "app run failed", "error", err)
-		return
-	}
 }

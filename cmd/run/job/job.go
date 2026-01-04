@@ -2,18 +2,11 @@
 package job
 
 import (
-	"strings"
-
-	"github.com/aide-family/magicbox/hello"
-	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/cmd/run"
-	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/internal/data"
-	"github.com/aide-family/rabbit/internal/server"
 )
 
 const cmdJobLong = `Start the Rabbit job service (EventBus) only, providing asynchronous message processing capabilities.
@@ -43,7 +36,7 @@ http or grpc service separately. The job service processes messages that are sub
 the HTTP or gRPC APIs.
 
 After starting the service, Rabbit job will:
-  • Listen on the configured job port (default: 0.0.0.0:9091, configurable via --job-address)
+  • Listen on the configured job port (default: 0.0.0.0:10070, configurable via --job-address)
   • Start processing messages from the queue asynchronously
   • Handle background message delivery tasks with the configured worker pool`
 
@@ -55,35 +48,15 @@ func NewCmd() *cobra.Command {
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},
-		Run: runJobServer,
+		Run: func(_ *cobra.Command, _ []string) {
+			if err := flags.applyToBootstrap(); err != nil {
+				klog.Errorw("msg", "apply to bootstrap failed", "error", err)
+				return
+			}
+			run.NewEngine(run.NewEndpoint("job", WireApp)).Start()
+		},
 	}
 
 	flags.addFlags(runCmd)
 	return runCmd
-}
-
-func runJobServer(_ *cobra.Command, _ []string) {
-	if err := flags.applyToBootstrap(); err != nil {
-		klog.Errorw("msg", "apply to bootstrap failed", "error", err)
-		return
-	}
-	hello.Hello()
-	run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "job"}, "."), WireApp)
-}
-
-func newApp(serviceName string, d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
-	opts := []kratos.Option{
-		kratos.Name(serviceName),
-		kratos.ID(hello.ID()),
-		kratos.Version(hello.Version()),
-		kratos.Metadata(hello.Metadata()),
-		kratos.Logger(helper.Logger()),
-		kratos.Server(srvs...),
-	}
-
-	if registry := d.Registry(); registry != nil {
-		opts = append(opts, kratos.Registrar(registry))
-	}
-
-	return kratos.New(opts...), nil
 }

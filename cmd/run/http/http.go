@@ -2,19 +2,11 @@
 package http
 
 import (
-	"strings"
-
-	"github.com/aide-family/magicbox/hello"
-	"github.com/go-kratos/kratos/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/cmd/run"
-	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/internal/data"
-	"github.com/aide-family/rabbit/internal/server"
 )
 
 const cmdHTTPLong = `Start the Rabbit HTTP service only, providing RESTful API interfaces for message delivery and management.
@@ -41,7 +33,7 @@ Use Cases:
 Note: This command only starts the HTTP service. For asynchronous message processing, you need to
 start the job service separately using the "rabbit job" command.
 
-After starting the service, Rabbit HTTP will listen on the configured HTTP port (default: 0.0.0.0:8080,
+After starting the service, Rabbit HTTP will listen on the configured HTTP port (default: 0.0.0.0:10080,
 configurable via --http-address) and provide RESTful API interfaces for client access.`
 
 func NewCmd() *cobra.Command {
@@ -52,47 +44,15 @@ func NewCmd() *cobra.Command {
 		Annotations: map[string]string{
 			"group": cmd.ServiceCommands,
 		},
-		Run: runHTTPServer,
+		Run: func(_ *cobra.Command, _ []string) {
+			if err := flags.applyToBootstrap(); err != nil {
+				klog.Errorw("msg", "apply to bootstrap failed", "error", err)
+				return
+			}
+			run.NewEngine(run.NewEndpoint("http", WireApp)).Start()
+		},
 	}
 
 	flags.addFlags(runCmd)
 	return runCmd
-}
-
-func runHTTPServer(_ *cobra.Command, _ []string) {
-	if err := flags.applyToBootstrap(); err != nil {
-		klog.Errorw("msg", "apply to bootstrap failed", "error", err)
-		return
-	}
-	hello.Hello()
-	run.StartServer(strings.Join([]string{flags.Name, flags.Server.Name, "http"}, "."), WireApp)
-}
-
-func newApp(serviceName string, d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
-	opts := []kratos.Option{
-		kratos.Name(serviceName),
-		kratos.ID(hello.ID()),
-		kratos.Version(hello.Version()),
-		kratos.Metadata(hello.Metadata()),
-		kratos.Logger(helper.Logger()),
-		kratos.Server(srvs...),
-	}
-
-	if registry := d.Registry(); registry != nil {
-		opts = append(opts, kratos.Registrar(registry))
-	}
-
-	for _, srv := range srvs {
-		if httpSrv, ok := srv.(*http.Server); ok {
-			server.BindSwagger(httpSrv, bc, helper)
-			server.BindMetrics(httpSrv, bc, helper)
-		}
-	}
-
-	// 生成客户端配置
-	if err := run.GenerateClientConfig(bc, srvs, helper); err != nil {
-		helper.Warnw("msg", "generate client config failed", "error", err)
-	}
-
-	return kratos.New(opts...), nil
 }

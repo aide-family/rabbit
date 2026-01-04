@@ -9,6 +9,7 @@ import (
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 
+	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
@@ -24,6 +25,6 @@ func WireApp(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) (*krat
 		biz.ProviderSetBiz,
 		impl.ProviderSetImpl,
 		data.ProviderSetData,
-		newApp,
+		run.NewApp,
 	))
 }
