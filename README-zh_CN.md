@@ -279,7 +279,6 @@ Rabbit 支持通过环境变量进行配置。所有环境变量遵循 `MOON_RAB
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `MOON_RABBIT_ENABLE_CLIENT_CONFIG` | `false` | 启用客户端配置 |
 | `MOON_RABBIT_ENABLE_SWAGGER` | `false` | 启用 Swagger UI |
 | `MOON_RABBIT_ENABLE_METRICS` | `false` | 启用指标端点 |
 | `MOON_RABBIT_DATASOURCE_PATHS` | `` | 数据源文件路径（逗号分隔，与 MOON_RABBIT_USE_DATABASE 互斥） |
