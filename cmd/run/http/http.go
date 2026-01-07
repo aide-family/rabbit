@@ -33,7 +33,7 @@ Use Cases:
 Note: This command only starts the HTTP service. For asynchronous message processing, you need to
 start the job service separately using the "rabbit job" command.
 
-After starting the service, Rabbit HTTP will listen on the configured HTTP port (default: 0.0.0.0:10080,
+After starting the service, Rabbit HTTP will listen on the configured HTTP port (default: 0.0.0.0:18080,
 configurable via --http-address) and provide RESTful API interfaces for client access.`
 
 func NewCmd() *cobra.Command {

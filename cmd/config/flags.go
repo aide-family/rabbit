@@ -32,7 +32,7 @@ var clientConfig = &config.ClientConfig{
 	RegistryType: config.RegistryType_UNKNOWN,
 	Cluster: &config.ClusterConfig{
 		Name:      "moon.rabbit",
-		Endpoints: "localhost:10080",
+		Endpoints: "localhost:18080",
 		Timeout:   durationpb.New(10 * time.Second),
 		Protocol:  config.ClusterConfig_GRPC,
 	},

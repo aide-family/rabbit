@@ -37,9 +37,9 @@ Note: For production environments requiring service separation, consider using t
 commands to start services independently for better scalability and resource management.
 
 After starting the service, Rabbit will listen on the configured ports:
-  • HTTP: Default 0.0.0.0:10080 (configurable via --http-address)
-  • gRPC: Default 0.0.0.0:10090 (configurable via --grpc-address)
-  • Job: Default 0.0.0.0:10070 (configurable via --job-address)`
+  • HTTP: Default 0.0.0.0:18080 (configurable via --http-address)
+  • gRPC: Default 0.0.0.0:19090 (configurable via --grpc-address)
+  • Job: Default 0.0.0.0:17070 (configurable via --job-address)`
 
 func NewCmd() *cobra.Command {
 	runCmd := &cobra.Command{

@@ -4,9 +4,9 @@ services:
     image: rabbit-local:latest
     container_name: rabbit
     ports:
-      - "${RABBIT_HTTP_PORT:-10080}:10080" # HTTP 端口
-      - "${RABBIT_GRPC_PORT:-10090}:10090" # gRPC 端口
-      - "${RABBIT_JOB_PORT:-10070}:10070" # Job 端口
+      - "${RABBIT_HTTP_PORT:-18080}:18080" # HTTP 端口
+      - "${RABBIT_GRPC_PORT:-19090}:19090" # gRPC 端口
+      - "${RABBIT_JOB_PORT:-17070}:17070" # Job 端口
     environment:
       # 基础配置
       - MOON_RABBIT_ENVIRONMENT=${MOON_RABBIT_ENVIRONMENT:-PROD}

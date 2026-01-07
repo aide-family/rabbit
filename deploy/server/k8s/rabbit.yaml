@@ -16,15 +16,15 @@ data:
       name: rabbit
       namespace: moon
       http:
-        address: "0.0.0.0:10080"
+        address: "0.0.0.0:18080"
         network: "tcp"
         timeout: "10s"
       grpc:
-        address: "0.0.0.0:10090"
+        address: "0.0.0.0:19090"
         network: "tcp"
         timeout: "10s"
       job:
-        address: "0.0.0.0:10070"
+        address: "0.0.0.0:17070"
         network: "grpc"
         timeout: "10s"
     
@@ -71,23 +71,23 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
-          containerPort: 10080
+          containerPort: 18080
           protocol: TCP
         - name: grpc
-          containerPort: 10090
+          containerPort: 19090
           protocol: TCP
         - name: job
-          containerPort: 10070
+          containerPort: 17070
           protocol: TCP
         env:
         - name: MOON_RABBIT_ENVIRONMENT
           value: "PROD"
         - name: MOON_RABBIT_HTTP_ADDRESS
-          value: "0.0.0.0:10080"
+          value: "0.0.0.0:18080"
         - name: MOON_RABBIT_GRPC_ADDRESS
-          value: "0.0.0.0:10090"
+          value: "0.0.0.0:19090"
         - name: MOON_RABBIT_JOB_ADDRESS
-          value: "0.0.0.0:10070"
+          value: "0.0.0.0:17070"
         - name: MOON_RABBIT_USE_DATABASE
           value: "false"
         - name: MOON_RABBIT_JWT_SECRET
@@ -144,15 +144,15 @@ spec:
   type: ClusterIP
   ports:
   - name: http
-    port: 10080
+    port: 18080
     targetPort: http
     protocol: TCP
   - name: grpc
-    port: 10090
+    port: 19090
     targetPort: grpc
     protocol: TCP
   - name: job
-    port: 10070
+    port: 17070
     targetPort: job
     protocol: TCP
   selector:

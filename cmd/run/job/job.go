@@ -36,7 +36,7 @@ http or grpc service separately. The job service processes messages that are sub
 the HTTP or gRPC APIs.
 
 After starting the service, Rabbit job will:
-  • Listen on the configured job port (default: 0.0.0.0:10070, configurable via --job-address)
+  • Listen on the configured job port (default: 0.0.0.0:17070, configurable via --job-address)
   • Start processing messages from the queue asynchronously
   • Handle background message delivery tasks with the configured worker pool`
 

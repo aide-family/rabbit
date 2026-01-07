@@ -33,7 +33,7 @@ Use Cases:
 Note: This command only starts the gRPC service. For asynchronous message processing, you need to
 start the job service separately using the "rabbit job" command.
 
-After starting the service, Rabbit gRPC will listen on the configured gRPC port (default: 0.0.0.0:10090,
+After starting the service, Rabbit gRPC will listen on the configured gRPC port (default: 0.0.0.0:19090,
 configurable via --grpc-address) and provide gRPC API interfaces for client access.`
 
 func NewCmd() *cobra.Command {

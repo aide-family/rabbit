@@ -101,10 +101,10 @@ rabbit  | ├── Metadata:                                                   
 rabbit  | │   ├── author: Aide Family                                                             │
 rabbit  | │   └── email: 1058165620@qq.com                                                        │
 rabbit  | └───────────────────────────────────────────────────────────────────────────────────────┘
-rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.job service.id=b789d98d95c8 caller=server/job.go:74 trace.id= span.id= server=job msg=[Job] started address=grpc://172.20.0.2:10070
-rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.job service.id=b789d98d95c8 caller=grpc/server.go:231 trace.id= span.id= msg=[gRPC] server listening on: [::]:10070
-rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.grpc service.id=b789d98d95c8 caller=grpc/server.go:231 trace.id= span.id= msg=[gRPC] server listening on: [::]:10090
-rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.http service.id=b789d98d95c8 caller=http/server.go:330 trace.id= span.id= msg=[HTTP] server listening on: [::]:10080
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.job service.id=b789d98d95c8 caller=server/job.go:74 trace.id= span.id= server=job msg=[Job] started address=grpc://172.20.0.2:17070
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.job service.id=b789d98d95c8 caller=grpc/server.go:231 trace.id= span.id= msg=[gRPC] server listening on: [::]:17070
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.grpc service.id=b789d98d95c8 caller=grpc/server.go:231 trace.id= span.id= msg=[gRPC] server listening on: [::]:19090
+rabbit  | INFO ts=2025-12-17T08:52:55Z service.name=moon.rabbit.http service.id=b789d98d95c8 caller=http/server.go:330 trace.id= span.id= msg=[HTTP] server listening on: [::]:18080
 ```
 
 ### 生成配置文件
