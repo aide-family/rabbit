@@ -136,7 +136,6 @@ func initDB() (*gorm.DB, error) {
 		}
 		databases = append(databases, database)
 	}
-	defer rows.Close()
 	klog.Debugw("msg", "show databases success", "databases", databases)
 	if !slices.Contains(databases, flags.database) {
 		// create database
