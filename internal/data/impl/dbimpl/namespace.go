@@ -2,10 +2,12 @@ package dbimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
+	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/do"
@@ -145,7 +147,7 @@ func (n *namespaceRepositoryImpl) GetNamespaceByName(ctx context.Context, name s
 	wrappers := namespaceDO.WithContext(ctx).Where(namespaceDO.Name.Eq(name))
 	namespaceDo, err := wrappers.First()
 	if err != nil {
-		if merr.IsNotFound(err) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, merr.ErrorNotFound("namespace %s not found", name)
 		}
 		return nil, err

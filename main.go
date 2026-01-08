@@ -14,19 +14,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
-	"github.com/aide-family/rabbit/cmd/apply"
-	"github.com/aide-family/rabbit/cmd/config"
-	"github.com/aide-family/rabbit/cmd/delete"
-	"github.com/aide-family/rabbit/cmd/get"
 	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/cmd/run/all"
 	"github.com/aide-family/rabbit/cmd/run/grpc"
 	"github.com/aide-family/rabbit/cmd/run/http"
 	"github.com/aide-family/rabbit/cmd/run/job"
-	"github.com/aide-family/rabbit/cmd/send"
-	"github.com/aide-family/rabbit/cmd/send/email"
-	"github.com/aide-family/rabbit/cmd/send/feishu"
-	"github.com/aide-family/rabbit/cmd/send/sms"
 	"github.com/aide-family/rabbit/cmd/version"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
@@ -59,16 +51,10 @@ func main() {
 		cmd.WithGlobalFlagsDescription(Description),
 	)
 
-	sendCmd := send.NewCmd(sms.NewCmd(), feishu.NewCmd(), email.NewCmd())
 	runCmd := run.NewCmd(defaultServerConfig)
 	runCmd.AddCommand(grpc.NewCmd(), http.NewCmd(), job.NewCmd(), all.NewCmd())
 
 	children := []*cobra.Command{
-		apply.NewCmd(),
-		config.NewCmd(defaultServerConfig),
-		delete.NewCmd(),
-		get.NewCmd(),
-		sendCmd,
 		runCmd,
 		version.NewCmd(),
 	}

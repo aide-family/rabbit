@@ -24,7 +24,7 @@ const cmdRunLong = `Run the Rabbit services`
 func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run the Rabbit services",
+		Short: "Run the Sovereign services",
 		Long:  cmdRunLong,
 	}
 	var bc conf.Bootstrap
@@ -37,9 +37,9 @@ func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	return runCmd
 }
 
-func NewEndpoint(serviceName string, wireApp WireAppFunc) *endpoint {
+func NewEndpoint(wireApp WireAppFunc) *endpoint {
 	return &endpoint{
-		serviceName: strings.Join([]string{runFlags.Name, runFlags.Server.Name, serviceName}, "."),
+		serviceName: strings.Join([]string{runFlags.Name, runFlags.Server.Name}, "."),
 		wireAppFunc: wireApp,
 	}
 }
@@ -52,12 +52,12 @@ func NewEngine(endpoints ...*endpoint) *Engine {
 	}
 }
 
-type WireAppFunc func(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error)
+type WireAppFunc func(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) ([]*kratos.App, func(), error)
 
 type endpoint struct {
 	serviceName string
 	wireAppFunc WireAppFunc
-	app         *kratos.App
+	apps        []*kratos.App
 	cleanup     func()
 	helper      *klog.Helper
 	err         error
@@ -86,6 +86,7 @@ func (e *Engine) init() *Engine {
 		hello.WithID(runFlags.Hostname),
 		hello.WithEnv(runFlags.Environment.String()),
 		hello.WithMetadata(serverConf.GetMetadata()),
+		hello.WithName(serverConf.GetName()),
 	}
 	if strings.EqualFold(serverConf.GetUseRandomID(), "true") {
 		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
@@ -107,6 +108,9 @@ func (e *Engine) Start() {
 		endpoint.start(wg)
 	}
 	wg.Wait()
+	for _, endpoint := range e.endpoints {
+		endpoint.Cleanup()
+	}
 	for _, afterFunc := range e.afterFuncs {
 		afterFunc()
 	}
@@ -120,7 +124,7 @@ func (e *endpoint) init() {
 		"trace.id", tracing.TraceID(),
 		"span.id", tracing.SpanID()),
 	)
-	e.app, e.cleanup, e.err = e.wireAppFunc(e.serviceName, runFlags.Bootstrap, e.helper)
+	e.apps, e.cleanup, e.err = e.wireAppFunc(e.serviceName, runFlags.Bootstrap, e.helper)
 }
 
 func (e *endpoint) start(wg *sync.WaitGroup) {
@@ -128,34 +132,53 @@ func (e *endpoint) start(wg *sync.WaitGroup) {
 		e.helper.Errorw("msg", "endpoint init failed", "error", e.err)
 		return
 	}
-	wg.Go(func() {
-		defer e.cleanup()
-		if err := e.app.Run(); err != nil {
-			e.helper.Errorw("msg", "app run failed", "error", err)
-		}
-	})
+	for _, app := range e.apps {
+		appName := app.Name()
+		_app := app
+		wg.Go(func() {
+			if err := _app.Run(); err != nil {
+				e.helper.Errorf("app [%s] run failed, error: %v", appName, err)
+				return
+			}
+		})
+	}
 }
 
-func NewApp(serviceName string, d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, error) {
-	opts := []kratos.Option{
-		kratos.Name(serviceName),
-		kratos.ID(hello.ID()),
-		kratos.Version(hello.Version()),
-		kratos.Metadata(hello.Metadata()),
-		kratos.Logger(helper.Logger()),
-		kratos.Server(srvs...),
-	}
+func (e *endpoint) Cleanup() {
+	e.cleanup()
+}
 
-	if registry := d.Registry(); registry != nil {
-		opts = append(opts, kratos.Registrar(registry))
+func NewApp(serviceName string, d *data.Data, srvs server.Servers, bc *conf.Bootstrap, helper *klog.Helper) ([]*kratos.App, error) {
+	apps := make([]*kratos.App, 0, len(srvs))
+	if len(srvs) == 0 {
+		panic("no servers")
 	}
 
 	for _, srv := range srvs {
-		if httpSrv, ok := srv.(*http.Server); ok {
+		opts := []kratos.Option{
+			kratos.Name(strings.Join([]string{serviceName, srv.Name()}, ".")),
+			kratos.ID(hello.ID()),
+			kratos.Version(hello.Version()),
+			kratos.Metadata(hello.Metadata()),
+			kratos.Logger(helper.Logger()),
+			kratos.Server(srv.Instance()),
+		}
+
+		if registry := d.Registry(); registry != nil {
+			opts = append(opts, kratos.Registrar(registry))
+		}
+
+		if srvName := srv.Name(); srvName == "http" {
+			instance := srv.Instance()
+			httpSrv, ok := instance.(*http.Server)
+			if !ok {
+				panic("server instance is not a *http.Server")
+			}
 			server.BindSwagger(httpSrv, bc, helper)
 			server.BindMetrics(httpSrv, bc, helper)
 		}
-	}
 
-	return kratos.New(opts...), nil
+		apps = append(apps, kratos.New(opts...))
+	}
+	return apps, nil
 }

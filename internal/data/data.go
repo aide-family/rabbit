@@ -3,19 +3,13 @@ package data
 
 import (
 	"context"
-	"strings"
-	"time"
 
 	"github.com/aide-family/magicbox/plugin/cache"
 	"github.com/aide-family/magicbox/plugin/cache/mem"
-	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
-	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
-	clientV3 "go.etcd.io/etcd/client/v3"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/biz/do/query"
@@ -35,7 +29,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		c:           c,
 		dbs:         safety.NewSyncMap(make(map[string]*gorm.DB)),
 		closes:      safety.NewSyncMap(make(map[string]func() error)),
-		useDatabase: strutil.IsNotEmpty(c.GetUseDatabase()) && strings.EqualFold(c.GetUseDatabase(), "true"),
+		useDatabase: c.GetMain().GetDialector() == config.ORMConfig_TYPE_UNKNOWN,
 		reloadFuncs: safety.NewSyncMap(make(map[string]func())),
 	}
 
@@ -43,15 +37,15 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 		return nil, d.close, err
 	}
 	if d.useDatabase {
-		mainDB, err := connect.NewGorm(d.c.GetMain(), d.helper)
+		mainDB, closeDB, err := connect.NewDB(d.c.GetMain(), d.helper)
 		if err != nil {
 			return nil, d.close, err
 		}
 		d.mainDB = mainDB
-		d.closes.Set("mainDB", func() error { return connect.CloseDB(mainDB) })
+		d.closes.Set("mainDB", closeDB)
 
 		for namespace, biz := range d.c.GetBiz() {
-			db, err := connect.NewGorm(biz, d.helper)
+			db, closeDB, err := connect.NewDB(biz, d.helper)
 			if err != nil {
 				return nil, d.close, err
 			}
@@ -62,8 +56,7 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 
 			// 使用局部变量避免闭包捕获问题
 			namespaceKey := "bizDB.[" + namespace + "]"
-			dbToClose := db
-			d.closes.Set(namespaceKey, func() error { return connect.CloseDB(dbToClose) })
+			d.closes.Set(namespaceKey, closeDB)
 		}
 	} else {
 		if err := d.LoadFileConfig(d.c, d.helper); err != nil {
@@ -88,7 +81,7 @@ type Data struct {
 	c           *conf.Bootstrap
 	dbs         *safety.SyncMap[string, *gorm.DB]
 	mainDB      *gorm.DB
-	registry    connect.Registry
+	registry    connect.Report
 	cache       cache.Interface
 	closes      *safety.SyncMap[string, func() error] // 使用SyncMap保证并发安全
 	useDatabase bool
@@ -151,43 +144,16 @@ func (d *Data) BizDB(ctx context.Context, namespace string) *gorm.DB {
 	return d.mainDB.WithContext(ctx)
 }
 
-func (d *Data) Registry() connect.Registry {
+func (d *Data) Registry() connect.Report {
 	return d.registry
 }
 
 func (d *Data) initRegistry() error {
-	namespace := d.c.GetServer().GetNamespace()
-	switch registryType := d.c.GetRegistryType(); registryType {
-	case config.RegistryType_KUBERNETES:
-		kubeConfig := d.c.GetKubernetes()
-		if pointer.IsNil(kubeConfig) {
-			return merr.ErrorInternalServer("kubernetes config is not found")
-		}
-		kubeClient, err := connect.NewKubernetesClientSet(kubeConfig.GetKubeConfig())
-		if err != nil {
-			d.helper.Errorw("msg", "kubernetes client initialization failed", "error", err)
-			return err
-		}
-		registrar := kuberegistry.NewRegistry(kubeClient, namespace)
-		d.registry = registrar
-	case config.RegistryType_ETCD:
-		etcdConfig := d.c.GetEtcd()
-		if pointer.IsNil(etcdConfig) {
-			return merr.ErrorInternalServer("etcd config is not found")
-		}
-		client, err := clientV3.New(clientV3.Config{
-			Endpoints:   strutil.SplitSkipEmpty(etcdConfig.GetEndpoints(), ","),
-			Username:    etcdConfig.GetUsername(),
-			Password:    etcdConfig.GetPassword(),
-			DialTimeout: 5 * time.Second,
-		})
-		if err != nil {
-			d.helper.Errorw("msg", "etcd client initialization failed", "error", err)
-			return err
-		}
-		registrar := etcd.New(client, etcd.Namespace(namespace))
-		d.registry = registrar
-		d.closes.Set("etcdClient", func() error { return client.Close() })
+	registry, closeRegistry, err := connect.NewReport(d.c.GetReport(), d.helper)
+	if err != nil {
+		return err
 	}
+	d.registry = registry
+	d.closes.Set("registry", closeRegistry)
 	return nil
 }

@@ -170,7 +170,7 @@ build: all
 # run the rabbit binary in development mode
 dev:
 	@echo "Running rabbit in development mode"
-	go run . run all --use-database=true --main-use-system-logger=false --main-debug=true
+	go run . run all --log-level=debug
 
 .PHONY: test
 # run the tests

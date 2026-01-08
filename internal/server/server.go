@@ -89,7 +89,33 @@ func init() {
 	encoding.RegisterCodec(newProtoYAMLCodec())
 }
 
-type Servers []transport.Server
+type Server interface {
+	transport.Server
+	Name() string
+	Instance() transport.Server
+}
+
+type server struct {
+	transport.Server
+	name string
+}
+
+func (s *server) Name() string {
+	return s.name
+}
+
+func (s *server) Instance() transport.Server {
+	return s.Server
+}
+
+func newServer(name string, srv transport.Server) Server {
+	return &server{
+		Server: srv,
+		name:   name,
+	}
+}
+
+type Servers []Server
 
 func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
 	if !strings.EqualFold(bc.GetEnableSwagger(), "true") {
@@ -199,7 +225,7 @@ func RegisterHTTPService(
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
 	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
 	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
-	return Servers{httpSrv}
+	return Servers{newServer("http", httpSrv)}
 }
 
 // RegisterGRPCService registers only gRPC service.
@@ -221,7 +247,7 @@ func RegisterGRPCService(
 	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
 	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
 	apiv1.RegisterTemplateServer(grpcSrv, templateService)
-	return Servers{grpcSrv}
+	return Servers{newServer("grpc", grpcSrv)}
 }
 
 // RegisterJobService registers only Job service.
@@ -237,7 +263,7 @@ func RegisterJobService(
 	case config.ClusterConfig_GRPC:
 		apiv1.RegisterJobServer(jobSrv.grpcSrv, jobService)
 	}
-	return Servers{jobSrv}
+	return Servers{newServer("job", jobSrv)}
 }
 
 var namespaceAllowList = []string{

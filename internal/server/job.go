@@ -27,7 +27,7 @@ func NewJobServer(bc *conf.Bootstrap, namespaceService *service.NamespaceService
 func newJobServer(jobConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) (*JobServer, error) {
 	protocol := jobConf.GetProtocol()
 	job := &JobServer{
-		helper:   klog.NewHelper(klog.With(helper.Logger(), "server", "job")),
+		helper:   klog.NewHelper(helper.Logger()),
 		protocol: protocol,
 	}
 

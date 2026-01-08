@@ -18,7 +18,7 @@ import (
 	"github.com/aide-family/rabbit/internal/service"
 )
 
-func WireApp(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) (*kratos.App, func(), error) {
+func WireApp(serviceName string, bc *conf.Bootstrap, helper *klog.Helper) ([]*kratos.App, func(), error) {
 	panic(wire.Build(
 		server.ProviderSetServerJob,
 		service.ProviderSetService,

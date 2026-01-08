@@ -1,7 +1,6 @@
 environment: ${MOON_RABBIT_ENVIRONMENT:PROD}
-enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:false}
-enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:false}
-useDatabase: ${MOON_RABBIT_USE_DATABASE:false}
+enableSwagger: ${MOON_RABBIT_ENABLE_SWAGGER:true}
+enableMetrics: ${MOON_RABBIT_ENABLE_METRICS:true}
 
 server:
   name: ${MOON_RABBIT_SERVER_NAME:rabbit}
@@ -34,24 +33,37 @@ jwt:
   issuer: "${MOON_RABBIT_JWT_ISSUER:rabbit}"
 
 main:
-  username: "${MOON_RABBIT_MAIN_USERNAME:root}"
-  password: "${MOON_RABBIT_MAIN_PASSWORD:123456}"
-  host: "${MOON_RABBIT_MAIN_HOST:localhost}"
-  port: ${MOON_RABBIT_MAIN_PORT:3306}
-  database: ${MOON_RABBIT_MAIN_DATABASE:rabbit}
-  debug: ${MOON_RABBIT_MAIN_DEBUG:false}
+  dialector: ${MOON_RABBIT_MAIN_DIALECTOR:MYSQL}
+  debug: ${MOON_RABBIT_MAIN_DEBUG:true}
   useSystemLogger: ${MOON_RABBIT_MAIN_USE_SYSTEM_LOGGER:true}
-  parameters:
-    charset: utf8mb4
-    parseTime: "true"
-    loc: Asia/Shanghai
+  options:
+    '@type': "${MOON_RABBIT_MAIN_OPTIONS_TYPE:type.googleapis.com/rabbit.config.MySQLOptions}"
+    username: "${MOON_RABBIT_MAIN_USERNAME:root}"
+    password: "${MOON_RABBIT_MAIN_PASSWORD:123456}"
+    host: "${MOON_RABBIT_MAIN_HOST:localhost}"
+    port: ${MOON_RABBIT_MAIN_PORT:3306}
+    database: ${MOON_RABBIT_MAIN_DATABASE:rabbit}
+    parameters:
+      charset: utf8mb4
+      parseTime: "true"
+      loc: Asia/Shanghai
+    dsn: "${MOON_RABBIT_MAIN_DSN:./rabbit.db?cache=shared}"
 
 jobCore:
   workerTotal: ${MOON_RABBIT_JOB_CORE_WORKER_TOTAL:10}
   timeout: "${MOON_RABBIT_JOB_CORE_TIMEOUT:10s}"
   bufferSize: ${MOON_RABBIT_JOB_CORE_BUFFER_SIZE:1000}
   
-registryType: ${MOON_RABBIT_REGISTRY_TYPE:}
+report:
+  reportType: ${MOON_RABBIT_REPORT_TYPE:ETCD}
+  namespace: ${MOON_RABBIT_REPORT_NAMESPACE:moon}
+  options:
+    '@type': "${MOON_RABBIT_REPORT_OPTIONS_TYPE:type.googleapis.com/rabbit.config.ETCDOptions}"
+    endpoints: ${MOON_RABBIT_REPORT_ENDPOINTS:127.0.0.1:2379}
+    username: ${MOON_RABBIT_REPORT_USERNAME:}
+    password: ${MOON_RABBIT_REPORT_PASSWORD:}
+    dialTimeout: ${MOON_RABBIT_REPORT_DIALECT_TIMEOUT:5s}
+    kubeConfig: ${MOON_RABBIT_REPORT_KUBECONFIG:~/.kube/config}
 
 cluster:
   name: ${MOON_RABBIT_CLUSTER_NAME:moon.rabbit}
@@ -59,21 +71,13 @@ cluster:
   timeout: ${MOON_RABBIT_CLUSTER_TIMEOUT:10s}
   protocol: ${MOON_RABBIT_CLUSTER_PROTOCOL:GRPC}
 
-etcd:
-  endpoints: ${MOON_RABBIT_ETCD_ENDPOINTS:127.0.0.1:2379}
-  username: ${MOON_RABBIT_ETCD_USERNAME:}
-  password: ${MOON_RABBIT_ETCD_PASSWORD:}
-
-kubernetes:
-  kubeConfig: ${MOON_RABBIT_KUBERNETES_KUBECONFIG:~/.kube/config}
-
 swaggerBasicAuth:
-  enabled: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED:true}
+  enabled: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED:false}
   username: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_USERNAME:moon.rabbit}
   password: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_PASSWORD:rabbit.swagger}
 
 metricsBasicAuth:
-  enabled: ${MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED:true}
+  enabled: ${MOON_RABBIT_METRICS_BASIC_AUTH_ENABLED:false}
   username: ${MOON_RABBIT_METRICS_BASIC_AUTH_USERNAME:moon.rabbit}
   password: ${MOON_RABBIT_METRICS_BASIC_AUTH_PASSWORD:rabbit.metrics}
 

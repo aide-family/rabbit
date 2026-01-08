@@ -49,7 +49,7 @@ func NewCmd() *cobra.Command {
 				klog.Errorw("msg", "apply to bootstrap failed", "error", err)
 				return
 			}
-			run.NewEngine(run.NewEndpoint("http", WireApp)).Start()
+			run.NewEngine(run.NewEndpoint(WireApp)).Start()
 		},
 	}
 

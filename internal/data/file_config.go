@@ -1,7 +1,6 @@
 package data
 
 import (
-	"strings"
 	sync "sync"
 
 	"github.com/aide-family/magicbox/load"
@@ -47,7 +46,7 @@ func (d *Data) LoadFileConfig(bc *conf.Bootstrap, helper *klog.Helper) error {
 	}
 	var err error
 	fileConfigOnce.Do(func() {
-		if strings.EqualFold(bc.GetUseDatabase(), "true") {
+		if d.useDatabase {
 			helper.Debugw("msg", "database mode is enabled, skipping file config loading")
 			return
 		}

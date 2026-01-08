@@ -12,20 +12,17 @@ message Bootstrap {
 	rabbit.enum.Environment environment = 1;
 	Server server = 2;
 	JWT jwt = 3;
-	map<string, rabbit.config.MySQLConfig> biz = 4;
-	rabbit.config.MySQLConfig main = 5;
+	map<string, rabbit.config.ORMConfig> biz = 4;
+	rabbit.config.ORMConfig main = 5;
 	JobCore jobCore = 6;
 	rabbit.config.ClusterConfig cluster = 7;
-	rabbit.config.RegistryType registryType = 8;
-	rabbit.config.ETCDConfig etcd = 9;
-	rabbit.config.KubernetesConfig kubernetes = 10;
+	rabbit.config.ReportConfig report = 8;
 	rabbit.config.BasicAuthConfig swaggerBasicAuth = 11;
 	rabbit.config.BasicAuthConfig metricsBasicAuth = 12;
 	string enableSwagger = 13;
 	string enableMetrics = 14;
-	string useDatabase = 15;
-	string dataSourcePaths = 16;
-	string messageLogPath = 17;
+	string dataSourcePaths = 15;
+	string messageLogPath = 16;
 }
 
 message Server {

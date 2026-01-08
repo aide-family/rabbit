@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package rabbit.config;
 
+import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 
 option go_package = "github.com/aide-family/rabbit/pkg/config;config";
@@ -9,10 +10,8 @@ option go_package = "github.com/aide-family/rabbit/pkg/config;config";
 message ClientConfig {
 	ClusterConfig cluster = 1;
 	string jwtToken = 2;
-	ETCDConfig etcd = 3;
-	KubernetesConfig kubernetes = 4;
-	RegistryType registryType = 5;
-	string namespace = 6;
+	ReportConfig report = 3;
+	string namespace = 4;
 }
 
 message ClusterConfig {
@@ -27,31 +26,51 @@ message ClusterConfig {
 	Protocol protocol = 4;
 }
 
-message ETCDConfig {
-	string endpoints = 1;
-	string username = 2;
-	string password = 3;
+message ORMConfig {
+	enum Dialector {
+		TYPE_UNKNOWN = 0;
+		MYSQL = 1;
+		SQLITE = 2;
+	}
+	Dialector dialector = 1;
+	google.protobuf.Any options = 2;
+	string debug = 3;
+	string useSystemLogger = 4;
 }
 
-message MySQLConfig {
+message MySQLOptions {
 	string username = 1;
 	string password = 2;
 	string host     = 3;
 	int32 port     = 4;
 	string database = 5;
-	string debug = 6;
-	string useSystemLogger = 7;
-	map<string, string> parameters = 8;
+	map<string, string> parameters = 6;
 }
 
-message KubernetesConfig {
+message SQLiteOptions {
+	string dsn = 1;
+}
+
+message ReportConfig {
+	enum ReportType {
+		REPORT_TYPE_UNKNOWN = 0;
+		ETCD = 1;
+		KUBERNETES = 2;
+	}
+	ReportType reportType = 1;
+	google.protobuf.Any options = 2;
+	string namespace = 3;
+}
+
+message ETCDOptions {
+	string endpoints = 1;
+	string username = 2;
+	string password = 3;
+	google.protobuf.Duration dialTimeout = 4;
+}
+
+message KubernetesOptions {
 	string kubeConfig = 1;
-}
-
-enum RegistryType {
-	UNKNOWN = 0;
-	ETCD = 1;
-	KUBERNETES = 2;
 }
 
 message BasicAuthConfig {

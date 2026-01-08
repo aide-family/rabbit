@@ -38,11 +38,12 @@ func newMigrateCmd() *cobra.Command {
 			"group": cmd.DatabaseCommands,
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			db, err := initDB()
+			db, closeDB, err := initDB()
 			if err != nil {
 				klog.Errorw("msg", "init db failed", "error", err)
 				return
 			}
+			defer closeDB()
 			migrate(db)
 		},
 	}
