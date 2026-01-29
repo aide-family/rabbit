@@ -5,10 +5,11 @@ import (
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
-	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
+
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type namespaceKey struct{}

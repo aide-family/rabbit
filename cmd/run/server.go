@@ -19,12 +19,12 @@ import (
 	"github.com/aide-family/rabbit/internal/server"
 )
 
-const cmdRunLong = `Run the Rabbit services`
+const cmdRunLong = `Run the rabbit services`
 
 func NewCmd(defaultServerConfigBytes []byte) *cobra.Command {
 	runCmd := &cobra.Command{
 		Use:   "run",
-		Short: "Run the Sovereign services",
+		Short: "Run the rabbit services",
 		Long:  cmdRunLong,
 	}
 	var bc conf.Bootstrap
@@ -88,7 +88,7 @@ func (e *Engine) init() *Engine {
 		hello.WithMetadata(serverConf.GetMetadata()),
 		hello.WithName(serverConf.GetName()),
 	}
-	if strings.EqualFold(serverConf.GetUseRandomID(), "true") {
+	if strings.EqualFold(runFlags.GetUseRandomID(), "true") {
 		envOpts = append(envOpts, hello.WithID(strutil.RandomID()))
 	}
 	hello.SetEnvWithOption(envOpts...)
@@ -145,6 +145,9 @@ func (e *endpoint) start(wg *sync.WaitGroup) {
 }
 
 func (e *endpoint) Cleanup() {
+	if e.cleanup == nil {
+		return
+	}
 	e.cleanup()
 }
 
@@ -174,8 +177,8 @@ func NewApp(serviceName string, d *data.Data, srvs server.Servers, bc *conf.Boot
 			if !ok {
 				panic("server instance is not a *http.Server")
 			}
-			server.BindSwagger(httpSrv, bc, helper)
-			server.BindMetrics(httpSrv, bc, helper)
+			server.BindSwagger(httpSrv, bc)
+			server.BindMetrics(httpSrv, bc)
 		}
 
 		apps = append(apps, kratos.New(opts...))

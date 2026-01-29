@@ -2,7 +2,7 @@
 Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 */
 
-// Package cmd is the root command for the Rabbit service
+// Package cmd is the root command for the rabbit service
 package cmd
 
 import (
@@ -13,9 +13,10 @@ import (
 
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/stdio"
-	"github.com/aide-family/rabbit/pkg/merr"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
+
+	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 // Command groups for organized help display
@@ -27,40 +28,14 @@ const (
 	DatabaseCommands = "Database Commands"
 )
 
-const cmdLong = `Rabbit (Jade Rabbit) is the messaging service tool for the Moon platform, providing unified message delivery and management capabilities.
-
-Rabbit is a distributed messaging platform built on the Kratos framework, supporting unified
-management and delivery of multiple message channels (email, Webhook, SMS, Feishu, etc.).
-It implements multi-tenant isolation through namespaces and supports both file-based and
-database storage modes to meet different deployment requirements.
-
-Core Capabilities:
-  • Multi-channel messaging: Unified management of email, Webhook, SMS, Feishu, and other message channels
-  • Template-based delivery: Support for message template configuration with dynamic content rendering and reuse
-  • Asynchronous processing: Queue-based asynchronous message delivery for improved throughput and reliability
-  • Configuration management: Centralized management of channel configurations (email servers, Webhook endpoints, etc.)
-  • Multi-tenant isolation: Namespace-based isolation of configurations and data for different businesses or tenants
-  • Command-line tools: Rich CLI commands for service management, message sending, configuration generation, and more
-
-Command Categories:
-  • Basic Commands: config, version, and other basic operations
-  • Message Commands: send, apply, get, delete, and other message-related operations
-  • Service Commands: run and other service management operations
-  • Code Commands: gorm for code generation and database migration
-  • Database Commands: database management and migration
-
-Use Cases:
-  • Enterprise notification system: Unified management of business notifications (orders, alerts, system messages, etc.)
-  • Microservices message center: Provide unified messaging capabilities for microservices architecture
-  • Multi-channel push platform: Integrate multiple message channels for unified message delivery and management
-  • Development and testing tools: Quickly test message channel configurations and sending functionality via CLI
+const cmdLong = `rabbit (太阴星君) is the service governance platform for the Moon platform, providing unified service governance capabilities.
 
 Use "rabbit [command] --help" to view detailed information about a specific command.`
 
 func NewCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "rabbit",
-		Short: "Moon messaging platform - Rabbit service",
+		Short: "Moon service governance platform - rabbit service",
 		Long:  cmdLong,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Help()

@@ -31,6 +31,5 @@ func (f *Flags) applyToBootstrap() error {
 	if f.httpTimeout > 0 {
 		f.Server.Http.Timeout = durationpb.New(f.httpTimeout)
 	}
-
 	return nil
 }

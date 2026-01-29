@@ -6,11 +6,6 @@ import "github.com/google/wire"
 // ProviderSetImpl is a set of providers.
 var ProviderSetImpl = wire.NewSet(
 	NewHealthRepository,
-	NewEmailConfigRepository,
-	NewMessageLogRepository,
 	NewNamespaceRepository,
-	NewWebhookConfigRepository,
-	NewTemplateRepository,
-	NewMessageRepository,
-	NewTransactionRepository,
+	NewLoginRepository,
 )

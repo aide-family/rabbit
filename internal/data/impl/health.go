@@ -17,5 +17,5 @@ type healthRepositoryImpl struct {
 
 // Readiness implements repository.Health.
 func (h *healthRepositoryImpl) Readiness() error {
-	panic("unimplemented")
+	return nil
 }

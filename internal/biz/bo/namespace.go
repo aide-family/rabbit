@@ -5,8 +5,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 
-	"github.com/aide-family/magicbox/safety"
-	"github.com/aide-family/rabbit/internal/biz/do"
 	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
@@ -15,19 +13,14 @@ import (
 type CreateNamespaceBo struct {
 	Name     string
 	Metadata map[string]string
-}
-
-func (b *CreateNamespaceBo) ToDoNamespace() *do.Namespace {
-	return &do.Namespace{
-		Name:     b.Name,
-		Metadata: safety.NewMap(b.Metadata),
-	}
+	Status   vobj.GlobalStatus
 }
 
 func NewCreateNamespaceBo(req *apiv1.CreateNamespaceRequest) *CreateNamespaceBo {
 	return &CreateNamespaceBo{
 		Name:     req.Name,
 		Metadata: req.Metadata,
+		Status:   vobj.GlobalStatusEnabled,
 	}
 }
 
@@ -35,15 +28,6 @@ type UpdateNamespaceBo struct {
 	UID      snowflake.ID
 	Name     string
 	Metadata map[string]string
-}
-
-func (b *UpdateNamespaceBo) ToDoNamespace() *do.Namespace {
-	namespace := &do.Namespace{
-		Name:     b.Name,
-		Metadata: safety.NewMap(b.Metadata),
-	}
-	namespace.WithUID(b.UID)
-	return namespace
 }
 
 func NewUpdateNamespaceBo(req *apiv1.UpdateNamespaceRequest) *UpdateNamespaceBo {
@@ -72,17 +56,6 @@ type NamespaceItemBo struct {
 	Status    vobj.GlobalStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
-}
-
-func NewNamespaceItemBo(doNamespace *do.Namespace) *NamespaceItemBo {
-	return &NamespaceItemBo{
-		UID:       doNamespace.UID,
-		Name:      doNamespace.Name,
-		Metadata:  doNamespace.Metadata.Map(),
-		Status:    doNamespace.Status,
-		CreatedAt: doNamespace.CreatedAt,
-		UpdatedAt: doNamespace.UpdatedAt,
-	}
 }
 
 func (b *NamespaceItemBo) ToAPIV1NamespaceItem() *apiv1.NamespaceItem {
@@ -155,17 +128,6 @@ type NamespaceItemSelectBo struct {
 	Tooltip  string
 }
 
-// NewNamespaceItemSelectBo 从 DO 创建 BO
-func NewNamespaceItemSelectBo(doNamespace *do.Namespace) *NamespaceItemSelectBo {
-	return &NamespaceItemSelectBo{
-		UID:      doNamespace.UID,
-		Name:     doNamespace.Name,
-		Status:   doNamespace.Status,
-		Disabled: doNamespace.Status != vobj.GlobalStatusEnabled,
-		Tooltip:  "",
-	}
-}
-
 // ToAPIV1NamespaceItemSelect 转换为 API 响应
 func (b *NamespaceItemSelectBo) ToAPIV1NamespaceItemSelect() *apiv1.NamespaceItemSelect {
 	return &apiv1.NamespaceItemSelect{
@@ -176,45 +138,25 @@ func (b *NamespaceItemSelectBo) ToAPIV1NamespaceItemSelect() *apiv1.NamespaceIte
 	}
 }
 
-// SelectNamespaceResult Repository层返回结果
-type SelectNamespaceResult struct {
-	Items   []*do.Namespace
-	Total   int64
-	LastUID snowflake.ID
-}
-
 // SelectNamespaceBoResult Biz层返回结果
 type SelectNamespaceBoResult struct {
 	Items   []*NamespaceItemSelectBo
 	Total   int64
 	LastUID snowflake.ID
-}
-
-// SelectNamespaceReplyParams 转换为API响应的参数
-type SelectNamespaceReplyParams struct {
-	Items   []*NamespaceItemSelectBo
-	Total   int64
-	LastUID snowflake.ID
-	Limit   int32
+	HasMore bool
 }
 
 // ToAPIV1SelectNamespaceReply 转换为 API 响应
-func ToAPIV1SelectNamespaceReply(params *SelectNamespaceReplyParams) *apiv1.SelectNamespaceReply {
-	selectItems := make([]*apiv1.NamespaceItemSelect, 0, len(params.Items))
-	for _, item := range params.Items {
+func ToAPIV1SelectNamespaceReply(result *SelectNamespaceBoResult) *apiv1.SelectNamespaceReply {
+	selectItems := make([]*apiv1.NamespaceItemSelect, 0, len(result.Items))
+	for _, item := range result.Items {
 		selectItems = append(selectItems, item.ToAPIV1NamespaceItemSelect())
 	}
-	var lastUIDInt64 int64
-	if params.LastUID > 0 {
-		lastUIDInt64 = params.LastUID.Int64()
-	}
-	// hasMore: 如果返回的记录数等于limit，说明可能还有更多记录
-	// 如果返回的记录数小于limit，说明已经查询完了
-	hasMore := int32(len(params.Items)) == params.Limit
+
 	return &apiv1.SelectNamespaceReply{
 		Items:   selectItems,
-		Total:   params.Total,
-		LastUID: lastUIDInt64,
-		HasMore: hasMore,
+		Total:   result.Total,
+		LastUID: result.LastUID.Int64(),
+		HasMore: result.HasMore,
 	}
 }

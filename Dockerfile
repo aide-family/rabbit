@@ -43,7 +43,7 @@ COPY --from=builder /moon/bin/rabbit /usr/local/bin/rabbit
 RUN chmod +x /usr/local/bin/rabbit
 
 # 暴露端口（根据实际配置调整）
-EXPOSE 17070 18080 19090 
+EXPOSE 10070 18080 19090 
 
 # 运行应用
 ENTRYPOINT ["/usr/local/bin/rabbit"]

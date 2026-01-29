@@ -24,7 +24,7 @@ type HealthService struct {
 func (s *HealthService) HealthCheck(ctx context.Context, req *apiv1.HealthCheckRequest) (*apiv1.HealthCheckReply, error) {
 	return &apiv1.HealthCheckReply{
 		Status:    "OK",
-		Message:   "Rabbit is running",
+		Message:   "rabbit is running",
 		Timestamp: timestamppb.Now(),
 	}, nil
 }

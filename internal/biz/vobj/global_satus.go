@@ -1,4 +1,4 @@
-// Package vobj is the value object package for the Rabbit service.
+// Package vobj is the value object package for the rabbit service.
 package vobj
 
 //go:generate stringer -type=GlobalStatus -linecomment -output=global_status__string.go

@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-// Package all is the all command for the Rabbit service
+// Package all is the all command for the rabbit service
 package all
 
 import (

@@ -10,19 +10,18 @@ option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 
 message Bootstrap {
 	rabbit.enum.Environment environment = 1;
-	Server server = 2;
-	JWT jwt = 3;
-	map<string, rabbit.config.ORMConfig> biz = 4;
-	rabbit.config.ORMConfig main = 5;
-	JobCore jobCore = 6;
-	rabbit.config.ClusterConfig cluster = 7;
-	rabbit.config.ReportConfig report = 8;
-	rabbit.config.BasicAuthConfig swaggerBasicAuth = 11;
-	rabbit.config.BasicAuthConfig metricsBasicAuth = 12;
-	string enableSwagger = 13;
-	string enableMetrics = 14;
-	string dataSourcePaths = 15;
-	string messageLogPath = 16;
+	string useRandomID = 2;
+	Server server = 3;
+	rabbit.config.JWT jwt = 4;
+	rabbit.config.BasicAuthConfig swaggerBasicAuth = 5;
+	rabbit.config.BasicAuthConfig metricsBasicAuth = 6;
+	string enableSwagger = 7;
+	string enableMetrics = 8;
+	string enableClientConfig = 9;
+	rabbit.config.ReportConfig report = 10;
+	rabbit.config.OAuth2 oauth2 = 11;
+	rabbit.config.DomainConfig namespaceConfig = 12;
+	rabbit.config.DomainConfig loginConfig = 13;
 }
 
 message Server {
@@ -30,85 +29,11 @@ message Server {
 		string address = 1;
 		string network = 2;
 		google.protobuf.Duration timeout = 3;
-		rabbit.config.ClusterConfig.Protocol protocol = 4;
+		rabbit.config.Protocol protocol = 4;
 	}
 	
 	string name = 1;
-	string namespace = 2;
-	map<string, string> metadata = 3;
-	ServerConfig http = 4;
-	ServerConfig grpc = 5;
-	ServerConfig job = 6;
-	string useRandomID = 7;
-}
-	
-message JWT {
-	string secret = 1;
-	google.protobuf.Duration expire = 2;
-	string issuer = 3;
-}
-
-message JobCore {
-	int32 workerTotal = 1;
-	google.protobuf.Duration timeout = 2;
-	uint32 bufferSize = 3;
-}
-
-message Config {
-	message Namespace {
-		uint32 id = 1;
-		int64 uid = 2;
-		string createdAt = 3;
-		string updatedAt = 4;
-		int64 creator = 5;
-		string name = 6;
-		map<string, string> metadata = 7;
-		rabbit.enum.GlobalStatus status = 8;
-	}
-	message Webhook {
-		uint32 id = 1;
-		int64 uid = 2;
-		string createdAt = 3;
-		string updatedAt = 4;
-		int64 creator = 5;
-		string namespace = 6;
-		rabbit.enum.WebhookAPP app = 7;
-		string name = 8;
-		string url = 9;
-		rabbit.enum.HTTPMethod method = 10;
-		map<string, string> headers = 11;
-		string secret = 12;
-		rabbit.enum.GlobalStatus status = 13;
-	}
-	message Email {
-		uint32 id = 1;
-		int64 uid = 2;
-		string createdAt = 3;
-		string updatedAt = 4;
-		int64 creator = 5;
-		string namespace = 6;
-		string name = 7;
-		string host = 8;
-		int32 port = 9;
-		string username = 10;
-		string password = 11;
-		rabbit.enum.GlobalStatus status = 12;
-	}
-	message Template {
-		uint32 id = 1;
-		int64 uid = 2;
-		string createdAt = 3;
-		string updatedAt = 4;
-		int64 creator = 5;
-		string namespace = 6;
-		string name = 7;
-		rabbit.enum.TemplateAPP app = 8;
-		string jsonData = 9;
-		rabbit.enum.GlobalStatus status = 10;
-	}
-
-	repeated Namespace namespaces = 1;
-	repeated Webhook webhooks = 2;
-	repeated Email emails = 3;
-	repeated Template templates = 4;
+	map<string, string> metadata = 2;
+	ServerConfig http = 3;
+	ServerConfig grpc = 4;
 }

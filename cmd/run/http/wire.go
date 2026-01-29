@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-// Package http is the http command for the Rabbit service
+// Package http is the http command for the rabbit service
 package http
 
 import (

@@ -3,14 +3,15 @@ package connect
 import (
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/rabbit/pkg/config"
-	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gorm"
 )
 
 var globalRegistry = NewRegistry()
 
-type ORMFactory func(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, error)
-type ReportFactory func(c *config.ReportConfig, logger *klog.Helper) (Report, func() error, error)
+type (
+	ORMFactory    func(c *config.ORMConfig) (*gorm.DB, error)
+	ReportFactory func(c *config.ReportConfig) (Report, func() error, error)
+)
 
 type Registry struct {
 	ormConfigs    *safety.SyncMap[config.ORMConfig_Dialector, ORMFactory]

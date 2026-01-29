@@ -7,6 +7,7 @@ import (
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
+
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
@@ -80,12 +81,7 @@ func (s *NamespaceService) SelectNamespace(ctx context.Context, req *apiv1.Selec
 	if err != nil {
 		return nil, err
 	}
-	return bo.ToAPIV1SelectNamespaceReply(&bo.SelectNamespaceReplyParams{
-		Items:   result.Items,
-		Total:   result.Total,
-		LastUID: result.LastUID,
-		Limit:   req.Limit,
-	}), nil
+	return bo.ToAPIV1SelectNamespaceReply(result), nil
 }
 
 func (s *NamespaceService) HasNamespace(ctx context.Context) error {

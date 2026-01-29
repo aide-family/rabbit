@@ -1,7 +1,7 @@
 //go:build wireinject
 // +build wireinject
 
-// Package grpc is the grpc command for the Rabbit service
+// Package grpc is the grpc command for the rabbit service
 package grpc
 
 import (

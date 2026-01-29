@@ -1,7 +1,3 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
-
 package main
 
 import (
@@ -18,17 +14,16 @@ import (
 	"github.com/aide-family/rabbit/cmd/run/all"
 	"github.com/aide-family/rabbit/cmd/run/grpc"
 	"github.com/aide-family/rabbit/cmd/run/http"
-	"github.com/aide-family/rabbit/cmd/run/job"
 	"github.com/aide-family/rabbit/cmd/version"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 var (
-	Name        = "moon"
+	Name        = "rabbit"
 	Version     = "latest"
 	BuildTime   = "now"
-	Author      = "Aide Family"
-	Email       = "aidecloud@163.com"
+	Author      = ""
+	Email       = ""
 	Repo        = "https://github.com/aide-family/rabbit"
 	hostname, _ = os.Hostname()
 )
@@ -39,7 +34,7 @@ var Description string
 //go:embed config/server.yaml
 var defaultServerConfig []byte
 
-func main() {
+func init() {
 	cmd.SetGlobalFlags(
 		cmd.WithGlobalFlagsName(Name),
 		cmd.WithGlobalFlagsHostname(hostname),
@@ -51,17 +46,6 @@ func main() {
 		cmd.WithGlobalFlagsDescription(Description),
 	)
 
-	runCmd := run.NewCmd(defaultServerConfig)
-	runCmd.AddCommand(grpc.NewCmd(), http.NewCmd(), job.NewCmd(), all.NewCmd())
-
-	children := []*cobra.Command{
-		runCmd,
-		version.NewCmd(),
-	}
-	cmd.Execute(cmd.NewCmd(), children...)
-}
-
-func init() {
 	logger, err := log.NewLogger(stdio.LoggerDriver())
 	if err != nil {
 		panic(merr.ErrorInternal("new logger failed with error: %v", err).WithCause(err))
@@ -72,4 +56,15 @@ func init() {
 	filterLogger := klog.NewFilter(logger, klog.FilterLevel(klog.LevelInfo))
 	helper := klog.NewHelper(filterLogger)
 	klog.SetLogger(helper.Logger())
+}
+
+func main() {
+	runCmd := run.NewCmd(defaultServerConfig)
+	runCmd.AddCommand(grpc.NewCmd(), http.NewCmd(), all.NewCmd())
+
+	children := []*cobra.Command{
+		version.NewCmd(),
+		runCmd,
+	}
+	cmd.Execute(cmd.NewCmd(), children...)
 }

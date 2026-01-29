@@ -6,10 +6,13 @@ import (
 	nethttp "net/http"
 	"strings"
 
+	_ "github.com/aide-family/rabbit/pkg/api/auth/feishu"
+	_ "github.com/aide-family/rabbit/pkg/api/auth/gitee"
+	_ "github.com/aide-family/rabbit/pkg/api/auth/github"
+
 	"buf.build/go/protoyaml"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/encoding/json"
-	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
@@ -21,9 +24,9 @@ import (
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
+	"github.com/aide-family/rabbit/pkg/api"
+	"github.com/aide-family/rabbit/pkg/api/auth"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/middler"
 )
 
 //go:embed swagger
@@ -73,10 +76,9 @@ func (c *protoYAMLCodec) Name() string {
 }
 
 var (
-	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService, NewJobServer)
+	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService)
 	ProviderSetServerHTTP = wire.NewSet(NewHTTPServer, RegisterHTTPService)
 	ProviderSetServerGRPC = wire.NewSet(NewGRPCServer, RegisterGRPCService)
-	ProviderSetServerJob  = wire.NewSet(NewJobServer, RegisterJobService)
 )
 
 // init initializes the json.MarshalOptions.
@@ -117,52 +119,26 @@ func newServer(name string, srv transport.Server) Server {
 
 type Servers []Server
 
-func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
-	if !strings.EqualFold(bc.GetEnableSwagger(), "true") {
-		helper.Debug("swagger is not enabled")
-		return
+func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap) {
+	binding := api.HandlerBinding{
+		Name:      "Swagger",
+		Enabled:   strings.EqualFold(bc.GetEnableSwagger(), "true"),
+		BasicAuth: bc.GetSwaggerBasicAuth(),
+		Handler:   nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS))),
+		Path:      "/doc/",
 	}
-
-	endpoint, err := httpSrv.Endpoint()
-	if err != nil {
-		helper.Errorw("msg", "get http server endpoint failed", "error", err)
-		return
-	}
-
-	// Create file server handler
-	authHandler := nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS)))
-	basicAuth := bc.GetSwaggerBasicAuth()
-	if strings.EqualFold(basicAuth.GetEnabled(), "true") {
-		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
-		helper.Debugf("[Swagger] endpoint: %s/doc/swagger (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
-	} else {
-		helper.Debugf("[Swagger] endpoint: %s/doc/swagger (No Basic Auth)", endpoint)
-	}
-
-	httpSrv.HandlePrefix("/doc/", authHandler)
+	api.BindHandlerWithAuth(httpSrv, binding)
 }
 
-func BindMetrics(httpSrv *http.Server, bc *conf.Bootstrap, helper *klog.Helper) {
-	if !strings.EqualFold(bc.GetEnableMetrics(), "true") {
-		helper.Debug("metrics is not enabled")
-		return
+func BindMetrics(httpSrv *http.Server, bc *conf.Bootstrap) {
+	binding := api.HandlerBinding{
+		Name:      "Metrics",
+		Enabled:   strings.EqualFold(bc.GetEnableMetrics(), "true"),
+		BasicAuth: bc.GetMetricsBasicAuth(),
+		Handler:   promhttp.Handler(),
+		Path:      "/metrics",
 	}
-
-	endpoint, err := httpSrv.Endpoint()
-	if err != nil {
-		helper.Errorw("msg", "get http server endpoint failed", "error", err)
-		return
-	}
-
-	basicAuth := bc.GetMetricsBasicAuth()
-	authHandler := promhttp.Handler()
-	if strings.EqualFold(basicAuth.GetEnabled(), "true") {
-		authHandler = middler.BasicAuthMiddleware(basicAuth.GetUsername(), basicAuth.GetPassword())(authHandler)
-		helper.Debugf("[Metrics] endpoint: %s/metrics (Basic Auth: %s:%s)", endpoint, basicAuth.GetUsername(), basicAuth.GetPassword())
-	} else {
-		helper.Debugf("[Metrics] endpoint: %s/metrics (No Basic Auth)", endpoint)
-	}
-	httpSrv.Handle("/metrics", authHandler)
+	api.BindHandlerWithAuth(httpSrv, binding)
 }
 
 // RegisterService registers the service.
@@ -170,38 +146,20 @@ func RegisterService(
 	c *conf.Bootstrap,
 	httpSrv *http.Server,
 	grpcSrv *grpc.Server,
-	jobSrv *JobServer,
+	authService *service.AuthService,
 	healthService *service.HealthService,
-	emailService *service.EmailService,
-	webhookService *service.WebhookService,
-	senderService *service.SenderService,
 	namespaceService *service.NamespaceService,
-	messageLogService *service.MessageLogService,
-	templateService *service.TemplateService,
-	jobService *service.JobService,
 ) Servers {
 	var srvs Servers
 
 	srvs = append(srvs, RegisterHTTPService(c, httpSrv,
+		authService,
 		healthService,
-		emailService,
-		webhookService,
-		senderService,
 		namespaceService,
-		messageLogService,
-		templateService,
 	)...)
 	srvs = append(srvs, RegisterGRPCService(c, grpcSrv,
 		healthService,
-		emailService,
-		webhookService,
-		senderService,
 		namespaceService,
-		messageLogService,
-		templateService,
-	)...)
-	srvs = append(srvs, RegisterJobService(c, jobSrv,
-		jobService,
 	)...)
 	return srvs
 }
@@ -210,21 +168,17 @@ func RegisterService(
 func RegisterHTTPService(
 	c *conf.Bootstrap,
 	httpSrv *http.Server,
+	authService *service.AuthService,
 	healthService *service.HealthService,
-	emailService *service.EmailService,
-	webhookService *service.WebhookService,
-	senderService *service.SenderService,
 	namespaceService *service.NamespaceService,
-	messageLogService *service.MessageLogService,
-	templateService *service.TemplateService,
 ) Servers {
 	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
-	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
-	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
-	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
-	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
-	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
+
+	oauth2Handler := auth.NewOAuth2Handler(c.GetOauth2(), authService.Login)
+	if err := oauth2Handler.Handler(httpSrv); err != nil {
+		panic(err)
+	}
 	return Servers{newServer("http", httpSrv)}
 }
 
@@ -233,37 +187,11 @@ func RegisterGRPCService(
 	c *conf.Bootstrap,
 	grpcSrv *grpc.Server,
 	healthService *service.HealthService,
-	emailService *service.EmailService,
-	webhookService *service.WebhookService,
-	senderService *service.SenderService,
 	namespaceService *service.NamespaceService,
-	messageLogService *service.MessageLogService,
-	templateService *service.TemplateService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
-	apiv1.RegisterEmailServer(grpcSrv, emailService)
-	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
-	apiv1.RegisterSenderServer(grpcSrv, senderService)
 	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
-	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
-	apiv1.RegisterTemplateServer(grpcSrv, templateService)
 	return Servers{newServer("grpc", grpcSrv)}
-}
-
-// RegisterJobService registers only Job service.
-func RegisterJobService(
-	c *conf.Bootstrap,
-	jobSrv *JobServer,
-	jobService *service.JobService,
-) Servers {
-	protocol := jobSrv.protocol
-	switch protocol {
-	case config.ClusterConfig_HTTP:
-		apiv1.RegisterJobHTTPServer(jobSrv.httpSrv, jobService)
-	case config.ClusterConfig_GRPC:
-		apiv1.RegisterJobServer(jobSrv.grpcSrv, jobService)
-	}
-	return Servers{newServer("job", jobSrv)}
 }
 
 var namespaceAllowList = []string{
@@ -278,4 +206,5 @@ var namespaceAllowList = []string{
 
 var authAllowList = []string{
 	apiv1.OperationHealthHealthCheck,
+	auth.OperationOAuth2Reports,
 }

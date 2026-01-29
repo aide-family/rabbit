@@ -19,8 +19,8 @@ func init() {
 }
 
 var (
-	ProtocolHTTP = config.ClusterConfig_HTTP.String()
-	ProtocolGRPC = config.ClusterConfig_GRPC.String()
+	ProtocolHTTP = config.Protocol_HTTP.String()
+	ProtocolGRPC = config.Protocol_GRPC.String()
 )
 
 type InitConfig interface {

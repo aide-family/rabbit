@@ -5,8 +5,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/aide-family/magicbox/log/gormlog"
-	"github.com/aide-family/magicbox/pointer"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -14,6 +12,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/aide-family/magicbox/log/gormlog"
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
@@ -26,19 +26,19 @@ func init() {
 // NewDB creates a new database connection.
 // If the orm factory is not registered, it will return an error.
 // The database connection is not closed, you need to call the returned function to close the connection.
-func NewDB(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, func() error, error) {
+func NewDB(c *config.ORMConfig) (*gorm.DB, func() error, error) {
 	factory, ok := globalRegistry.GetORMFactory(c.GetDialector())
 	if !ok {
 		return nil, nil, merr.ErrorInternalServer("orm factory not registered")
 	}
-	db, err := factory(c, logger)
+	db, err := factory(c)
 	if err != nil {
 		return nil, nil, err
 	}
-	return db, func() error { return loseDBConnection(db) }, nil
+	return db, func() error { return closeDBConnection(db) }, nil
 }
 
-func loseDBConnection(db *gorm.DB) error {
+func closeDBConnection(db *gorm.DB) error {
 	mdb, err := db.DB()
 	if err != nil {
 		return err
@@ -46,7 +46,7 @@ func loseDBConnection(db *gorm.DB) error {
 	return mdb.Close()
 }
 
-func buildORMFromMySQL(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, error) {
+func buildORMFromMySQL(c *config.ORMConfig) (*gorm.DB, error) {
 	mysqlConf := &config.MySQLOptions{}
 	if pointer.IsNotNil(c.GetOptions()) {
 		if err := anypb.UnmarshalTo(c.GetOptions(), mysqlConf, proto.UnmarshalOptions{Merge: true}); err != nil {
@@ -63,7 +63,7 @@ func buildORMFromMySQL(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, erro
 		DisableForeignKeyConstraintWhenMigrating: true,
 	}
 	if strings.EqualFold(c.GetUseSystemLogger(), "true") {
-		ormConfig.Logger = gormlog.New(logger.Logger())
+		ormConfig.Logger = gormlog.New(klog.GetLogger())
 	}
 
 	b := &gormBuilder{
@@ -74,7 +74,7 @@ func buildORMFromMySQL(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, erro
 	return b.build()
 }
 
-func buildORMFromSQLite(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, error) {
+func buildORMFromSQLite(c *config.ORMConfig) (*gorm.DB, error) {
 	sqliteConf := &config.SQLiteOptions{}
 	if pointer.IsNotNil(c.GetOptions()) {
 		if err := anypb.UnmarshalTo(c.GetOptions(), sqliteConf, proto.UnmarshalOptions{Merge: true}); err != nil {
@@ -85,7 +85,7 @@ func buildORMFromSQLite(c *config.ORMConfig, logger *klog.Helper) (*gorm.DB, err
 		DisableForeignKeyConstraintWhenMigrating: true,
 	}
 	if strings.EqualFold(c.GetUseSystemLogger(), "true") {
-		ormConfig.Logger = gormlog.New(logger.Logger())
+		ormConfig.Logger = gormlog.New(klog.GetLogger())
 	}
 	b := &gormBuilder{
 		Dialector: sqlite.Open(sqliteConf.Dsn),

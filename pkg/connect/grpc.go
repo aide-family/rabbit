@@ -6,6 +6,7 @@ import (
 
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/server/middler"
+	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/middleware/metadata"
 	"github.com/go-kratos/kratos/v2/middleware/recovery"
@@ -15,7 +16,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/aide-family/rabbit/pkg/merr"
-	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
 func InitGRPCClient(c InitConfig, opts ...InitOption) (*grpc.ClientConn, error) {

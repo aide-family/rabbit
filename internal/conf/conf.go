@@ -93,7 +93,7 @@ type ServerConfig interface {
 	GetAddress() string
 	GetNetwork() string
 	GetTimeout() *durationpb.Duration
-	GetProtocol() config.ClusterConfig_Protocol
+	GetProtocol() config.Protocol
 }
 
 type JWTConfig interface {

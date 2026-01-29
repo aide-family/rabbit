@@ -9,7 +9,6 @@ import (
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/go-kratos/kratos/contrib/registry/etcd/v2"
 	kuberegistry "github.com/go-kratos/kratos/contrib/registry/kubernetes/v2"
-	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/registry"
 	clientV3 "go.etcd.io/etcd/client/v3"
 	"google.golang.org/protobuf/proto"
@@ -27,6 +26,7 @@ const defaultKubeConfig = "~/.kube/config"
 func init() {
 	globalRegistry.RegisterReportFactory(config.ReportConfig_KUBERNETES, buildReportFromKubernetes)
 	globalRegistry.RegisterReportFactory(config.ReportConfig_ETCD, buildReportFromEtcd)
+	globalRegistry.RegisterReportFactory(config.ReportConfig_REPORT_TYPE_UNKNOWN, newDefaultReport)
 }
 
 type Report interface {
@@ -69,12 +69,12 @@ func (s *safeReport) Watch(ctx context.Context, serviceName string) (registry.Wa
 // NewReport creates a new report.
 // If the report factory is not registered, it will return an error.
 // The report is not closed, you need to call the returned function to close the report.
-func NewReport(c *config.ReportConfig, logger *klog.Helper) (Report, func() error, error) {
+func NewReport(c *config.ReportConfig) (Report, func() error, error) {
 	factory, ok := globalRegistry.GetReportFactory(c.GetReportType())
 	if !ok {
 		return nil, nil, merr.ErrorInternalServer("report factory not registered")
 	}
-	report, closeFn, err := factory(c, logger)
+	report, closeFn, err := factory(c)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -86,7 +86,7 @@ func NewReport(c *config.ReportConfig, logger *klog.Helper) (Report, func() erro
 	return safe, closeFn, nil
 }
 
-func buildReportFromKubernetes(c *config.ReportConfig, logger *klog.Helper) (Report, func() error, error) {
+func buildReportFromKubernetes(c *config.ReportConfig) (Report, func() error, error) {
 	kubeConfig := &config.KubernetesOptions{}
 	if pointer.IsNotNil(c.GetOptions()) {
 		if err := anypb.UnmarshalTo(c.GetOptions(), kubeConfig, proto.UnmarshalOptions{Merge: true}); err != nil {
@@ -112,7 +112,7 @@ func buildReportFromKubernetes(c *config.ReportConfig, logger *klog.Helper) (Rep
 	return kuberegistry.NewRegistry(clientSet, c.GetNamespace()), func() error { return nil }, nil
 }
 
-func buildReportFromEtcd(c *config.ReportConfig, logger *klog.Helper) (Report, func() error, error) {
+func buildReportFromEtcd(c *config.ReportConfig) (Report, func() error, error) {
 	etcdConfig := &config.ETCDOptions{}
 	if pointer.IsNotNil(c.GetOptions()) {
 		if err := anypb.UnmarshalTo(c.GetOptions(), etcdConfig, proto.UnmarshalOptions{Merge: true}); err != nil {
@@ -129,4 +129,30 @@ func buildReportFromEtcd(c *config.ReportConfig, logger *klog.Helper) (Report, f
 		return nil, nil, merr.ErrorInternalServer("create etcd client failed: %v", err)
 	}
 	return etcd.New(client, etcd.Namespace(c.GetNamespace())), client.Close, nil
+}
+
+func newDefaultReport(c *config.ReportConfig) (Report, func() error, error) {
+	return &defaultReport{}, func() error { return nil }, nil
+}
+
+type defaultReport struct{}
+
+// Deregister implements [Report].
+func (d *defaultReport) Deregister(ctx context.Context, service *registry.ServiceInstance) error {
+	return nil
+}
+
+// GetService implements [Report].
+func (d *defaultReport) GetService(ctx context.Context, serviceName string) ([]*registry.ServiceInstance, error) {
+	return nil, nil
+}
+
+// Register implements [Report].
+func (d *defaultReport) Register(ctx context.Context, service *registry.ServiceInstance) error {
+	return nil
+}
+
+// Watch implements [Report].
+func (d *defaultReport) Watch(ctx context.Context, serviceName string) (registry.Watcher, error) {
+	return nil, nil
 }

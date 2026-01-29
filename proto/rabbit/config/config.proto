@@ -14,12 +14,19 @@ message ClientConfig {
 	string namespace = 4;
 }
 
+message JWT {
+	string secret = 1;
+	google.protobuf.Duration expire = 2;
+	string issuer = 3;
+}
+
+enum Protocol {
+	PROTOCOL_UNKNOWN = 0;
+	GRPC = 1;
+	HTTP = 2;
+}
+
 message ClusterConfig {
-	enum Protocol {
-		PROTOCOL_UNKNOWN = 0;
-		GRPC = 1;
-		HTTP = 2;
-	}
 	string name = 1;
 	string endpoints = 2;
 	google.protobuf.Duration timeout = 3;
@@ -77,4 +84,58 @@ message BasicAuthConfig {
 	string username = 1;
 	string password = 2;
 	string enabled = 3;
+}
+
+message DomainConfig {
+	enum Driver {
+		FILE = 0;
+		GORM = 1;
+		ETCD = 2;
+		OUTER = 3;
+	}
+	Driver driver = 1;
+    string version = 2;
+    google.protobuf.Any options = 3;
+}
+
+message FileConfig {
+	enum FileType {
+		YAML = 0;
+		JSON = 1;
+	}
+	string path = 1;
+	FileType fileType = 2;
+	string filename = 3;
+	google.protobuf.Duration storageInterval = 4;
+}
+
+message OuterServerConfig {
+	string address = 1;
+	string network = 2;
+	google.protobuf.Duration timeout = 3;
+	Protocol protocol = 4;
+}
+
+message OAuth2 {
+   enum APP {
+     UNKNOWN = 0;
+     GITHUB = 1;
+     GITEE = 2;
+     FEISHU = 3;
+   }
+   
+   message Config {
+	 APP app = 1;
+     string clientId = 2;
+     string clientSecret = 3;
+     string callbackUri = 4;
+     string authUrl = 5;
+     string tokenUrl = 6;
+     repeated string scopes = 7;
+     string loginUrl = 8;
+   }
+
+   string enable = 1;
+   string redirectUri = 2;
+   repeated Config configs = 3;
 }

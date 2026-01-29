@@ -1,3 +1,4 @@
+// Package bo is the business logic object
 package bo
 
 func NewPageRequestBo(page int32, pageSize int32) *PageRequestBo {

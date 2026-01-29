@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/aide-family/magicbox/load"
 	"github.com/aide-family/magicbox/pointer"
@@ -14,27 +13,20 @@ import (
 	"github.com/go-kratos/kratos/v2/config/file"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
-	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type RunFlags struct {
 	*conf.Bootstrap
 	*cmd.GlobalFlags
 
-	metadata        []string
-	useRandomID     bool
-	configPaths     []string
-	dataSourcePaths []string
-	environment     string
-	jwtExpire       string
-	clusterTimeout  time.Duration
-	clusterProtocol string
+	metadata    []string
+	useRandomID bool
+	configPaths []string
+	environment string
 }
 
 var runFlags RunFlags
@@ -46,7 +38,7 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	c.PersistentFlags().StringSliceVarP(&f.configPaths, "config", "c", []string{}, `Example: -c=./config1/ -c=./config2/`)
 
 	c.PersistentFlags().StringVar(&f.Server.Name, "server-name", f.Server.Name, `Example: --server-name="rabbit"`)
-	useRandomID, _ := strconv.ParseBool(f.Server.UseRandomID)
+	useRandomID, _ := strconv.ParseBool(f.UseRandomID)
 	c.PersistentFlags().BoolVar(&f.useRandomID, "use-random-node-id", useRandomID, `Example: --use-random-node-id`)
 	metadataStr := make([]string, 0, len(f.Server.Metadata))
 	for key, value := range f.Server.Metadata {
@@ -54,23 +46,11 @@ func (f *RunFlags) addFlags(c *cobra.Command, bc *conf.Bootstrap) {
 	}
 	c.PersistentFlags().StringSliceVar(&f.metadata, "server-metadata", metadataStr, `Example: --server-metadata="tag=rabbit" --server-metadata="email=aidecloud@163.com"`)
 	c.PersistentFlags().StringVar(&f.environment, "environment", f.Environment.String(), `Example: --environment="DEV", --environment="TEST", --environment="PREVIEW", --environment="PROD"`)
-	c.PersistentFlags().StringVar(&f.Jwt.Secret, "jwt-secret", f.Jwt.Secret, `Example: --jwt-secret="xxx"`)
-	c.PersistentFlags().StringVar(&f.jwtExpire, "jwt-expire", f.Jwt.Expire.AsDuration().String(), `Example: --jwt-expire="10s", --jwt-expire="1m", --jwt-expire="1h", --jwt-expire="1d"`)
-	c.PersistentFlags().StringVar(&f.Jwt.Issuer, "jwt-issuer", f.Jwt.Issuer, `Example: --jwt-issuer="xxx"`)
-	c.PersistentFlags().StringSliceVar(&f.dataSourcePaths, "datasource-paths", strutil.SplitSkipEmpty(f.DataSourcePaths, ","), `Example: --datasource-paths="./datasource" --datasource-paths="./config,./datasource"`)
-	c.PersistentFlags().StringVar(&f.MessageLogPath, "message-log-path", f.MessageLogPath, `Example: --message-log-path="./messages/"`)
-	c.PersistentFlags().StringVar(&f.Cluster.Endpoints, "cluster-endpoints", f.Cluster.Endpoints, `Example: --cluster-endpoints="127.0.0.1:2379"`)
-	c.PersistentFlags().StringVar(&f.Cluster.Name, "cluster-name", f.Cluster.Name, `Example: --cluster-name="moon.rabbit"`)
-	c.PersistentFlags().DurationVar(&f.clusterTimeout, "cluster-timeout", f.Cluster.Timeout.AsDuration(), `Example: --cluster-timeout="10s"`)
-	c.PersistentFlags().StringVar(&f.clusterProtocol, "cluster-protocol", f.Cluster.Protocol.String(), `Example: --cluster-protocol="GRPC"`)
 }
 
 func (f *RunFlags) ApplyToBootstrap() error {
 	if strutil.IsEmpty(f.Server.Name) {
 		f.Server.Name = f.Name
-	}
-	if strutil.IsEmpty(f.Server.Namespace) {
-		f.Server.Namespace = f.Namespace
 	}
 
 	metadata := f.Server.Metadata
@@ -91,16 +71,10 @@ func (f *RunFlags) ApplyToBootstrap() error {
 	}
 
 	f.Server.Metadata = metadata
-	f.Server.UseRandomID = strconv.FormatBool(f.useRandomID)
+	f.UseRandomID = strconv.FormatBool(f.useRandomID)
 
 	if strutil.IsNotEmpty(f.environment) {
 		f.Environment = enum.Environment(enum.Environment_value[f.environment])
-	}
-
-	if strutil.IsNotEmpty(f.jwtExpire) {
-		if expire, err := time.ParseDuration(f.jwtExpire); pointer.IsNil(err) {
-			f.Jwt.Expire = durationpb.New(expire)
-		}
 	}
 
 	if len(f.configPaths) > 0 {
@@ -120,20 +94,7 @@ func (f *RunFlags) ApplyToBootstrap() error {
 			f.Bootstrap = &bc
 		}
 	}
-	if len(f.dataSourcePaths) > 0 {
-		f.DataSourcePaths = strings.Join(f.dataSourcePaths, ",")
-	}
 
-	if f.clusterTimeout > 0 {
-		f.Cluster.Timeout = durationpb.New(f.clusterTimeout)
-	}
-	if strutil.IsNotEmpty(f.clusterProtocol) {
-		protocolValue, ok := config.ClusterConfig_Protocol_value[strings.ToUpper(f.clusterProtocol)]
-		if !ok || protocolValue == int32(config.ClusterConfig_PROTOCOL_UNKNOWN) {
-			return merr.ErrorInternal("invalid cluster protocol: %s", f.clusterProtocol)
-		}
-		f.Cluster.Protocol = config.ClusterConfig_Protocol(protocolValue)
-	}
 	return nil
 }
 
