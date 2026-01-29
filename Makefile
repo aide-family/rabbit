@@ -72,12 +72,6 @@ wire:
 	@echo "Generating wire files"
 	wire ./...
 
-.PHONY: vobj
-# generate the vobj files
-vobj:
-	@echo "Generating vobj files"
-	cd internal/biz/vobj && go generate .
-
 .PHONY: errors
 # generate errors
 errors:
@@ -99,7 +93,7 @@ errors:
 # generate all files
 all: 
 	@git log -1 --format='%B' > description.txt
-	make api conf errors vobj wire
+	make api conf errors wire
 
 .PHONY: build
 # build the rabbit binary

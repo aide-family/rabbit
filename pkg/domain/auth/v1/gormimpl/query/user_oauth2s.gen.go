@@ -116,6 +116,7 @@ func (o *oAuth2User) fillFieldMap() {
 	o.fieldMap["app"] = o.APP
 	o.fieldMap["raw"] = o.Raw
 	o.fieldMap["user_id"] = o.UID
+
 }
 
 func (o oAuth2User) clone(db *gorm.DB) oAuth2User {

@@ -14,6 +14,7 @@ import (
 	"github.com/aide-family/rabbit/cmd/run/all"
 	"github.com/aide-family/rabbit/cmd/run/grpc"
 	"github.com/aide-family/rabbit/cmd/run/http"
+	"github.com/aide-family/rabbit/cmd/run/job"
 	"github.com/aide-family/rabbit/cmd/version"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
@@ -60,7 +61,7 @@ func init() {
 
 func main() {
 	runCmd := run.NewCmd(defaultServerConfig)
-	runCmd.AddCommand(grpc.NewCmd(), http.NewCmd(), all.NewCmd())
+	runCmd.AddCommand(grpc.NewCmd(), http.NewCmd(), all.NewCmd(), job.NewCmd())
 
 	children := []*cobra.Command{
 		version.NewCmd(),

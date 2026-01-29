@@ -4,12 +4,15 @@ package data
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/plugin/cache"
 	"github.com/aide-family/magicbox/plugin/cache/mem"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
+	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
+	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/pkg/config"
@@ -22,10 +25,9 @@ var ProviderSetData = wire.NewSet(New)
 // New a data and returns.
 func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 	d := &Data{
-		helper:      helper,
-		c:           c,
-		closes:      safety.NewSyncMap(make(map[string]func() error)),
-		reloadFuncs: safety.NewSyncMap(make(map[string]func())),
+		helper: helper,
+		c:      c,
+		closes: safety.NewSyncMap(make(map[string]func() error)),
 	}
 
 	if err := d.initRegistry(); err != nil {
@@ -39,17 +41,30 @@ func New(c *conf.Bootstrap, helper *klog.Helper) (*Data, func(), error) {
 	}
 	d.cache = cache
 	d.closes.Set("cache", func() error { return cache.Close() })
+	db, close, err := connect.NewDB(d.c.GetDatabase())
+	if err != nil {
+		return nil, d.close, err
+	}
+	d.db = db
+	d.closes.Set("db", close)
+
+	node, err := snowflake.NewNode(hello.NodeID())
+	if err != nil {
+		return nil, d.close, err
+	}
+	d.node = node
 
 	return d, d.close, nil
 }
 
 type Data struct {
-	helper      *klog.Helper
-	c           *conf.Bootstrap
-	registry    connect.Report
-	cache       cache.Interface
-	closes      *safety.SyncMap[string, func() error] // 使用SyncMap保证并发安全
-	reloadFuncs *safety.SyncMap[string, func()]
+	helper   *klog.Helper
+	c        *conf.Bootstrap
+	registry connect.Report
+	cache    cache.Interface
+	db       *gorm.DB
+	node     *snowflake.Node
+	closes   *safety.SyncMap[string, func() error] // 使用SyncMap保证并发安全
 }
 
 func (d *Data) AppendClose(name string, close func() error) {
@@ -83,4 +98,12 @@ func (d *Data) initRegistry() error {
 	d.registry = reportInstance
 	d.closes.Set("report", closer)
 	return nil
+}
+
+func (d *Data) Node() *snowflake.Node {
+	return d.node
+}
+
+func (d *Data) DB() *gorm.DB {
+	return d.db
 }

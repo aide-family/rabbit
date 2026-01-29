@@ -11,8 +11,9 @@ import (
 	"github.com/aide-family/rabbit/internal/biz"
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
+	"github.com/aide-family/rabbit/pkg/contextx"
+	"github.com/aide-family/rabbit/pkg/enum"
 	"github.com/aide-family/rabbit/pkg/merr"
-	"github.com/aide-family/rabbit/pkg/middler"
 )
 
 func NewNamespaceService(namespaceBiz *biz.Namespace) *NamespaceService {
@@ -84,20 +85,20 @@ func (s *NamespaceService) SelectNamespace(ctx context.Context, req *apiv1.Selec
 	return bo.ToAPIV1SelectNamespaceReply(result), nil
 }
 
-func (s *NamespaceService) HasNamespace(ctx context.Context) error {
-	ns := middler.GetNamespace(ctx)
-	if strutil.IsEmpty(ns) {
-		return merr.ErrorForbidden("namespace is required, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
+func (s *NamespaceService) HasNamespace(ctx context.Context) (snowflake.ID, error) {
+	namespace := contextx.GetNamespace(ctx)
+	if strutil.IsEmpty(namespace) {
+		return 0, merr.ErrorForbidden("namespace is required, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
 	}
-	namespaceItemBo, err := s.namespaceBiz.GetNamespaceByName(ctx, ns)
+	namespaceItemBo, err := s.namespaceBiz.GetNamespaceByName(ctx, namespace)
 	if err != nil {
 		if merr.IsNotFound(err) {
-			return merr.ErrorForbidden("namespace %s not found", ns)
+			return 0, merr.ErrorForbidden("namespace %s not found", namespace)
 		}
-		return err
+		return 0, err
 	}
-	if !namespaceItemBo.Status.IsEnabled() {
-		return merr.ErrorForbidden("namespace %s is not enabled", ns)
+	if namespaceItemBo.Status != enum.GlobalStatus_ENABLED {
+		return 0, merr.ErrorForbidden("namespace %s is not enabled", namespace)
 	}
-	return nil
+	return namespaceItemBo.UID, nil
 }

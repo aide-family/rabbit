@@ -11,7 +11,6 @@ import (
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
-	"github.com/aide-family/rabbit/internal/biz/vobj"
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/pkg/domain"
@@ -146,7 +145,7 @@ func parseNamespaceModel(namespaceModel *namespacev1.NamespaceModel) *bo.Namespa
 		UID:       snowflake.ParseInt64(namespaceModel.Uid),
 		Name:      namespaceModel.Name,
 		Metadata:  namespaceModel.Metadata,
-		Status:    vobj.GlobalStatus(namespaceModel.Status),
+		Status:    namespaceModel.Status,
 		CreatedAt: time.Unix(namespaceModel.CreatedAt, 0),
 		UpdatedAt: time.Unix(namespaceModel.UpdatedAt, 0),
 	}

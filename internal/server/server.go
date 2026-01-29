@@ -76,9 +76,10 @@ func (c *protoYAMLCodec) Name() string {
 }
 
 var (
-	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, RegisterService)
+	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, NewJobServer, RegisterService)
 	ProviderSetServerHTTP = wire.NewSet(NewHTTPServer, RegisterHTTPService)
 	ProviderSetServerGRPC = wire.NewSet(NewGRPCServer, RegisterGRPCService)
+	ProviderSetServerJob  = wire.NewSet(NewJobServer, RegisterJobService)
 )
 
 // init initializes the json.MarshalOptions.
@@ -141,14 +142,25 @@ func BindMetrics(httpSrv *http.Server, bc *conf.Bootstrap) {
 	api.BindHandlerWithAuth(httpSrv, binding)
 }
 
+func RegisterJobService(jobSrv *JobServer) Servers {
+	return Servers{newServer("job", jobSrv)}
+}
+
 // RegisterService registers the service.
 func RegisterService(
 	c *conf.Bootstrap,
 	httpSrv *http.Server,
 	grpcSrv *grpc.Server,
+	jobSrv *JobServer,
+	jobService *service.JobService,
 	authService *service.AuthService,
 	healthService *service.HealthService,
 	namespaceService *service.NamespaceService,
+	emailService *service.EmailService,
+	webhookService *service.WebhookService,
+	senderService *service.SenderService,
+	templateService *service.TemplateService,
+	messageLogService *service.MessageLogService,
 ) Servers {
 	var srvs Servers
 
@@ -156,11 +168,22 @@ func RegisterService(
 		authService,
 		healthService,
 		namespaceService,
+		emailService,
+		webhookService,
+		senderService,
+		templateService,
+		messageLogService,
 	)...)
 	srvs = append(srvs, RegisterGRPCService(c, grpcSrv,
 		healthService,
 		namespaceService,
+		emailService,
+		webhookService,
+		senderService,
+		templateService,
+		messageLogService,
 	)...)
+	srvs = append(srvs, RegisterJobService(jobSrv)...)
 	return srvs
 }
 
@@ -171,9 +194,19 @@ func RegisterHTTPService(
 	authService *service.AuthService,
 	healthService *service.HealthService,
 	namespaceService *service.NamespaceService,
+	emailService *service.EmailService,
+	webhookService *service.WebhookService,
+	senderService *service.SenderService,
+	templateService *service.TemplateService,
+	messageLogService *service.MessageLogService,
 ) Servers {
 	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
 	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
+	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
+	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
+	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
+	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
 
 	oauth2Handler := auth.NewOAuth2Handler(c.GetOauth2(), authService.Login)
 	if err := oauth2Handler.Handler(httpSrv); err != nil {
@@ -188,9 +221,19 @@ func RegisterGRPCService(
 	grpcSrv *grpc.Server,
 	healthService *service.HealthService,
 	namespaceService *service.NamespaceService,
+	emailService *service.EmailService,
+	webhookService *service.WebhookService,
+	senderService *service.SenderService,
+	templateService *service.TemplateService,
+	messageLogService *service.MessageLogService,
 ) Servers {
 	apiv1.RegisterHealthServer(grpcSrv, healthService)
 	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
+	apiv1.RegisterEmailServer(grpcSrv, emailService)
+	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
+	apiv1.RegisterSenderServer(grpcSrv, senderService)
+	apiv1.RegisterTemplateServer(grpcSrv, templateService)
+	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
 	return Servers{newServer("grpc", grpcSrv)}
 }
 

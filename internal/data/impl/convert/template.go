@@ -1,0 +1,43 @@
+package convert
+
+import (
+	"context"
+
+	"github.com/aide-family/rabbit/internal/biz/bo"
+	"github.com/aide-family/rabbit/internal/data/impl/do"
+	"github.com/aide-family/rabbit/pkg/contextx"
+	"github.com/aide-family/rabbit/pkg/enum"
+)
+
+func ToTemplateDO(ctx context.Context, req *bo.CreateTemplateBo) *do.Template {
+	model := &do.Template{
+		Name:        req.Name,
+		MessageType: req.MessageType,
+		JSONData:    []byte(req.JSONData),
+		Status:      enum.GlobalStatus_ENABLED,
+	}
+	model.WithNamespaceUID(contextx.GetNamespaceUID(ctx)).WithCreator(contextx.GetUserUID(ctx))
+	return model
+}
+
+func ToTemplateItemBo(templateDO *do.Template) *bo.TemplateItemBo {
+	return &bo.TemplateItemBo{
+		UID:         templateDO.UID,
+		Name:        templateDO.Name,
+		MessageType: templateDO.MessageType,
+		JSONData:    string(templateDO.JSONData),
+		Status:      templateDO.Status,
+		CreatedAt:   templateDO.CreatedAt,
+		UpdatedAt:   templateDO.UpdatedAt,
+	}
+}
+
+func ToTemplateItemSelectBo(templateDO *do.Template) *bo.TemplateItemSelectBo {
+	return &bo.TemplateItemSelectBo{
+		UID:      templateDO.UID,
+		Name:     templateDO.Name,
+		Status:   templateDO.Status,
+		Disabled: templateDO.Status == enum.GlobalStatus_DISABLED || templateDO.DeletedAt.Valid,
+		Tooltip:  templateDO.Name,
+	}
+}

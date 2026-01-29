@@ -5,7 +5,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 
-	"github.com/aide-family/rabbit/internal/biz/vobj"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/enum"
 )
@@ -13,14 +12,14 @@ import (
 type CreateNamespaceBo struct {
 	Name     string
 	Metadata map[string]string
-	Status   vobj.GlobalStatus
+	Status   enum.GlobalStatus
 }
 
 func NewCreateNamespaceBo(req *apiv1.CreateNamespaceRequest) *CreateNamespaceBo {
 	return &CreateNamespaceBo{
 		Name:     req.Name,
 		Metadata: req.Metadata,
-		Status:   vobj.GlobalStatusEnabled,
+		Status:   enum.GlobalStatus_ENABLED,
 	}
 }
 
@@ -40,20 +39,20 @@ func NewUpdateNamespaceBo(req *apiv1.UpdateNamespaceRequest) *UpdateNamespaceBo 
 
 type UpdateNamespaceStatusBo struct {
 	UID    snowflake.ID
-	Status vobj.GlobalStatus
+	Status enum.GlobalStatus
 }
 
 type ListNamespaceBo struct {
 	*PageRequestBo
 	Keyword string
-	Status  vobj.GlobalStatus
+	Status  enum.GlobalStatus
 }
 
 type NamespaceItemBo struct {
 	UID       snowflake.ID
 	Name      string
 	Metadata  map[string]string
-	Status    vobj.GlobalStatus
+	Status    enum.GlobalStatus
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -63,7 +62,7 @@ func (b *NamespaceItemBo) ToAPIV1NamespaceItem() *apiv1.NamespaceItem {
 		Uid:       b.UID.Int64(),
 		Name:      b.Name,
 		Metadata:  b.Metadata,
-		Status:    enum.GlobalStatus(b.Status),
+		Status:    b.Status,
 		CreatedAt: b.CreatedAt.Format(time.DateTime),
 		UpdatedAt: b.UpdatedAt.Format(time.DateTime),
 	}
@@ -72,7 +71,7 @@ func (b *NamespaceItemBo) ToAPIV1NamespaceItem() *apiv1.NamespaceItem {
 func NewUpdateNamespaceStatusBo(req *apiv1.UpdateNamespaceStatusRequest) *UpdateNamespaceStatusBo {
 	return &UpdateNamespaceStatusBo{
 		UID:    snowflake.ParseInt64(req.Uid),
-		Status: vobj.GlobalStatus(req.Status),
+		Status: req.Status,
 	}
 }
 
@@ -80,7 +79,7 @@ func NewListNamespaceBo(req *apiv1.ListNamespaceRequest) *ListNamespaceBo {
 	return &ListNamespaceBo{
 		PageRequestBo: NewPageRequestBo(req.Page, req.PageSize),
 		Keyword:       req.Keyword,
-		Status:        vobj.GlobalStatus(req.Status),
+		Status:        req.Status,
 	}
 }
 
@@ -102,7 +101,7 @@ type SelectNamespaceBo struct {
 	Keyword string
 	Limit   int32
 	LastUID snowflake.ID
-	Status  vobj.GlobalStatus
+	Status  enum.GlobalStatus
 }
 
 // NewSelectNamespaceBo 从 API 请求创建 BO
@@ -115,7 +114,7 @@ func NewSelectNamespaceBo(req *apiv1.SelectNamespaceRequest) *SelectNamespaceBo 
 		Keyword: req.Keyword,
 		Limit:   req.Limit,
 		LastUID: lastUID,
-		Status:  vobj.GlobalStatus(req.Status),
+		Status:  req.Status,
 	}
 }
 
@@ -123,7 +122,7 @@ func NewSelectNamespaceBo(req *apiv1.SelectNamespaceRequest) *SelectNamespaceBo 
 type NamespaceItemSelectBo struct {
 	UID      snowflake.ID
 	Name     string
-	Status   vobj.GlobalStatus
+	Status   enum.GlobalStatus
 	Disabled bool
 	Tooltip  string
 }

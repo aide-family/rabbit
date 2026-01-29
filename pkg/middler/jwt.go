@@ -13,6 +13,7 @@ import (
 	"github.com/go-kratos/kratos/v2/transport"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 
+	"github.com/aide-family/rabbit/pkg/contextx"
 	authv1 "github.com/aide-family/rabbit/pkg/domain/auth/v1"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
@@ -75,7 +76,8 @@ func MustLogin() middleware.Middleware {
 			if err != nil {
 				return nil, err
 			}
-			ctx = authv1.WithBaseInfo(ctx, claims.BaseInfo)
+			ctx = contextx.WithUserUID(ctx, claims.UID)
+			ctx = contextx.WithUsername(ctx, claims.Username)
 			return handler(ctx, req)
 		}
 	}

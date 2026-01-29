@@ -25,8 +25,6 @@ type (
 		BaseInfo
 		jwtv5.RegisteredClaims
 	}
-
-	baseInfoKey struct{}
 )
 
 // NewJwtClaims new jwt claims
@@ -87,13 +85,4 @@ func ParseClaimsFromToken(secret string, token string) (*JwtClaims, error) {
 		return nil, err
 	}
 	return &jwtClaims, nil
-}
-
-func WithBaseInfo(ctx context.Context, baseInfo BaseInfo) context.Context {
-	return context.WithValue(ctx, baseInfoKey{}, baseInfo)
-}
-
-func GetBaseInfo(ctx context.Context) (BaseInfo, bool) {
-	baseInfo, ok := ctx.Value(baseInfoKey{}).(BaseInfo)
-	return baseInfo, ok
 }

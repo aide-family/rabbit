@@ -5,22 +5,14 @@ import (
 
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
+	"github.com/bwmarrin/snowflake"
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
 	"github.com/go-kratos/kratos/v2/transport"
 
+	"github.com/aide-family/rabbit/pkg/contextx"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
-
-type namespaceKey struct{}
-
-func WithNamespace(ctx context.Context, namespace string) context.Context {
-	return context.WithValue(ctx, namespaceKey{}, namespace)
-}
-
-func GetNamespace(ctx context.Context) string {
-	return ctx.Value(namespaceKey{}).(string)
-}
 
 func MustNamespace() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
@@ -32,7 +24,7 @@ func MustNamespace() middleware.Middleware {
 			}
 
 			namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
-			ctx = WithNamespace(ctx, namespace)
+			ctx = contextx.WithNamespace(ctx, namespace)
 			tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
 
 			if strutil.IsNotEmpty(namespace) {
@@ -41,7 +33,7 @@ func MustNamespace() middleware.Middleware {
 
 			if md, ok := metadata.FromServerContext(ctx); ok {
 				namespace = md.Get(cnst.MetadataGlobalKeyNamespace)
-				ctx = WithNamespace(ctx, namespace)
+				ctx = contextx.WithNamespace(ctx, namespace)
 				tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
 			}
 
@@ -55,12 +47,14 @@ func MustNamespace() middleware.Middleware {
 }
 
 // MustNamespaceExist 检查namespace必须存在且有效
-func MustNamespaceExist(hasNamespace func(ctx context.Context) error) middleware.Middleware {
+func MustNamespaceExist(hasNamespace func(ctx context.Context) (snowflake.ID, error)) middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
-			if err := hasNamespace(ctx); err != nil {
+			namespace, err := hasNamespace(ctx)
+			if err != nil {
 				return nil, err
 			}
+			ctx = contextx.WithNamespaceUID(ctx, namespace)
 			return handler(ctx, req)
 		}
 	}

@@ -22,6 +22,9 @@ message Bootstrap {
 	rabbit.config.OAuth2 oauth2 = 11;
 	rabbit.config.DomainConfig namespaceConfig = 12;
 	rabbit.config.DomainConfig loginConfig = 13;
+	rabbit.config.ClusterConfig jobCluster = 14;
+	JobCore jobCore = 15;
+	rabbit.config.ORMConfig database = 16;
 }
 
 message Server {
@@ -36,4 +39,11 @@ message Server {
 	map<string, string> metadata = 2;
 	ServerConfig http = 3;
 	ServerConfig grpc = 4;
+	ServerConfig job = 5;
+}
+
+message JobCore {
+	int32 workerTotal = 1;
+	google.protobuf.Duration timeout = 2;
+	uint32 bufferSize = 3;
 }
