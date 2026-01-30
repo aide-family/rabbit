@@ -8,6 +8,7 @@ import (
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -134,7 +135,7 @@ func (g *gormRepository) GetNamespaceByName(ctx context.Context, req *namespacev
 func (g *gormRepository) ListNamespace(ctx context.Context, req *namespacev1.ListNamespaceRequest) (*namespacev1.ListNamespaceResponse, error) {
 	mutation := query.Namespace
 	wrappers := mutation.WithContext(ctx)
-	if pointer.IsNotNil(req.Keyword) {
+	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(mutation.Name.Like("%" + req.Keyword + "%"))
 	}
 	if req.Status > enum.GlobalStatus_GlobalStatus_UNKNOWN {
@@ -172,7 +173,7 @@ func (g *gormRepository) ListNamespace(ctx context.Context, req *namespacev1.Lis
 func (g *gormRepository) SelectNamespace(ctx context.Context, req *namespacev1.SelectNamespaceRequest) (*namespacev1.SelectNamespaceResponse, error) {
 	mutation := query.Namespace
 	wrappers := mutation.WithContext(ctx)
-	if pointer.IsNotNil(req.Keyword) {
+	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(mutation.Name.Like("%" + req.Keyword + "%"))
 	}
 	if req.Status > enum.GlobalStatus_GlobalStatus_UNKNOWN {
