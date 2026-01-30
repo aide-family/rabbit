@@ -107,3 +107,7 @@ func (d *Data) Node() *snowflake.Node {
 func (d *Data) DB() *gorm.DB {
 	return d.db
 }
+
+func (d *Data) Cache() cache.Interface {
+	return d.cache
+}

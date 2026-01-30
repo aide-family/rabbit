@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aide-family/magicbox/strutil"
+	"github.com/bwmarrin/snowflake"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/pkg/enum"
@@ -30,12 +31,12 @@ func (m *MessageLog) TableName() string {
 	return TableNameMessageLog
 }
 
-func GenMessageLogTableName(namespace string, sendAt time.Time) string {
+func GenMessageLogTableName(namespace snowflake.ID, sendAt time.Time) string {
 	weekStart := getFirstMonday(sendAt)
-	return strings.Join([]string{TableNameMessageLog, namespace, weekStart.Format("20060102")}, "__")
+	return strings.Join([]string{TableNameMessageLog, namespace.String(), weekStart.Format("20060102")}, "__")
 }
 
-func GenMessageLogTableNames(tx *gorm.DB, namespace string, startAt time.Time, endAt time.Time) []string {
+func GenMessageLogTableNames(tx *gorm.DB, namespace snowflake.ID, startAt time.Time, endAt time.Time) []string {
 	if startAt.After(endAt) {
 		return nil
 	}

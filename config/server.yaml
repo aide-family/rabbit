@@ -109,3 +109,9 @@ database:
   options:
     '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/rabbit.config.SQLiteOptions}"
     dsn: "${MOON_RABBIT_DATABASE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+
+jobCluster:
+  name: ${MOON_RABBIT_JOB_CLUSTER_NAME:rabbit}
+  endpoints: ${MOON_RABBIT_JOB_CLUSTER_ENDPOINTS:http://localhost:18081}
+  timeout: "${MOON_RABBIT_JOB_CLUSTER_TIMEOUT:10s}"
+  protocol: ${MOON_RABBIT_JOB_CLUSTER_PROTOCOL:HTTP}

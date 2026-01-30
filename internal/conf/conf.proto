@@ -22,7 +22,7 @@ message Bootstrap {
 	rabbit.config.OAuth2 oauth2 = 11;
 	rabbit.config.DomainConfig namespaceConfig = 12;
 	rabbit.config.DomainConfig loginConfig = 13;
-	rabbit.config.ClusterConfig jobCluster = 14;
+	rabbit.config.ClusterConfig jobClusters = 14;
 	JobCore jobCore = 15;
 	rabbit.config.ORMConfig database = 16;
 }

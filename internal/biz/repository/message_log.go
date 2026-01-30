@@ -17,4 +17,6 @@ type MessageLog interface {
 	GetMessageLogWithLock(ctx context.Context, uid snowflake.ID) (*bo.MessageLogItemBo, error)
 	// UpdateMessageLogStatusIf 条件更新消息状态，只有当前状态匹配时才更新，用于实现 CAS 操作
 	UpdateMessageLogStatusIf(ctx context.Context, uid snowflake.ID, oldStatus, newStatus enum.MessageStatus) (bool, error)
+	// UpdateMessageLogLastErrorIf 条件更新消息最后错误，只有当前状态匹配时才更新，用于实现 CAS 操作
+	UpdateMessageLogLastErrorIf(ctx context.Context, uid snowflake.ID, oldStatus enum.MessageStatus, lastError string) (bool, error)
 }
