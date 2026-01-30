@@ -62,11 +62,15 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 		return merr.ErrorInternal("get message log failed")
 	}
 	if slices.Contains([]enum.MessageStatus{enum.MessageStatus_SENT, enum.MessageStatus_SENDING, enum.MessageStatus_CANCELLED}, messageLog.Status) {
+		m.helper.Debugw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)
 		return nil
 	}
 	if err := m.jobBiz.AppendMessage(ctx, uid); err != nil {
 		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
 		return merr.ErrorInternal("append message failed")
+	}
+	if err := m.messageLogRepo.MessageLogRetryIncrement(ctx, uid); err != nil {
+		m.helper.Warnw("msg", "increment message retry failed", "error", err, "uid", uid)
 	}
 	return nil
 }

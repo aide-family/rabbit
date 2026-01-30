@@ -257,3 +257,17 @@ func (m *messageLogRepository) getTableName(ctx context.Context, req *bo.Message
 
 	return tableName, nil
 }
+
+func (m *messageLogRepository) MessageLogRetryIncrement(ctx context.Context, uid snowflake.ID) error {
+	namespace := contextx.GetNamespaceUID(ctx)
+	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
+	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
+		return merr.ErrorNotFound("message log %d not found", uid.Int64())
+	}
+	bizQuery := query.Use(m.DB().Table(tableName))
+	messageLog := bizQuery.MessageLog
+	messageLogTable := messageLog.As(tableName)
+	wrappers := messageLog.WithContext(ctx)
+	_, err := wrappers.UpdateColumnSimple(messageLogTable.RetryTotal.Add(1))
+	return err
+}
