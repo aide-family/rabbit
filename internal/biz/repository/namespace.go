@@ -8,6 +8,7 @@ import (
 )
 
 type Namespace interface {
+	AllNamespaces(ctx context.Context) ([]*bo.NamespaceItemBo, error)
 	CreateNamespace(ctx context.Context, req *bo.CreateNamespaceBo) error
 	UpdateNamespace(ctx context.Context, req *bo.UpdateNamespaceBo) error
 	UpdateNamespaceStatus(ctx context.Context, req *bo.UpdateNamespaceStatusBo) error

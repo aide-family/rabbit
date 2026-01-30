@@ -42,6 +42,32 @@ type namespaceRepository struct {
 	repo namespacev1.Repository
 }
 
+// AllNamespaces implements [repository.Namespace].
+func (n *namespaceRepository) AllNamespaces(ctx context.Context) ([]*bo.NamespaceItemBo, error) {
+	var namespaces []*bo.NamespaceItemBo
+	page := int32(1)
+	for {
+		namespaceReply, err := n.repo.ListNamespace(ctx, &namespacev1.ListNamespaceRequest{
+			Page:     page,
+			PageSize: 10000,
+			Status:   enum.GlobalStatus_ENABLED,
+		})
+		if err != nil {
+			return nil, err
+		}
+		items := make([]*bo.NamespaceItemBo, 0, len(namespaceReply.Namespaces))
+		for _, namespace := range namespaceReply.Namespaces {
+			items = append(items, parseNamespaceModel(namespace))
+		}
+		namespaces = append(namespaces, items...)
+		if namespaceReply.Total <= int64(len(namespaces)) {
+			break
+		}
+		page++
+	}
+	return namespaces, nil
+}
+
 // CreateNamespace implements [repository.Namespace].
 func (n *namespaceRepository) CreateNamespace(ctx context.Context, req *bo.CreateNamespaceBo) error {
 	_, err := n.repo.CreateNamespace(ctx, &namespacev1.CreateNamespaceRequest{

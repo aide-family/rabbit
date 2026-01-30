@@ -31,16 +31,17 @@ func NewCreateMessageLogBo(sendAt time.Time, message string, messageType enum.Me
 }
 
 type MessageLogItemBo struct {
-	UID         snowflake.ID
-	SendAt      time.Time
-	Message     strutil.EncryptString
-	Config      strutil.EncryptString
-	MessageType enum.MessageType
-	Status      enum.MessageStatus
-	RetryTotal  int32
-	LastError   string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	UID          snowflake.ID
+	NamespaceUID snowflake.ID
+	SendAt       time.Time
+	Message      strutil.EncryptString
+	Config       strutil.EncryptString
+	MessageType  enum.MessageType
+	Status       enum.MessageStatus
+	RetryTotal   int32
+	LastError    string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 func (b *MessageLogItemBo) ToAPIV1MessageLogItem() *apiv1.MessageLogItem {

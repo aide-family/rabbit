@@ -31,11 +31,17 @@ import (
 	"github.com/aide-family/rabbit/pkg/message"
 )
 
-func NewMessageRepository(c *conf.Bootstrap, d *data.Data, messageLogRepo repository.MessageLog) (repository.Message, error) {
+func NewMessageRepository(
+	c *conf.Bootstrap,
+	d *data.Data,
+	messageLogRepo repository.MessageLog,
+	namespaceRepo repository.Namespace,
+) (repository.Message, error) {
 	jobCore := c.GetJobCore()
 	repo := &messageRepository{
 		Data:           d,
 		messageLogRepo: messageLogRepo,
+		namespaceRepo:  namespaceRepo,
 		messageChan:    make(chan *messageTask, jobCore.GetBufferSize()),
 		stopChan:       make(chan struct{}),
 		workerTotal:    int(jobCore.GetWorkerTotal()),
@@ -49,12 +55,16 @@ func NewMessageRepository(c *conf.Bootstrap, d *data.Data, messageLogRepo reposi
 	if err := repo.Start(context.Background()); err != nil {
 		return nil, err
 	}
+	if err := repo.loadMessageLogs(); err != nil {
+		return nil, err
+	}
 	d.AppendClose("messageRepo", func() error { return repo.Stop(context.Background()) })
 	return repo, nil
 }
 
 type messageRepository struct {
 	messageLogRepo repository.MessageLog
+	namespaceRepo  repository.Namespace
 	stopChan       chan struct{}
 	messageChan    chan *messageTask
 	wg             sync.WaitGroup
@@ -122,6 +132,44 @@ func (m *messageRepository) sendMessage(namespaceUID, messageUID snowflake.ID) e
 	}
 
 	return m.processMessage(ctx, messageLog)
+}
+
+func (m *messageRepository) loadMessageLogs() error {
+	namespaces, err := m.namespaceRepo.AllNamespaces(context.Background())
+	if err != nil {
+		return err
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Go(func() {
+		bufferChan := make(chan struct{}, 3)
+		for _, namespace := range namespaces {
+			bufferChan <- struct{}{}
+			go func(namespaceUID snowflake.ID) {
+				m.loadMessageLogsForNamespace(namespaceUID)
+				<-bufferChan
+			}(namespace.UID)
+		}
+	})
+
+	return nil
+}
+
+func (m *messageRepository) loadMessageLogsForNamespace(namespaceUID snowflake.ID) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	ctx = contextx.WithNamespaceUID(ctx, namespaceUID)
+	messageLogs, err := m.messageLogRepo.GetAllMessageLogs(ctx, enum.MessageStatus_PENDING)
+	if err != nil {
+		klog.Warnw("msg", "load message logs for namespace failed", "error", err, "namespaceUID", namespaceUID)
+		return
+	}
+	for _, messageLog := range messageLogs {
+		m.messageChan <- &messageTask{
+			namespaceUID: messageLog.NamespaceUID,
+			messageUID:   messageLog.UID,
+		}
+	}
 }
 
 // messageLogBody 实现 message.Message，用于把 messageLog 的 Message 字段传给 sender.Send。

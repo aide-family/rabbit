@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/plugin/cache"
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/gen"
@@ -14,8 +16,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/aide-family/magicbox/plugin/cache"
-	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 	"github.com/aide-family/rabbit/internal/data"
@@ -39,6 +39,33 @@ type messageLogRepository struct {
 // GetMessageLog implements [repository.MessageLog].
 func (m *messageLogRepository) GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.MessageLogItemBo, error) {
 	return m.getMessageLog(ctx, uid)
+}
+
+// GetAllMessageLogs implements [repository.MessageLog].
+func (m *messageLogRepository) GetAllMessageLogs(ctx context.Context, status enum.MessageStatus) ([]*bo.MessageLogItemBo, error) {
+	namespace := contextx.GetNamespaceUID(ctx)
+	tableName := do.GenMessageLogTableName(namespace, time.Now())
+	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
+		return []*bo.MessageLogItemBo{}, nil
+	}
+
+	bizQuery := query.Use(m.DB().Table(tableName))
+	messageLog := bizQuery.MessageLog
+	messageLogTable := messageLog.As(tableName)
+	wrappers := messageLog.WithContext(ctx)
+	wheres := []gen.Condition{
+		messageLogTable.Status.Eq(int32(status)),
+	}
+	wrappers = wrappers.Where(wheres...)
+	messageLogs, err := wrappers.Order(messageLog.CreatedAt.Asc()).Find()
+	if err != nil {
+		return nil, err
+	}
+	messageLogItems := make([]*bo.MessageLogItemBo, 0, len(messageLogs))
+	for _, messageLog := range messageLogs {
+		messageLogItems = append(messageLogItems, convert.ToMessageLogItemBo(messageLog))
+	}
+	return messageLogItems, nil
 }
 
 // GetMessageLogWithLock implements [repository.MessageLog].
