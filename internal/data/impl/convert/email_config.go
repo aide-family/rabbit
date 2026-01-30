@@ -13,14 +13,15 @@ import (
 
 func ToEmailConfigDO(ctx context.Context, req *bo.CreateEmailConfigBo) *do.EmailConfig {
 	model := &do.EmailConfig{
-		Name:     req.Name,
-		Host:     req.Host,
-		Port:     req.Port,
-		Username: req.Username,
-		Password: strutil.EncryptString(req.Password),
-		Status:   enum.GlobalStatus_ENABLED,
+		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		Name:         req.Name,
+		Host:         req.Host,
+		Port:         req.Port,
+		Username:     req.Username,
+		Password:     strutil.EncryptString(req.Password),
+		Status:       enum.GlobalStatus_ENABLED,
 	}
-	model.WithNamespaceUID(contextx.GetNamespaceUID(ctx)).WithCreator(contextx.GetUserUID(ctx))
+	model.WithCreator(contextx.GetUserUID(ctx))
 	return model
 }
 

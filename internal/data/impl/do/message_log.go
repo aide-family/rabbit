@@ -18,13 +18,14 @@ const (
 type MessageLog struct {
 	BaseModel
 
-	SendAt     time.Time             `gorm:"column:send_at;"`
-	Message    strutil.EncryptString `gorm:"column:message;"`
-	Config     strutil.EncryptString `gorm:"column:config;"`
-	Type       enum.MessageType      `gorm:"column:type;default:0"`
-	Status     enum.MessageStatus    `gorm:"column:status;default:0"`
-	RetryTotal int32                 `gorm:"column:retry_total;default:0"`
-	LastError  string                `gorm:"column:last_error;"`
+	NamespaceUID snowflake.ID          `gorm:"column:namespace_uid;index"`
+	SendAt       time.Time             `gorm:"column:send_at;"`
+	Message      strutil.EncryptString `gorm:"column:message;"`
+	Config       strutil.EncryptString `gorm:"column:config;"`
+	Type         enum.MessageType      `gorm:"column:type;default:0"`
+	Status       enum.MessageStatus    `gorm:"column:status;default:0"`
+	RetryTotal   int32                 `gorm:"column:retry_total;default:0"`
+	LastError    string                `gorm:"column:last_error;"`
 }
 
 func (m *MessageLog) TableName() string {

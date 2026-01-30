@@ -11,12 +11,13 @@ import (
 
 func ToTemplateDO(ctx context.Context, req *bo.CreateTemplateBo) *do.Template {
 	model := &do.Template{
-		Name:        req.Name,
-		MessageType: req.MessageType,
-		JSONData:    []byte(req.JSONData),
-		Status:      enum.GlobalStatus_ENABLED,
+		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		Name:         req.Name,
+		MessageType:  req.MessageType,
+		JSONData:     []byte(req.JSONData),
+		Status:       enum.GlobalStatus_ENABLED,
 	}
-	model.WithNamespaceUID(contextx.GetNamespaceUID(ctx)).WithCreator(contextx.GetUserUID(ctx))
+	model.WithCreator(contextx.GetUserUID(ctx))
 	return model
 }
 

@@ -9,9 +9,10 @@ import (
 type MessageRetryLog struct {
 	BaseModel
 
-	MessageLogID snowflake.ID `gorm:"column:message_log_id;type:bigint(20);not null"`
-	RetryAt      time.Time    `gorm:"column:retry_at;type:datetime;not null"`
-	Error        string       `gorm:"column:error;type:text;not null"`
+	NamespaceUID snowflake.ID `gorm:"column:namespace_uid;index"`
+	MessageLogID snowflake.ID `gorm:"column:message_log_id"`
+	RetryAt      time.Time    `gorm:"column:retry_at"`
+	Error        string       `gorm:"column:error"`
 }
 
 func (MessageRetryLog) TableName() string {

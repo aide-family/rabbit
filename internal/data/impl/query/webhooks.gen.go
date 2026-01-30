@@ -33,8 +33,8 @@ func newWebhookConfig(db *gorm.DB, opts ...gen.DOOption) webhookConfig {
 	_webhookConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_webhookConfig.DeletedAt = field.NewField(tableName, "deleted_at")
 	_webhookConfig.Creator = field.NewInt64(tableName, "creator")
-	_webhookConfig.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_webhookConfig.App = field.NewInt32(tableName, "app")
+	_webhookConfig.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_webhookConfig.Name = field.NewString(tableName, "name")
 	_webhookConfig.URL = field.NewString(tableName, "url")
 	_webhookConfig.Method = field.NewInt32(tableName, "method")
@@ -57,8 +57,8 @@ type webhookConfig struct {
 	UpdatedAt    field.Time
 	DeletedAt    field.Field
 	Creator      field.Int64
-	NamespaceUID field.Int64
 	App          field.Int32
+	NamespaceUID field.Int64
 	Name         field.String
 	URL          field.String
 	Method       field.Int32
@@ -87,8 +87,8 @@ func (w *webhookConfig) updateTableName(table string) *webhookConfig {
 	w.UpdatedAt = field.NewTime(table, "updated_at")
 	w.DeletedAt = field.NewField(table, "deleted_at")
 	w.Creator = field.NewInt64(table, "creator")
-	w.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	w.App = field.NewInt32(table, "app")
+	w.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	w.Name = field.NewString(table, "name")
 	w.URL = field.NewString(table, "url")
 	w.Method = field.NewInt32(table, "method")
@@ -118,8 +118,8 @@ func (w *webhookConfig) fillFieldMap() {
 	w.fieldMap["updated_at"] = w.UpdatedAt
 	w.fieldMap["deleted_at"] = w.DeletedAt
 	w.fieldMap["creator"] = w.Creator
-	w.fieldMap["namespace_uid"] = w.NamespaceUID
 	w.fieldMap["app"] = w.App
+	w.fieldMap["namespace_uid"] = w.NamespaceUID
 	w.fieldMap["name"] = w.Name
 	w.fieldMap["url"] = w.URL
 	w.fieldMap["method"] = w.Method

@@ -10,7 +10,8 @@ import (
 type RecipientGroup struct {
 	BaseModel
 
-	Name         string                      `gorm:"column:name;uniqueIndex"`
+	NamespaceUID snowflake.ID                `gorm:"column:namespace_uid;uniqueIndex:recipient_group__namespace_uid__name"`
+	Name         string                      `gorm:"column:name;uniqueIndex:recipient_group__namespace_uid__name"`
 	Metadata     *safety.Map[string, string] `gorm:"column:metadata;type:json;"`
 	Status       enum.GlobalStatus           `gorm:"column:status;default:0"`
 	Templates    []*Template                 `gorm:"many2many:recipient_group__templates;"`
@@ -26,10 +27,11 @@ func (RecipientGroup) TableName() string {
 type RecipientMember struct {
 	BaseModel
 
-	UserID snowflake.ID          `gorm:"column:user_id;uniqueIndex"`
-	Email  strutil.EncryptString `gorm:"column:email;uniqueIndex"`
-	Phone  strutil.EncryptString `gorm:"column:phone;uniqueIndex"`
-	Status enum.GlobalStatus     `gorm:"column:status;default:0"`
+	NamespaceUID snowflake.ID          `gorm:"column:namespace_uid;uniqueIndex:recipient_member__namespace_uid__user_uid"`
+	UserUID      snowflake.ID          `gorm:"column:user_uid;uniqueIndex:recipient_member__namespace_uid__user_uid"`
+	Email        strutil.EncryptString `gorm:"column:email;uniqueIndex"`
+	Phone        strutil.EncryptString `gorm:"column:phone;uniqueIndex"`
+	Status       enum.GlobalStatus     `gorm:"column:status;default:0"`
 }
 
 func (RecipientMember) TableName() string {

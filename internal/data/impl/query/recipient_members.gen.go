@@ -34,7 +34,7 @@ func newRecipientMember(db *gorm.DB, opts ...gen.DOOption) recipientMember {
 	_recipientMember.DeletedAt = field.NewField(tableName, "deleted_at")
 	_recipientMember.Creator = field.NewInt64(tableName, "creator")
 	_recipientMember.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
-	_recipientMember.UserID = field.NewInt64(tableName, "user_id")
+	_recipientMember.UserUID = field.NewInt64(tableName, "user_uid")
 	_recipientMember.Email = field.NewField(tableName, "email")
 	_recipientMember.Phone = field.NewField(tableName, "phone")
 	_recipientMember.Status = field.NewInt32(tableName, "status")
@@ -55,7 +55,7 @@ type recipientMember struct {
 	DeletedAt    field.Field
 	Creator      field.Int64
 	NamespaceUID field.Int64
-	UserID       field.Int64
+	UserUID      field.Int64
 	Email        field.Field
 	Phone        field.Field
 	Status       field.Int32
@@ -82,7 +82,7 @@ func (r *recipientMember) updateTableName(table string) *recipientMember {
 	r.DeletedAt = field.NewField(table, "deleted_at")
 	r.Creator = field.NewInt64(table, "creator")
 	r.NamespaceUID = field.NewInt64(table, "namespace_uid")
-	r.UserID = field.NewInt64(table, "user_id")
+	r.UserUID = field.NewInt64(table, "user_uid")
 	r.Email = field.NewField(table, "email")
 	r.Phone = field.NewField(table, "phone")
 	r.Status = field.NewInt32(table, "status")
@@ -110,7 +110,7 @@ func (r *recipientMember) fillFieldMap() {
 	r.fieldMap["deleted_at"] = r.DeletedAt
 	r.fieldMap["creator"] = r.Creator
 	r.fieldMap["namespace_uid"] = r.NamespaceUID
-	r.fieldMap["user_id"] = r.UserID
+	r.fieldMap["user_uid"] = r.UserUID
 	r.fieldMap["email"] = r.Email
 	r.fieldMap["phone"] = r.Phone
 	r.fieldMap["status"] = r.Status

@@ -14,15 +14,16 @@ import (
 
 func ToWebhookConfigDO(ctx context.Context, req *bo.CreateWebhookBo) *do.WebhookConfig {
 	model := &do.WebhookConfig{
-		App:     req.App,
-		Name:    req.Name,
-		URL:     req.URL,
-		Method:  req.Method,
-		Headers: safety.NewMap(req.Headers),
-		Secret:  strutil.EncryptString(req.Secret),
-		Status:  enum.GlobalStatus_ENABLED,
+		App:          req.App,
+		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		Name:         req.Name,
+		URL:          req.URL,
+		Method:       req.Method,
+		Headers:      safety.NewMap(req.Headers),
+		Secret:       strutil.EncryptString(req.Secret),
+		Status:       enum.GlobalStatus_ENABLED,
 	}
-	model.WithNamespaceUID(contextx.GetNamespaceUID(ctx)).WithCreator(contextx.GetUserUID(ctx))
+	model.WithCreator(contextx.GetUserUID(ctx))
 	return model
 }
 

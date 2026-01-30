@@ -93,12 +93,12 @@ func (s *NamespaceService) HasNamespace(ctx context.Context) (snowflake.ID, erro
 	namespaceItemBo, err := s.namespaceBiz.GetNamespaceByName(ctx, namespace)
 	if err != nil {
 		if merr.IsNotFound(err) {
-			return 0, merr.ErrorForbidden("namespace %s not found", namespace)
+			return 0, merr.ErrorForbidden("namespace %s not allowed", namespace)
 		}
 		return 0, err
 	}
 	if namespaceItemBo.Status != enum.GlobalStatus_ENABLED {
-		return 0, merr.ErrorForbidden("namespace %s is not enabled", namespace)
+		return 0, merr.ErrorForbidden("namespace %s is not allowed", namespace)
 	}
 	return namespaceItemBo.UID, nil
 }

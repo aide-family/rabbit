@@ -54,7 +54,7 @@ func migrateMysql() {
 	db.AutoMigrate(model.Models()...)
 }
 
-func migrateSQLite() {
+func migrateSQLite() error {
 	dsn := "file:../../../../../../rabbit.db?cache=shared"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
@@ -62,7 +62,7 @@ func migrateSQLite() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(model.Models()...)
+	return db.AutoMigrate(model.Models()...)
 }
 
 func TestGenerate(t *testing.T) {
@@ -74,5 +74,7 @@ func TestMigrateMysql(t *testing.T) {
 }
 
 func TestMigrateSQLite(t *testing.T) {
-	migrateSQLite()
+	if err := migrateSQLite(); err != nil {
+		t.Fatalf("migrate sqlite failed: %v", err)
+	}
 }

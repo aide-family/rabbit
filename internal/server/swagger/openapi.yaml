@@ -1053,9 +1053,11 @@ components:
                     type: string
                 message:
                     type: string
-                timestamp:
+                uptime:
                     type: string
                     format: date-time
+                duration:
+                    type: string
         rabbit.api.v1.JobSendMessageRequest:
             type: object
             properties:

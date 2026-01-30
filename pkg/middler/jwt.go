@@ -76,6 +76,9 @@ func MustLogin() middleware.Middleware {
 			if err != nil {
 				return nil, err
 			}
+			if claims.UID == 0 || strutil.IsEmpty(claims.Username) {
+				return nil, merr.ErrorUnauthorized("token is invalid")
+			}
 			ctx = contextx.WithUserUID(ctx, claims.UID)
 			ctx = contextx.WithUsername(ctx, claims.Username)
 			return handler(ctx, req)

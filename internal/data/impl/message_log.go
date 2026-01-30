@@ -57,7 +57,7 @@ func (m *messageLogRepository) GetAllMessageLogs(ctx context.Context, status enu
 		messageLogTable.Status.Eq(int32(status)),
 	}
 	wrappers = wrappers.Where(wheres...)
-	messageLogs, err := wrappers.Order(messageLog.CreatedAt.Asc()).Find()
+	messageLogs, err := wrappers.Order(messageLogTable.CreatedAt.Asc()).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -89,14 +89,14 @@ func (m *messageLogRepository) getMessageLog(ctx context.Context, uid snowflake.
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
 	}
 	wrappers = wrappers.Where(wheres...).Clauses(clauses...)
-	messageLogDo, err := wrappers.First()
+	messageLogDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, merr.ErrorNotFound("message log %d not found", uid.Int64())
 		}
 		return nil, err
 	}
-	return convert.ToMessageLogItemBo(messageLogDo), nil
+	return convert.ToMessageLogItemBo(messageLogDO), nil
 }
 
 // ListMessageLog implements [repository.MessageLog].
@@ -129,18 +129,18 @@ func (m *messageLogRepository) ListMessageLog(ctx context.Context, req *bo.ListM
 		wrappers = wrappers.Table(fmt.Sprintf("%s as %s", tableNames[0], do.TableNameMessageLog))
 	}
 
-	bizQuery := query.Use(m.DB())
-	messageLog := bizQuery.MessageLog
+	messageLog := query.MessageLog
+	messageLogTable := messageLog.As(do.TableNameMessageLog)
 
-	wrappers = wrappers.Where(messageLog.SendAt.Gte(req.StartAt))
-	wrappers = wrappers.Where(messageLog.SendAt.Lte(req.EndAt))
-	wrappers = wrappers.Where(messageLog.NamespaceUID.Eq(namespace.Int64()))
+	wrappers = wrappers.Where(messageLogTable.SendAt.Gte(req.StartAt))
+	wrappers = wrappers.Where(messageLogTable.SendAt.Lte(req.EndAt))
+	wrappers = wrappers.Where(messageLogTable.NamespaceUID.Eq(namespace.Int64()))
 
 	if req.Status > enum.MessageStatus_MessageStatus_UNKNOWN {
-		wrappers = wrappers.Where(messageLog.Status.Eq(int32(req.Status)))
+		wrappers = wrappers.Where(messageLogTable.Status.Eq(int32(req.Status)))
 	}
 	if req.MessageType > enum.MessageType_MessageType_UNKNOWN {
-		wrappers = wrappers.Where(messageLog.Type.Eq(int32(req.MessageType)))
+		wrappers = wrappers.Where(messageLogTable.Type.Eq(int32(req.MessageType)))
 	}
 	if pointer.IsNotNil(req.PageRequestBo) {
 		var total int64
@@ -151,7 +151,7 @@ func (m *messageLogRepository) ListMessageLog(ctx context.Context, req *bo.ListM
 		wrappers = wrappers.Limit(req.Limit()).Offset(req.Offset())
 	}
 	var messageLogs []*do.MessageLog
-	if err := wrappers.Order(messageLog.CreatedAt.Desc()).Find(&messageLogs).Error; err != nil {
+	if err := wrappers.Order(messageLogTable.CreatedAt.Desc()).Find(&messageLogs).Error; err != nil {
 		return nil, err
 	}
 	messageLogItems := make([]*bo.MessageLogItemBo, 0, len(messageLogs))
@@ -179,7 +179,7 @@ func (m *messageLogRepository) UpdateMessageLogStatusIf(ctx context.Context, uid
 		messageLogTable.Status.Eq(int32(oldStatus)),
 	}
 	wrappers = wrappers.Where(wheres...)
-	result, err := wrappers.Update(messageLogTable.Status, newStatus)
+	result, err := wrappers.UpdateColumnSimple(messageLogTable.Status.Value(int32(newStatus)))
 	if err != nil {
 		return false, err
 	}
@@ -224,7 +224,12 @@ func (m *messageLogRepository) CreateMessageLog(ctx context.Context, req *bo.Mes
 	bizQuery := query.Use(m.DB().Table(tableName))
 	messageLog := bizQuery.MessageLog
 	mutation := messageLog.WithContext(ctx)
-	return mutation.Create(convert.ToMessageLogDO(ctx, req))
+	messageLogDO := convert.ToMessageLogDO(ctx, req)
+	if err := mutation.Create(messageLogDO); err != nil {
+		return err
+	}
+	req.UID = messageLogDO.UID
+	return nil
 }
 
 func (m *messageLogRepository) getTableName(ctx context.Context, req *bo.MessageLogItemBo) (string, error) {

@@ -50,6 +50,7 @@ func (e *emailSender) Send(ctx context.Context, m message.Message) error {
 		if err != nil {
 			return err
 		}
+		emailMessage = NewMessage()
 		if err := json.Unmarshal(jsonBytes, emailMessage); err != nil {
 			return err
 		}
