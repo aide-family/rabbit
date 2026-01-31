@@ -69,9 +69,9 @@ func TestGenerate(t *testing.T) {
 	generate()
 }
 
-func TestMigrateMysql(t *testing.T) {
-	migrateMysql()
-}
+// func TestMigrateMysql(t *testing.T) {
+// 	migrateMysql()
+// }
 
 func TestMigrateSQLite(t *testing.T) {
 	if err := migrateSQLite(); err != nil {

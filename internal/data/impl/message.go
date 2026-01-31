@@ -49,7 +49,7 @@ func NewMessageRepository(
 		wg:             sync.WaitGroup{},
 	}
 	query.SetDefault(d.DB())
-	if err := repo.initClusters(c.GetJobCluster()); err != nil {
+	if err := repo.initClusters(c.GetJobClusters()); err != nil {
 		return nil, err
 	}
 	if err := repo.Start(context.Background()); err != nil {
