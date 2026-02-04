@@ -5,7 +5,6 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 
-	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
 
 	"github.com/aide-family/rabbit/internal/biz"
@@ -87,10 +86,10 @@ func (s *NamespaceService) SelectNamespace(ctx context.Context, req *apiv1.Selec
 
 func (s *NamespaceService) HasNamespace(ctx context.Context) (snowflake.ID, error) {
 	namespace := contextx.GetNamespace(ctx)
-	if strutil.IsEmpty(namespace) {
+	if namespace <= 0 {
 		return 0, merr.ErrorForbidden("namespace is required, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
 	}
-	namespaceItemBo, err := s.namespaceBiz.GetNamespaceByName(ctx, namespace)
+	namespaceItemBo, err := s.namespaceBiz.GetNamespace(ctx, namespace)
 	if err != nil {
 		if merr.IsNotFound(err) {
 			return 0, merr.ErrorForbidden("namespace %s not allowed", namespace)

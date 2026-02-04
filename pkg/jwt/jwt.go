@@ -1,4 +1,5 @@
-package authv1
+// Package jwt is a package for jwt.
+package jwt
 
 import (
 	"context"
@@ -15,11 +16,13 @@ import (
 )
 
 type (
+	// BaseInfo is the base info for the jwt claims.
 	BaseInfo struct {
 		UID      snowflake.ID `json:"uid"`
 		Username string       `json:"username"`
 	}
 
+	// JwtClaims is the jwt claims.
 	JwtClaims struct {
 		signKey string
 		BaseInfo
@@ -27,7 +30,7 @@ type (
 	}
 )
 
-// NewJwtClaims new jwt claims
+// NewJwtClaims creates a new jwt claims.
 func NewJwtClaims(c *config.JWT, base BaseInfo) *JwtClaims {
 	expire, issuer := c.GetExpire().AsDuration(), c.GetIssuer()
 	if expire <= 0 {
@@ -46,12 +49,12 @@ func NewJwtClaims(c *config.JWT, base BaseInfo) *JwtClaims {
 	}
 }
 
-// GenerateToken generate token
+// GenerateToken generates a new jwt token.
 func (l *JwtClaims) GenerateToken() (string, error) {
 	return jwtv5.NewWithClaims(jwtv5.SigningMethodHS256, l).SignedString([]byte(l.signKey))
 }
 
-// GetClaimsFromContext 从context中获取已解析的JWT claims
+// GetClaimsFromContext gets the jwt claims from the context.
 func GetClaimsFromContext(ctx context.Context) (*JwtClaims, error) {
 	claims, ok := jwt.FromContext(ctx)
 	if !ok {
@@ -64,7 +67,7 @@ func GetClaimsFromContext(ctx context.Context) (*JwtClaims, error) {
 	return jwtClaims, nil
 }
 
-// ParseClaimsFromToken 从JWT token字符串中解析出claims
+// ParseClaimsFromToken parses the jwt claims from the token string.
 func ParseClaimsFromToken(secret string, token string) (*JwtClaims, error) {
 	claims, err := jwtv5.Parse(token, func(token *jwtv5.Token) (interface{}, error) {
 		return []byte(secret), nil

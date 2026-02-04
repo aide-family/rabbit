@@ -3,7 +3,6 @@ package middler
 import (
 	"context"
 
-	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/bwmarrin/snowflake"
 	"github.com/go-kratos/kratos/v2/metadata"
@@ -24,20 +23,28 @@ func MustNamespace() middleware.Middleware {
 			}
 
 			namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
-			ctx = contextx.WithNamespace(ctx, namespace)
+			namespaceUID, err := snowflake.ParseString(namespace)
+			if err != nil {
+				return nil, merr.ErrorForbidden("namespace is invalid, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
+			}
+			ctx = contextx.WithNamespace(ctx, namespaceUID)
 			tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
 
-			if strutil.IsNotEmpty(namespace) {
+			if namespaceUID > 0 {
 				return handler(ctx, req)
 			}
 
 			if md, ok := metadata.FromServerContext(ctx); ok {
 				namespace = md.Get(cnst.MetadataGlobalKeyNamespace)
-				ctx = contextx.WithNamespace(ctx, namespace)
+				namespaceUID, err := snowflake.ParseString(namespace)
+				if err != nil {
+					return nil, merr.ErrorForbidden("namespace is invalid, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
+				}
+				ctx = contextx.WithNamespace(ctx, namespaceUID)
 				tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
 			}
 
-			if strutil.IsNotEmpty(namespace) {
+			if namespaceUID > 0 {
 				return handler(ctx, req)
 			}
 
@@ -54,7 +61,7 @@ func MustNamespaceExist(hasNamespace func(ctx context.Context) (snowflake.ID, er
 			if err != nil {
 				return nil, err
 			}
-			ctx = contextx.WithNamespaceUID(ctx, namespace)
+			ctx = contextx.WithNamespace(ctx, namespace)
 			return handler(ctx, req)
 		}
 	}

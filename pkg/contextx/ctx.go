@@ -9,28 +9,18 @@ import (
 )
 
 type (
-	namespaceNameKey struct{}
-	namespaceUIDKey  struct{}
-	userUIDKey       struct{}
-	usernameKey      struct{}
+	namespaceKey struct{}
+	userUIDKey   struct{}
+	usernameKey  struct{}
 )
 
-func WithNamespace(ctx context.Context, namespace string) context.Context {
-	klog.Debugw("msg", "with namespace", "namespace", namespace)
-	return context.WithValue(ctx, namespaceNameKey{}, namespace)
-}
-
-func GetNamespace(ctx context.Context) string {
-	return ctx.Value(namespaceNameKey{}).(string)
-}
-
-func WithNamespaceUID(ctx context.Context, namespace snowflake.ID) context.Context {
+func WithNamespace(ctx context.Context, namespace snowflake.ID) context.Context {
 	klog.Debugw("msg", "with namespace uid", "namespaceUID", namespace)
-	return context.WithValue(ctx, namespaceUIDKey{}, namespace)
+	return context.WithValue(ctx, namespaceKey{}, namespace)
 }
 
-func GetNamespaceUID(ctx context.Context) snowflake.ID {
-	return ctx.Value(namespaceUIDKey{}).(snowflake.ID)
+func GetNamespace(ctx context.Context) snowflake.ID {
+	return ctx.Value(namespaceKey{}).(snowflake.ID)
 }
 
 func WithUserUID(ctx context.Context, userUID snowflake.ID) context.Context {

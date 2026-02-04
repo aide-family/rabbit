@@ -32,7 +32,7 @@ type templateRepository struct {
 // DeleteTemplate implements [repository.Template].
 func (t *templateRepository) DeleteTemplate(ctx context.Context, uid snowflake.ID) error {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), template.UID.Eq(uid.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
@@ -40,7 +40,7 @@ func (t *templateRepository) DeleteTemplate(ctx context.Context, uid snowflake.I
 // GetTemplate implements [repository.Template].
 func (t *templateRepository) GetTemplate(ctx context.Context, uid snowflake.ID) (*bo.TemplateItemBo, error) {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), template.UID.Eq(uid.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(uid.Int64()))
 	templateDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -54,7 +54,7 @@ func (t *templateRepository) GetTemplate(ctx context.Context, uid snowflake.ID) 
 // GetTemplateByName implements [repository.Template].
 func (t *templateRepository) GetTemplateByName(ctx context.Context, name string) (*bo.TemplateItemBo, error) {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), template.Name.Eq(name))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.Name.Eq(name))
 	templateDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -67,7 +67,7 @@ func (t *templateRepository) GetTemplateByName(ctx context.Context, name string)
 
 // ListTemplate implements [repository.Template].
 func (t *templateRepository) ListTemplate(ctx context.Context, req *bo.ListTemplateBo) (*bo.PageResponseBo[*bo.TemplateItemBo], error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	template := query.Template
 	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(namespace.Int64()))
 	if strutil.IsNotEmpty(req.Keyword) {
@@ -100,7 +100,7 @@ func (t *templateRepository) ListTemplate(ctx context.Context, req *bo.ListTempl
 
 // SelectTemplate implements [repository.Template].
 func (t *templateRepository) SelectTemplate(ctx context.Context, req *bo.SelectTemplateBo) (*bo.SelectTemplateBoResult, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	template := query.Template
 	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(namespace.Int64()))
 
@@ -154,7 +154,7 @@ func (t *templateRepository) SelectTemplate(ctx context.Context, req *bo.SelectT
 // UpdateTemplate implements [repository.Template].
 func (t *templateRepository) UpdateTemplate(ctx context.Context, req *bo.UpdateTemplateBo) error {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), template.UID.Eq(req.UID.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(req.UID.Int64()))
 	columns := []field.AssignExpr{
 		template.Name.Value(req.Name),
 		template.MessageType.Value(int32(req.MessageType)),
@@ -167,7 +167,7 @@ func (t *templateRepository) UpdateTemplate(ctx context.Context, req *bo.UpdateT
 // UpdateTemplateStatus implements [repository.Template].
 func (t *templateRepository) UpdateTemplateStatus(ctx context.Context, req *bo.UpdateTemplateStatusBo) error {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), template.UID.Eq(req.UID.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(req.UID.Int64()))
 	_, err := wrappers.UpdateColumn(template.Status, req.Status)
 	return err
 }

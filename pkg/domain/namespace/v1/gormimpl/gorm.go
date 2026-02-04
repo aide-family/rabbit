@@ -17,6 +17,7 @@ import (
 
 	"github.com/aide-family/rabbit/pkg/config"
 	"github.com/aide-family/rabbit/pkg/connect"
+	"github.com/aide-family/rabbit/pkg/contextx"
 	domain "github.com/aide-family/rabbit/pkg/domain"
 	namespacev1 "github.com/aide-family/rabbit/pkg/domain/namespace/v1"
 	"github.com/aide-family/rabbit/pkg/domain/namespace/v1/gormimpl/model"
@@ -86,8 +87,7 @@ func (g *gormRepository) CreateNamespace(ctx context.Context, req *namespacev1.C
 		Metadata: safety.NewMap(req.Metadata),
 		Status:   uint8(req.Status),
 	}
-	namespaceDo.WithCreator(1)
-	namespaceDo.WithUID(g.node.Generate())
+	namespaceDo.WithCreator(contextx.GetUserUID(ctx))
 	mutation := query.Namespace
 	if err := mutation.WithContext(ctx).Create(namespaceDo); err != nil {
 		return nil, merr.ErrorInternalServer("create namespace failed: %v", err)

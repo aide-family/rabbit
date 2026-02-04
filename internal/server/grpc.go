@@ -13,7 +13,7 @@ import (
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
-	authv1 "github.com/aide-family/rabbit/pkg/domain/auth/v1"
+	"github.com/aide-family/rabbit/pkg/jwt"
 	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
@@ -29,7 +29,7 @@ func newGRPCServer(grpcConf conf.ServerConfig, jwtConf conf.JWTConfig, namespace
 	}
 	namespaceMiddleware := selector.Server(selectorNamespaceMiddlewares...).Match(middler.AllowListMatcher(namespaceAllowList...)).Build()
 	selectorMustAuthMiddlewares := []middleware.Middleware{
-		rabbitMiddler.JwtServe(jwtConf.GetSecret(), &authv1.JwtClaims{}),
+		rabbitMiddler.JwtServe(jwtConf.GetSecret(), &jwt.JwtClaims{}),
 		rabbitMiddler.MustLogin(),
 		rabbitMiddler.BindJwtToken(),
 		namespaceMiddleware,

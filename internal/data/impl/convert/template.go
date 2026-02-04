@@ -11,7 +11,7 @@ import (
 
 func ToTemplateDO(ctx context.Context, req *bo.CreateTemplateBo) *do.Template {
 	model := &do.Template{
-		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		NamespaceUID: contextx.GetNamespace(ctx),
 		Name:         req.Name,
 		MessageType:  req.MessageType,
 		JSONData:     []byte(req.JSONData),

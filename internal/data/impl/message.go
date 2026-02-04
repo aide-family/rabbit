@@ -83,7 +83,7 @@ type messageTask struct {
 // AppendMessage implements [repository.Message].
 func (m *messageRepository) AppendMessage(ctx context.Context, messageUID snowflake.ID) error {
 	task := &messageTask{
-		namespaceUID: contextx.GetNamespaceUID(ctx),
+		namespaceUID: contextx.GetNamespace(ctx),
 		messageUID:   messageUID,
 	}
 	select {
@@ -106,14 +106,14 @@ func (m *messageRepository) AppendMessage(ctx context.Context, messageUID snowfl
 
 // SendMessage implements [repository.Message].
 func (m *messageRepository) SendMessage(ctx context.Context, messageUID snowflake.ID) error {
-	return m.sendMessage(contextx.GetNamespaceUID(ctx), messageUID)
+	return m.sendMessage(contextx.GetNamespace(ctx), messageUID)
 }
 
 // SendMessage implements [repository.Message].
 func (m *messageRepository) sendMessage(namespaceUID, messageUID snowflake.ID) error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
-	ctx = contextx.WithNamespaceUID(ctx, namespaceUID)
+	ctx = contextx.WithNamespace(ctx, namespaceUID)
 	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, messageUID)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (m *messageRepository) loadMessageLogs() error {
 func (m *messageRepository) loadMessageLogsForNamespace(namespaceUID snowflake.ID) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	ctx = contextx.WithNamespaceUID(ctx, namespaceUID)
+	ctx = contextx.WithNamespace(ctx, namespaceUID)
 	messageLogs, err := m.messageLogRepo.GetAllMessageLogs(ctx, enum.MessageStatus_PENDING)
 	if err != nil {
 		klog.Warnw("msg", "load message logs for namespace failed", "error", err, "namespaceUID", namespaceUID)

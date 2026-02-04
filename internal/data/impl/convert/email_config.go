@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/aide-family/magicbox/strutil"
+
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/data/impl/do"
 	"github.com/aide-family/rabbit/pkg/contextx"
@@ -13,7 +14,7 @@ import (
 
 func ToEmailConfigDO(ctx context.Context, req *bo.CreateEmailConfigBo) *do.EmailConfig {
 	model := &do.EmailConfig{
-		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		NamespaceUID: contextx.GetNamespace(ctx),
 		Name:         req.Name,
 		Host:         req.Host,
 		Port:         req.Port,

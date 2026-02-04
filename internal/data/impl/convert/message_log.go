@@ -26,7 +26,7 @@ func ToMessageLogItemBo(messageLogDo *do.MessageLog) *bo.MessageLogItemBo {
 
 func ToMessageLogDO(ctx context.Context, messageLogBo *bo.MessageLogItemBo) *do.MessageLog {
 	model := &do.MessageLog{
-		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		NamespaceUID: contextx.GetNamespace(ctx),
 		SendAt:       messageLogBo.SendAt,
 		Message:      messageLogBo.Message,
 		Config:       messageLogBo.Config,

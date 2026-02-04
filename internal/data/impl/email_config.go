@@ -38,7 +38,7 @@ func (e *emailConfigRepository) CreateEmailConfig(ctx context.Context, req *bo.C
 
 // DeleteEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) DeleteEmailConfig(ctx context.Context, uid snowflake.ID) error {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	emailConfig := query.EmailConfig
 	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(namespace.Int64()), emailConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
@@ -48,7 +48,7 @@ func (e *emailConfigRepository) DeleteEmailConfig(ctx context.Context, uid snowf
 // GetEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) GetEmailConfig(ctx context.Context, uid snowflake.ID) (*bo.EmailConfigItemBo, error) {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), emailConfig.UID.Eq(uid.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.UID.Eq(uid.Int64()))
 	emailConfigDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -62,7 +62,7 @@ func (e *emailConfigRepository) GetEmailConfig(ctx context.Context, uid snowflak
 // GetEmailConfigByName implements [repository.EmailConfig].
 func (e *emailConfigRepository) GetEmailConfigByName(ctx context.Context, name string) (*bo.EmailConfigItemBo, error) {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), emailConfig.Name.Eq(name))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.Name.Eq(name))
 	emailConfigDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -76,7 +76,7 @@ func (e *emailConfigRepository) GetEmailConfigByName(ctx context.Context, name s
 // ListEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) ListEmailConfig(ctx context.Context, req *bo.ListEmailConfigBo) (*bo.PageResponseBo[*bo.EmailConfigItemBo], error) {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()))
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(emailConfig.Name.Like("%" + req.Keyword + "%"))
 	}
@@ -111,7 +111,7 @@ func (e *emailConfigRepository) ListEmailConfig(ctx context.Context, req *bo.Lis
 // SelectEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) SelectEmailConfig(ctx context.Context, req *bo.SelectEmailConfigBo) (*bo.SelectEmailConfigBoResult, error) {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()))
 
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(emailConfig.Name.Like("%" + req.Keyword + "%"))
@@ -160,7 +160,7 @@ func (e *emailConfigRepository) SelectEmailConfig(ctx context.Context, req *bo.S
 // UpdateEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmailConfigBo) error {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), emailConfig.UID.Eq(req.UID.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.UID.Eq(req.UID.Int64()))
 	columns := []field.AssignExpr{
 		emailConfig.Name.Value(req.Name),
 		emailConfig.Host.Value(req.Host),
@@ -175,7 +175,7 @@ func (e *emailConfigRepository) UpdateEmailConfig(ctx context.Context, req *bo.U
 // UpdateEmailConfigStatus implements [repository.EmailConfig].
 func (e *emailConfigRepository) UpdateEmailConfigStatus(ctx context.Context, req *bo.UpdateEmailConfigStatusBo) error {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), emailConfig.UID.Eq(req.UID.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.UID.Eq(req.UID.Int64()))
 	_, err := wrappers.UpdateColumn(emailConfig.Status, req.Status)
 	return err
 }

@@ -43,7 +43,7 @@ func (m *messageLogRepository) GetMessageLog(ctx context.Context, uid snowflake.
 
 // GetAllMessageLogs implements [repository.MessageLog].
 func (m *messageLogRepository) GetAllMessageLogs(ctx context.Context, status enum.MessageStatus) ([]*bo.MessageLogItemBo, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.Now())
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
 		return []*bo.MessageLogItemBo{}, nil
@@ -74,7 +74,7 @@ func (m *messageLogRepository) GetMessageLogWithLock(ctx context.Context, uid sn
 }
 
 func (m *messageLogRepository) getMessageLog(ctx context.Context, uid snowflake.ID, clauses ...clause.Expression) (*bo.MessageLogItemBo, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
 		return nil, gorm.ErrRecordNotFound
@@ -101,7 +101,7 @@ func (m *messageLogRepository) getMessageLog(ctx context.Context, uid snowflake.
 
 // ListMessageLog implements [repository.MessageLog].
 func (m *messageLogRepository) ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*bo.MessageLogItemBo], error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 
 	if req.StartAt.IsZero() {
 		req.StartAt = time.Now().AddDate(0, 0, -7)
@@ -163,7 +163,7 @@ func (m *messageLogRepository) ListMessageLog(ctx context.Context, req *bo.ListM
 
 // UpdateMessageLogStatusIf implements [repository.MessageLog].
 func (m *messageLogRepository) UpdateMessageLogStatusIf(ctx context.Context, uid snowflake.ID, oldStatus enum.MessageStatus, newStatus enum.MessageStatus) (bool, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
 		return false, merr.ErrorNotFound("message log %d not found", uid.Int64())
@@ -188,7 +188,7 @@ func (m *messageLogRepository) UpdateMessageLogStatusIf(ctx context.Context, uid
 
 // UpdateMessageLogLastErrorIf implements [repository.MessageLog].
 func (m *messageLogRepository) UpdateMessageLogLastErrorIf(ctx context.Context, uid snowflake.ID, oldStatus enum.MessageStatus, lastError string) (bool, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
 		return false, merr.ErrorNotFound("message log %d not found", uid.Int64())
@@ -233,7 +233,7 @@ func (m *messageLogRepository) CreateMessageLog(ctx context.Context, req *bo.Mes
 }
 
 func (m *messageLogRepository) getTableName(ctx context.Context, req *bo.MessageLogItemBo) (string, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, req.SendAt)
 
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err == nil && do.HasTable(m.DB(), tableName) {
@@ -259,7 +259,7 @@ func (m *messageLogRepository) getTableName(ctx context.Context, req *bo.Message
 }
 
 func (m *messageLogRepository) MessageLogRetryIncrement(ctx context.Context, uid snowflake.ID) error {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
 		return merr.ErrorNotFound("message log %d not found", uid.Int64())

@@ -9,12 +9,12 @@ import (
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/v2/metadata"
 	"github.com/go-kratos/kratos/v2/middleware"
-	"github.com/go-kratos/kratos/v2/middleware/auth/jwt"
+	kjwt "github.com/go-kratos/kratos/v2/middleware/auth/jwt"
 	"github.com/go-kratos/kratos/v2/transport"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 
 	"github.com/aide-family/rabbit/pkg/contextx"
-	authv1 "github.com/aide-family/rabbit/pkg/domain/auth/v1"
+	"github.com/aide-family/rabbit/pkg/jwt"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
@@ -58,12 +58,12 @@ func JwtClient(headers ...string) middleware.Middleware {
 }
 
 func JwtServe(signKey string, claims jwtv5.Claims) middleware.Middleware {
-	return jwt.Server(
+	return kjwt.Server(
 		func(token *jwtv5.Token) (interface{}, error) {
 			return []byte(signKey), nil
 		},
-		jwt.WithSigningMethod(jwtv5.SigningMethodHS256),
-		jwt.WithClaims(func() jwtv5.Claims {
+		kjwt.WithSigningMethod(jwtv5.SigningMethodHS256),
+		kjwt.WithClaims(func() jwtv5.Claims {
 			return claims
 		}),
 	)
@@ -72,7 +72,7 @@ func JwtServe(signKey string, claims jwtv5.Claims) middleware.Middleware {
 func MustLogin() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
-			claims, err := authv1.GetClaimsFromContext(ctx)
+			claims, err := jwt.GetClaimsFromContext(ctx)
 			if err != nil {
 				return nil, err
 			}

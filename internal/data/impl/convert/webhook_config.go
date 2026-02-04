@@ -2,7 +2,9 @@ package convert
 
 import (
 	"context"
+	"maps"
 
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 
@@ -13,13 +15,16 @@ import (
 )
 
 func ToWebhookConfigDO(ctx context.Context, req *bo.CreateWebhookBo) *do.WebhookConfig {
+	if pointer.IsNil(req.Headers) {
+		req.Headers = make(map[string]string)
+	}
 	model := &do.WebhookConfig{
 		App:          req.App,
-		NamespaceUID: contextx.GetNamespaceUID(ctx),
+		NamespaceUID: contextx.GetNamespace(ctx),
 		Name:         req.Name,
 		URL:          req.URL,
 		Method:       req.Method,
-		Headers:      safety.NewMap(req.Headers),
+		Headers:      safety.NewMap(maps.Clone(req.Headers)),
 		Secret:       strutil.EncryptString(req.Secret),
 		Status:       enum.GlobalStatus_ENABLED,
 	}
@@ -28,6 +33,9 @@ func ToWebhookConfigDO(ctx context.Context, req *bo.CreateWebhookBo) *do.Webhook
 }
 
 func ToWebhookConfigItemBo(webhookConfigDO *do.WebhookConfig) *bo.WebhookItemBo {
+	if pointer.IsNil(webhookConfigDO.Headers) {
+		webhookConfigDO.Headers = safety.NewMap(make(map[string]string))
+	}
 	return &bo.WebhookItemBo{
 		UID:       webhookConfigDO.UID,
 		App:       webhookConfigDO.App,

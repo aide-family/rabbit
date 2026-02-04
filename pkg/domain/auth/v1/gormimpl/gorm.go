@@ -21,6 +21,7 @@ import (
 	authv1 "github.com/aide-family/rabbit/pkg/domain/auth/v1"
 	"github.com/aide-family/rabbit/pkg/domain/auth/v1/gormimpl/model"
 	"github.com/aide-family/rabbit/pkg/domain/auth/v1/gormimpl/query"
+	"github.com/aide-family/rabbit/pkg/jwt"
 	"github.com/aide-family/rabbit/pkg/merr"
 )
 
@@ -167,7 +168,7 @@ func (g *gormRepository) bindUserAndOAuth2User(ctx context.Context, user *model.
 }
 
 func (g *gormRepository) generateToken(ctx context.Context, user *model.User) (string, error) {
-	claims := authv1.NewJwtClaims(g.jwtConfig, authv1.BaseInfo{
+	claims := jwt.NewJwtClaims(g.jwtConfig, jwt.BaseInfo{
 		UID:      user.UID,
 		Username: user.Email,
 	})

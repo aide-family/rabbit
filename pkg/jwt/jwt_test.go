@@ -1,4 +1,4 @@
-package authv1_test
+package jwt_test
 
 import (
 	"strings"
@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/aide-family/rabbit/pkg/config"
-	authv1 "github.com/aide-family/rabbit/pkg/domain/auth/v1"
+	"github.com/aide-family/rabbit/pkg/jwt"
 )
 
 func TestGetJwtToken(t *testing.T) {
@@ -21,11 +21,11 @@ func TestGetJwtToken(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewNode failed: %v", err)
 	}
-	claims := authv1.NewJwtClaims(&config.JWT{
+	claims := jwt.NewJwtClaims(&config.JWT{
 		Secret: "xxx",
 		Expire: durationpb.New(24 * 365 * time.Hour),
 		Issuer: "rabbit-test",
-	}, authv1.BaseInfo{
+	}, jwt.BaseInfo{
 		UID:      node.Generate(),
 		Username: hello.ID(),
 	})

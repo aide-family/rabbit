@@ -33,7 +33,7 @@ type webhookConfigRepository struct {
 // DeleteWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) DeleteWebhookConfig(ctx context.Context, uid snowflake.ID) error {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), webhookConfig.UID.Eq(uid.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
@@ -41,7 +41,7 @@ func (w *webhookConfigRepository) DeleteWebhookConfig(ctx context.Context, uid s
 // GetWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) GetWebhookConfig(ctx context.Context, uid snowflake.ID) (*bo.WebhookItemBo, error) {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), webhookConfig.UID.Eq(uid.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(uid.Int64()))
 	webhookConfigDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -55,7 +55,7 @@ func (w *webhookConfigRepository) GetWebhookConfig(ctx context.Context, uid snow
 // GetWebhookConfigByName implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) GetWebhookConfigByName(ctx context.Context, name string) (*bo.WebhookItemBo, error) {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), webhookConfig.Name.Eq(name))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.Name.Eq(name))
 	webhookConfigDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -68,7 +68,7 @@ func (w *webhookConfigRepository) GetWebhookConfigByName(ctx context.Context, na
 
 // ListWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) ListWebhookConfig(ctx context.Context, req *bo.ListWebhookBo) (*bo.PageResponseBo[*bo.WebhookItemBo], error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	webhookConfig := query.WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(namespace.Int64()))
 	if req.App > enum.WebhookAPP_WebhookAPP_UNKNOWN {
@@ -98,7 +98,7 @@ func (w *webhookConfigRepository) ListWebhookConfig(ctx context.Context, req *bo
 
 // SelectWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) SelectWebhookConfig(ctx context.Context, req *bo.SelectWebhookBo) (*bo.SelectWebhookBoResult, error) {
-	namespace := contextx.GetNamespaceUID(ctx)
+	namespace := contextx.GetNamespace(ctx)
 	webhookConfig := query.WebhookConfig
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(namespace.Int64()))
 
@@ -152,7 +152,7 @@ func (w *webhookConfigRepository) SelectWebhookConfig(ctx context.Context, req *
 // UpdateWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) UpdateWebhookConfig(ctx context.Context, req *bo.UpdateWebhookBo) error {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), webhookConfig.UID.Eq(req.UID.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(req.UID.Int64()))
 	columns := []field.AssignExpr{
 		webhookConfig.Name.Value(req.Name),
 		webhookConfig.URL.Value(req.URL),
@@ -167,7 +167,7 @@ func (w *webhookConfigRepository) UpdateWebhookConfig(ctx context.Context, req *
 // UpdateWebhookStatus implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) UpdateWebhookStatus(ctx context.Context, req *bo.UpdateWebhookStatusBo) error {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespaceUID(ctx).Int64()), webhookConfig.UID.Eq(req.UID.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(req.UID.Int64()))
 	_, err := wrappers.UpdateColumn(webhookConfig.Status, req.Status)
 	return err
 }
