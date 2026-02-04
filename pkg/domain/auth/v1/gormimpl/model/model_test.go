@@ -4,12 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aide-family/rabbit/pkg/domain/auth/v1/gormimpl/model"
+	"github.com/glebarez/sqlite"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gen"
 	"gorm.io/gorm"
+
+	"github.com/aide-family/rabbit/pkg/domain/auth/v1/gormimpl/model"
 )
 
 var genConfig = gen.Config{

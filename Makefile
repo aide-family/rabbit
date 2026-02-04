@@ -106,6 +106,18 @@ build: all
 	@git log -1 --format='%B' > description.txt
 	go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.Author=$(AUTHOR) -X main.Email=$(AUTHOR_EMAIL) -X main.Repo=$(REPO)" -o bin/rabbit main.go
 
+.PHONY: build-exe
+# build the rabbit binary for windows
+build-exe: all
+	@echo "Building rabbit"
+	@echo "VERSION: $(VERSION)"
+	@echo "BUILD_TIME: $(BUILD_TIME)"
+	@echo "AUTHOR: $(AUTHOR)"
+	@echo "AUTHOR_EMAIL: $(AUTHOR_EMAIL)"
+	@git log -1 --format='%B' > description.txt
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.Author=$(AUTHOR) -X main.Email=$(AUTHOR_EMAIL) -X main.Repo=$(REPO)" -o bin/rabbit.exe main.go
+
+
 .PHONY: dev
 # run the rabbit binary in development mode
 dev:

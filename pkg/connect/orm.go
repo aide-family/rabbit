@@ -5,11 +5,11 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/glebarez/sqlite"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	"gorm.io/driver/mysql"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/aide-family/magicbox/log/gormlog"

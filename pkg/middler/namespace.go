@@ -16,39 +16,34 @@ import (
 func MustNamespace() middleware.Middleware {
 	return func(handler middleware.Handler) middleware.Handler {
 		return func(ctx context.Context, req any) (any, error) {
-			var namespace string
-			tr, ok := transport.FromServerContext(ctx)
-			if !ok {
-				return handler(ctx, req)
-			}
-
-			namespace = tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
-			namespaceUID, err := snowflake.ParseString(namespace)
-			if err != nil {
-				return nil, merr.ErrorForbidden("namespace is invalid, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
-			}
-			ctx = contextx.WithNamespace(ctx, namespaceUID)
-			tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
-
-			if namespaceUID > 0 {
-				return handler(ctx, req)
-			}
-
-			if md, ok := metadata.FromServerContext(ctx); ok {
-				namespace = md.Get(cnst.MetadataGlobalKeyNamespace)
+			if tr, ok := transport.FromServerContext(ctx); ok {
+				namespace := tr.RequestHeader().Get(cnst.HTTPHeaderXNamespace)
 				namespaceUID, err := snowflake.ParseString(namespace)
 				if err != nil {
-					return nil, merr.ErrorForbidden("namespace is invalid, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
+					return nil, merr.ErrorForbidden("namespace is invalid, please set the namespace in the request header, Example: %s: 1", cnst.HTTPHeaderXNamespace)
 				}
 				ctx = contextx.WithNamespace(ctx, namespaceUID)
 				tr.RequestHeader().Set(cnst.MetadataGlobalKeyNamespace, namespace)
+
+				if namespaceUID > 0 {
+					return handler(ctx, req)
+				}
 			}
 
-			if namespaceUID > 0 {
-				return handler(ctx, req)
+			if md, ok := metadata.FromServerContext(ctx); ok {
+				namespace := md.Get(cnst.MetadataGlobalKeyNamespace)
+				namespaceUID, err := snowflake.ParseString(namespace)
+				if err != nil {
+					return nil, merr.ErrorForbidden("namespace is invalid, please set the namespace in the metadata, Example: %s: 1", cnst.HTTPHeaderXNamespace)
+				}
+				ctx = contextx.WithNamespace(ctx, namespaceUID)
+				md.Set(cnst.MetadataGlobalKeyNamespace, namespace)
+				if namespaceUID > 0 {
+					return handler(ctx, req)
+				}
 			}
 
-			return nil, merr.ErrorForbidden("namespace is required, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
+			return nil, merr.ErrorForbidden("namespace is required, please set the namespace in the request header or metadata, Example: %s: 1", cnst.HTTPHeaderXNamespace)
 		}
 	}
 }
