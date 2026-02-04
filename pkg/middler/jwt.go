@@ -5,6 +5,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/go-kratos/kratos/v2/metadata"
@@ -76,7 +77,7 @@ func MustLogin() middleware.Middleware {
 			if err != nil {
 				return nil, err
 			}
-			if claims.UID == 0 || strutil.IsEmpty(claims.Username) {
+			if pointer.IsNil(claims) || claims.UID == 0 || strutil.IsEmpty(claims.Username) {
 				return nil, merr.ErrorUnauthorized("token is invalid")
 			}
 			ctx = contextx.WithUserUID(ctx, claims.UID)

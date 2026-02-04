@@ -158,12 +158,27 @@ func (n *namespaceRepository) SelectNamespace(ctx context.Context, req *bo.Selec
 
 // UpdateNamespace implements [repository.Namespace].
 func (n *namespaceRepository) UpdateNamespace(ctx context.Context, req *bo.UpdateNamespaceBo) error {
-	panic("unimplemented")
+	_, err := n.repo.UpdateNamespace(ctx, &namespacev1.UpdateNamespaceRequest{
+		Uid:      req.UID.Int64(),
+		Name:     req.Name,
+		Metadata: req.Metadata,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // UpdateNamespaceStatus implements [repository.Namespace].
 func (n *namespaceRepository) UpdateNamespaceStatus(ctx context.Context, req *bo.UpdateNamespaceStatusBo) error {
-	panic("unimplemented")
+	_, err := n.repo.UpdateNamespaceStatus(ctx, &namespacev1.UpdateNamespaceStatusRequest{
+		Uid:    req.UID.Int64(),
+		Status: req.Status,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func parseNamespaceModel(namespaceModel *namespacev1.NamespaceModel) *bo.NamespaceItemBo {

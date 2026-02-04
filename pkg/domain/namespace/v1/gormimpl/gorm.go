@@ -150,8 +150,14 @@ func (g *gormRepository) ListNamespace(ctx context.Context, req *namespacev1.Lis
 		wrappers = wrappers.Order(fieldExpr.Asc())
 	}
 
+	var total int64
 	if req.Page > 0 && req.PageSize > 0 {
 		wrappers = wrappers.Limit(int(req.PageSize)).Offset(int((req.Page - 1) * req.PageSize))
+		var err error
+		total, err = wrappers.Count()
+		if err != nil {
+			return nil, merr.ErrorInternalServer("count namespace failed: %v", err)
+		}
 	}
 	queryNamespaces, err := wrappers.Find()
 	if err != nil {
@@ -163,7 +169,7 @@ func (g *gormRepository) ListNamespace(ctx context.Context, req *namespacev1.Lis
 	}
 	return &namespacev1.ListNamespaceResponse{
 		Namespaces: namespaces,
-		Total:      int64(len(namespaces)),
+		Total:      total,
 		Page:       req.Page,
 		PageSize:   req.PageSize,
 	}, nil
@@ -199,13 +205,17 @@ func (g *gormRepository) SelectNamespace(ctx context.Context, req *namespacev1.S
 	if err != nil {
 		return nil, merr.ErrorInternalServer("select namespace failed: %v", err)
 	}
+	total, err := wrappers.Count()
+	if err != nil {
+		return nil, merr.ErrorInternalServer("count namespace failed: %v", err)
+	}
 	namespaces := make([]*namespacev1.NamespaceItemSelect, 0, len(queryNamespaces))
 	for _, queryNamespace := range queryNamespaces {
 		namespaces = append(namespaces, ConvertNamespaceItemSelect(queryNamespace))
 	}
 	return &namespacev1.SelectNamespaceResponse{
 		Items:   namespaces,
-		Total:   int64(len(namespaces)),
+		Total:   total,
 		LastUID: queryNamespaces[len(queryNamespaces)-1].UID.Int64(),
 		HasMore: len(queryNamespaces) == int(req.Limit),
 	}, nil
