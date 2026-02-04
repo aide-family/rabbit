@@ -152,12 +152,12 @@ func (g *gormRepository) ListNamespace(ctx context.Context, req *namespacev1.Lis
 
 	var total int64
 	if req.Page > 0 && req.PageSize > 0 {
-		wrappers = wrappers.Limit(int(req.PageSize)).Offset(int((req.Page - 1) * req.PageSize))
 		var err error
 		total, err = wrappers.Count()
 		if err != nil {
 			return nil, merr.ErrorInternalServer("count namespace failed: %v", err)
 		}
+		wrappers = wrappers.Limit(int(req.PageSize)).Offset(int((req.Page - 1) * req.PageSize))
 	}
 	queryNamespaces, err := wrappers.Find()
 	if err != nil {
@@ -185,7 +185,6 @@ func (g *gormRepository) SelectNamespace(ctx context.Context, req *namespacev1.S
 	if req.Status > enum.GlobalStatus_GlobalStatus_UNKNOWN {
 		wrappers = wrappers.Where(mutation.Status.Eq(uint8(req.Status)))
 	}
-	wrappers = wrappers.Limit(int(req.Limit))
 	switch req.Order {
 	case namespacev1.Order_DESC:
 		wrappers = wrappers.Order(mutation.UID.Desc())
@@ -200,14 +199,15 @@ func (g *gormRepository) SelectNamespace(ctx context.Context, req *namespacev1.S
 			wrappers = wrappers.Where(mutation.UID.Gt(req.LastUID))
 		}
 	}
+	total, err := wrappers.Count()
+	if err != nil {
+		return nil, merr.ErrorInternalServer("count namespace failed: %v", err)
+	}
+	wrappers = wrappers.Limit(int(req.Limit))
 	wrappers = wrappers.Select(mutation.UID, mutation.Name, mutation.Status, mutation.DeletedAt)
 	queryNamespaces, err := wrappers.Find()
 	if err != nil {
 		return nil, merr.ErrorInternalServer("select namespace failed: %v", err)
-	}
-	total, err := wrappers.Count()
-	if err != nil {
-		return nil, merr.ErrorInternalServer("count namespace failed: %v", err)
 	}
 	namespaces := make([]*namespacev1.NamespaceItemSelect, 0, len(queryNamespaces))
 	for _, queryNamespace := range queryNamespaces {
