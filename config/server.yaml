@@ -35,24 +35,24 @@ namespaceConfig:
   driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
   version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
   options:
-    '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/rabbit.config.ORMConfig}"
+    '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}"
     dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:SQLITE}
     debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
     useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
     options:
-      '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/rabbit.config.SQLiteOptions}"
+      '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
       dsn: "${MOON_RABBIT_NAMESPACE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
 
 loginConfig:
   driver: ${MOON_RABBIT_LOGIN_DRIVER:GORM}
   version: ${MOON_RABBIT_LOGIN_VERSION:v1}
   options:
-    '@type': "${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/rabbit.config.ORMConfig}"
+    '@type': "${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}"
     dialector: ${MOON_RABBIT_LOGIN_DIALECTOR:SQLITE}
     debug: ${MOON_RABBIT_LOGIN_DEBUG:true}
     useSystemLogger: ${MOON_RABBIT_LOGIN_USE_SYSTEM_LOGGER:false}
     options:
-      '@type': "${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/rabbit.config.SQLiteOptions}"
+      '@type': "${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
       dsn: "${MOON_RABBIT_LOGIN_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
 
 swaggerBasicAuth:
@@ -107,7 +107,7 @@ database:
   debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
   useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
   options:
-    '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/rabbit.config.SQLiteOptions}"
+    '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
     dsn: "${MOON_RABBIT_DATABASE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
 
 jobCluster:

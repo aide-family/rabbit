@@ -7,7 +7,7 @@ import (
 	"strings"
 	text "text/template"
 
-	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/magicbox/enum"
 )
 
 func Equals(m enum.MessageType, channel enum.MessageType) error {

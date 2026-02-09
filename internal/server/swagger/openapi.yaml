@@ -863,6 +863,11 @@ paths:
                   in: query
                   schema:
                     type: string
+                - name: status
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
             responses:
                 "200":
                     description: OK

@@ -3,10 +3,10 @@ package bo
 import (
 	"time"
 
+	"github.com/aide-family/magicbox/enum"
 	"github.com/bwmarrin/snowflake"
 
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 type CreateNamespaceBo struct {
@@ -120,18 +120,17 @@ func NewSelectNamespaceBo(req *apiv1.SelectNamespaceRequest) *SelectNamespaceBo 
 
 // NamespaceItemSelectBo Namespace选择项的 BO
 type NamespaceItemSelectBo struct {
-	UID      snowflake.ID
-	Name     string
-	Status   enum.GlobalStatus
-	Disabled bool
-	Tooltip  string
+	Value    int64  `json:"value"`
+	Label    string `json:"label"`
+	Disabled bool   `json:"disabled"`
+	Tooltip  string `json:"tooltip"`
 }
 
 // ToAPIV1NamespaceItemSelect 转换为 API 响应
 func (b *NamespaceItemSelectBo) ToAPIV1NamespaceItemSelect() *apiv1.NamespaceItemSelect {
 	return &apiv1.NamespaceItemSelect{
-		Value:    b.UID.Int64(),
-		Label:    b.Name,
+		Value:    b.Value,
+		Label:    b.Label,
 		Disabled: b.Disabled,
 		Tooltip:  b.Tooltip,
 	}

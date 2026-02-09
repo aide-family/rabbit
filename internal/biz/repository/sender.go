@@ -3,8 +3,9 @@ package repository
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/enum"
+
 	"github.com/aide-family/rabbit/internal/biz/bo"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 // MessageSender 定义消息发送器接口

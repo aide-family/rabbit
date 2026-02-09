@@ -3,28 +3,28 @@ syntax = "proto3";
 package internal.conf;
 
 import "google/protobuf/duration.proto";
-import "config/config.proto";
-import "enum/enum.proto";
+import "magicbox/config/config.proto";
+import "magicbox/enum/enum.proto";
 
 option go_package = "github.com/aide-family/rabbit/internal/conf;conf";
 
 message Bootstrap {
-	rabbit.enum.Environment environment = 1;
+	magicbox.enum.Environment environment = 1;
 	string useRandomID = 2;
 	Server server = 3;
-	rabbit.config.JWT jwt = 4;
-	rabbit.config.BasicAuthConfig swaggerBasicAuth = 5;
-	rabbit.config.BasicAuthConfig metricsBasicAuth = 6;
+	magicbox.config.JWT jwt = 4;
+	magicbox.config.BasicAuthConfig swaggerBasicAuth = 5;
+	magicbox.config.BasicAuthConfig metricsBasicAuth = 6;
 	string enableSwagger = 7;
 	string enableMetrics = 8;
 	string enableClientConfig = 9;
-	rabbit.config.ReportConfig report = 10;
-	rabbit.config.OAuth2 oauth2 = 11;
-	rabbit.config.DomainConfig namespaceConfig = 12;
-	rabbit.config.DomainConfig loginConfig = 13;
-	rabbit.config.ClusterConfig jobClusters = 14;
+	magicbox.config.ReportConfig report = 10;
+	magicbox.config.OAuth2 oauth2 = 11;
+	magicbox.config.DomainConfig namespaceConfig = 12;
+	magicbox.config.DomainConfig loginConfig = 13;
+	magicbox.config.ClusterConfig jobClusters = 14;
 	JobCore jobCore = 15;
-	rabbit.config.ORMConfig database = 16;
+	magicbox.config.ORMConfig database = 16;
 }
 
 message Server {
@@ -32,7 +32,7 @@ message Server {
 		string address = 1;
 		string network = 2;
 		google.protobuf.Duration timeout = 3;
-		rabbit.config.Protocol protocol = 4;
+		magicbox.config.Protocol protocol = 4;
 	}
 	
 	string name = 1;

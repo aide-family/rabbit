@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/pointer"
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	dysmsapiv3 "github.com/alibabacloud-go/dysmsapi-20170525/v3/client"
@@ -13,9 +16,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/aide-family/rabbit/pkg/message"
 )
 

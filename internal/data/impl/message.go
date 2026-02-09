@@ -7,12 +7,11 @@ import (
 	"sync"
 	"time"
 
-	_ "github.com/aide-family/rabbit/pkg/message/email"
-	_ "github.com/aide-family/rabbit/pkg/message/hook/dingtalk"
-	_ "github.com/aide-family/rabbit/pkg/message/hook/feishu"
-	_ "github.com/aide-family/rabbit/pkg/message/hook/wechat"
-	_ "github.com/aide-family/rabbit/pkg/message/sms/alicloud"
-
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/connect"
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -22,12 +21,7 @@ import (
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/internal/data/impl/query"
-	authv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/connect"
-	"github.com/aide-family/rabbit/pkg/contextx"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
+	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 	"github.com/aide-family/rabbit/pkg/message"
 )
 
@@ -100,7 +94,7 @@ func (m *messageRepository) AppendMessage(ctx context.Context, messageUID snowfl
 				klog.Warnw("msg", "send message to cluster failed", "error", err, "cluster", cluster)
 			}
 		}
-		return merr.ErrorInternal("append message channel full: %d", messageUID)
+		return merr.ErrorInternalServer("append message channel full: %d", messageUID)
 	}
 }
 
@@ -135,23 +129,34 @@ func (m *messageRepository) sendMessage(namespaceUID, messageUID snowflake.ID) e
 }
 
 func (m *messageRepository) loadMessageLogs() error {
-	namespaces, err := m.namespaceRepo.AllNamespaces(context.Background())
-	if err != nil {
-		return err
+	req := &bo.SelectNamespaceBo{
+		Status: enum.GlobalStatus_ENABLED,
+		Limit:  1000,
+	}
+	wg := sync.WaitGroup{}
+	for {
+		selectNamespaceBoResult, err := m.namespaceRepo.SelectNamespace(context.Background(), req)
+		if err != nil {
+			return err
+		}
+
+		wg.Go(func() {
+			bufferChan := make(chan struct{}, 3)
+			for _, namespace := range selectNamespaceBoResult.Items {
+				bufferChan <- struct{}{}
+				go func(namespaceUID snowflake.ID) {
+					m.loadMessageLogsForNamespace(namespaceUID)
+					<-bufferChan
+				}(snowflake.ParseInt64(namespace.Value))
+			}
+		})
+		if !selectNamespaceBoResult.HasMore {
+			break
+		}
+		req.LastUID = selectNamespaceBoResult.LastUID
 	}
 
-	wg := sync.WaitGroup{}
-	wg.Go(func() {
-		bufferChan := make(chan struct{}, 3)
-		for _, namespace := range namespaces {
-			bufferChan <- struct{}{}
-			go func(namespaceUID snowflake.ID) {
-				m.loadMessageLogsForNamespace(namespaceUID)
-				<-bufferChan
-			}(namespace.UID)
-		}
-	})
-
+	wg.Wait()
 	return nil
 }
 
@@ -276,7 +281,7 @@ type ClusterSender interface {
 	Close() error
 }
 
-func NewClusterSender(name string, sendFunc func(ctx context.Context, req *authv1.SendMessageRequest) (*authv1.SendReply, error), closeFunc func() error) ClusterSender {
+func NewClusterSender(name string, sendFunc func(ctx context.Context, req *apiv1.SendMessageRequest) (*apiv1.SendReply, error), closeFunc func() error) ClusterSender {
 	return &clusterSender{
 		name:      name,
 		sendFunc:  sendFunc,
@@ -286,7 +291,7 @@ func NewClusterSender(name string, sendFunc func(ctx context.Context, req *authv
 
 type clusterSender struct {
 	name      string
-	sendFunc  func(ctx context.Context, req *authv1.SendMessageRequest) (*authv1.SendReply, error)
+	sendFunc  func(ctx context.Context, req *apiv1.SendMessageRequest) (*apiv1.SendReply, error)
 	closeFunc func() error
 }
 
@@ -295,7 +300,7 @@ func (c *clusterSender) Name() string {
 }
 
 func (c *clusterSender) Send(ctx context.Context, messageUID snowflake.ID) error {
-	req := &authv1.SendMessageRequest{
+	req := &apiv1.SendMessageRequest{
 		Uid: messageUID.Int64(),
 	}
 	_, err := c.sendFunc(ctx, req)
@@ -328,8 +333,8 @@ func (m *messageRepository) initClusters(c *config.ClusterConfig) error {
 				return err
 			}
 
-			httpSender := authv1.NewSenderHTTPClient(httpClient)
-			clusterSender = NewClusterSender(name, func(ctx context.Context, req *authv1.SendMessageRequest) (*authv1.SendReply, error) {
+			httpSender := apiv1.NewSenderHTTPClient(httpClient)
+			clusterSender = NewClusterSender(name, func(ctx context.Context, req *apiv1.SendMessageRequest) (*apiv1.SendReply, error) {
 				return httpSender.SendMessage(ctx, req)
 			}, httpClient.Close)
 		case connect.ProtocolGRPC:
@@ -338,13 +343,13 @@ func (m *messageRepository) initClusters(c *config.ClusterConfig) error {
 				klog.Warnw("msg", "create GRPC client failed", "endpoint", clusterEndpoint, "error", err)
 				return err
 			}
-			grpcSender := authv1.NewSenderClient(grpcClient)
-			clusterSender = NewClusterSender(name, func(ctx context.Context, req *authv1.SendMessageRequest) (*authv1.SendReply, error) {
+			grpcSender := apiv1.NewSenderClient(grpcClient)
+			clusterSender = NewClusterSender(name, func(ctx context.Context, req *apiv1.SendMessageRequest) (*apiv1.SendReply, error) {
 				return grpcSender.SendMessage(ctx, req)
 			}, grpcClient.Close)
 		default:
 			klog.Warnw("msg", "unknown protocol", "endpoint", clusterEndpoint, "protocol", protocol)
-			return merr.ErrorInternal("unknown protocol: %s", protocol)
+			return merr.ErrorInternalServer("unknown protocol: %s", protocol)
 		}
 
 		clusters = append(clusters, clusterSender)

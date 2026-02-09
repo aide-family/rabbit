@@ -3,7 +3,8 @@ package alicloud
 import (
 	"encoding/json"
 
-	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/magicbox/enum"
+
 	"github.com/aide-family/rabbit/pkg/message"
 )
 

@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/httpx"
+	"github.com/aide-family/magicbox/merr"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 	"github.com/aide-family/rabbit/pkg/message"
 	"github.com/aide-family/rabbit/pkg/message/hook"
 )

@@ -3,12 +3,12 @@ package biz
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/merr"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewEmailConfig(
@@ -31,11 +31,11 @@ func (c *EmailConfig) CreateEmailConfig(ctx context.Context, req *bo.CreateEmail
 		return merr.ErrorParams("email config %s already exists", req.Name)
 	} else if !merr.IsNotFound(err) {
 		c.helper.Errorw("msg", "check email config exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("create email config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("create email config %s failed", req.Name).WithCause(err)
 	}
 	if err := c.emailConfigRepo.CreateEmailConfig(ctx, req); err != nil {
 		c.helper.Errorw("msg", "create email config failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("create email config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("create email config %s failed", req.Name).WithCause(err)
 	}
 	return nil
 }
@@ -44,13 +44,13 @@ func (c *EmailConfig) UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmail
 	existEmailConfig, err := c.emailConfigRepo.GetEmailConfigByName(ctx, req.Name)
 	if err != nil && !merr.IsNotFound(err) {
 		c.helper.Errorw("msg", "check email config exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("update email config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("update email config %s failed", req.Name).WithCause(err)
 	} else if existEmailConfig != nil && existEmailConfig.UID != req.UID {
 		return merr.ErrorParams("email config %s already exists", req.Name)
 	}
 	if err := c.emailConfigRepo.UpdateEmailConfig(ctx, req); err != nil {
 		c.helper.Errorw("msg", "update email config failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("update email config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("update email config %s failed", req.Name).WithCause(err)
 	}
 	return nil
 }
@@ -58,7 +58,7 @@ func (c *EmailConfig) UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmail
 func (c *EmailConfig) UpdateEmailConfigStatus(ctx context.Context, req *bo.UpdateEmailConfigStatusBo) error {
 	if err := c.emailConfigRepo.UpdateEmailConfigStatus(ctx, req); err != nil {
 		c.helper.Errorw("msg", "update email config status failed", "error", err, "uid", req.UID)
-		return merr.ErrorInternal("update email config status %d failed", req.UID).WithCause(err)
+		return merr.ErrorInternalServer("update email config status %d failed", req.UID).WithCause(err)
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func (c *EmailConfig) UpdateEmailConfigStatus(ctx context.Context, req *bo.Updat
 func (c *EmailConfig) DeleteEmailConfig(ctx context.Context, uid snowflake.ID) error {
 	if err := c.emailConfigRepo.DeleteEmailConfig(ctx, uid); err != nil {
 		c.helper.Errorw("msg", "delete email config failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("delete email config %s failed", uid).WithCause(err)
+		return merr.ErrorInternalServer("delete email config %s failed", uid).WithCause(err)
 	}
 	return nil
 }
@@ -78,7 +78,7 @@ func (c *EmailConfig) GetEmailConfig(ctx context.Context, uid snowflake.ID) (*bo
 			return nil, err
 		}
 		c.helper.Errorw("msg", "get email config failed", "error", err, "uid", uid)
-		return nil, merr.ErrorInternal("get email config %s failed", uid).WithCause(err)
+		return nil, merr.ErrorInternalServer("get email config %s failed", uid).WithCause(err)
 	}
 	return emailConfig, nil
 }
@@ -87,7 +87,7 @@ func (c *EmailConfig) ListEmailConfig(ctx context.Context, req *bo.ListEmailConf
 	pageResponseBo, err := c.emailConfigRepo.ListEmailConfig(ctx, req)
 	if err != nil {
 		c.helper.Errorw("msg", "list email config failed", "error", err, "req", req)
-		return nil, merr.ErrorInternal("list email config failed").WithCause(err)
+		return nil, merr.ErrorInternalServer("list email config failed").WithCause(err)
 	}
 
 	return pageResponseBo, nil
@@ -97,7 +97,7 @@ func (c *EmailConfig) SelectEmailConfig(ctx context.Context, req *bo.SelectEmail
 	result, err := c.emailConfigRepo.SelectEmailConfig(ctx, req)
 	if err != nil {
 		c.helper.Errorw("msg", "select email config failed", "error", err, "req", req)
-		return nil, merr.ErrorInternal("select email config failed").WithCause(err)
+		return nil, merr.ErrorInternalServer("select email config failed").WithCause(err)
 	}
 	return result, nil
 }

@@ -3,9 +3,9 @@ package message
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/safety"
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 var globalRegistry = NewRegistry()

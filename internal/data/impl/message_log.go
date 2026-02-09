@@ -7,6 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/plugin/cache"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/bwmarrin/snowflake"
@@ -22,9 +25,6 @@ import (
 	"github.com/aide-family/rabbit/internal/data/impl/convert"
 	"github.com/aide-family/rabbit/internal/data/impl/do"
 	"github.com/aide-family/rabbit/internal/data/impl/query"
-	"github.com/aide-family/rabbit/pkg/contextx"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewMessageLogRepository(d *data.Data) repository.MessageLog {

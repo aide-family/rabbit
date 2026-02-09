@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aide-family/magicbox/load"
+	"github.com/aide-family/magicbox/dir"
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
 	kconfig "github.com/go-kratos/kratos/v2/config"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/aide-family/rabbit/cmd"
 	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 type RunFlags struct {
@@ -83,7 +83,7 @@ func (f *RunFlags) ApplyToBootstrap() error {
 		sourceOpts = append(sourceOpts, env.NewSource())
 		for _, configPath := range f.configPaths {
 			if strutil.IsNotEmpty(configPath) {
-				sourceOpts = append(sourceOpts, file.NewSource(load.ExpandHomeDir(strings.TrimSpace(configPath))))
+				sourceOpts = append(sourceOpts, file.NewSource(dir.ExpandHomeDir(strings.TrimSpace(configPath))))
 			}
 		}
 		if len(sourceOpts) > 0 {

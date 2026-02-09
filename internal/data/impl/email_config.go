@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
@@ -15,9 +18,6 @@ import (
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/internal/data/impl/convert"
 	"github.com/aide-family/rabbit/internal/data/impl/query"
-	"github.com/aide-family/rabbit/pkg/contextx"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewEmailConfigRepository(d *data.Data) repository.EmailConfig {

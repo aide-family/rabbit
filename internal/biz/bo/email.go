@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type SendEmailBo struct {
@@ -92,7 +92,7 @@ func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateBo *TemplateItemBo) (*Se
 	}
 	var jsonData map[string]any
 	if err := json.Unmarshal(b.JSONData, &jsonData); err != nil {
-		return nil, merr.ErrorInternal("unmarshal json data failed").WithCause(err)
+		return nil, merr.ErrorInternalServer("unmarshal json data failed").WithCause(err)
 	}
 
 	subjectData, err := strutil.ExecuteTextTemplate(emailTemplateData.Subject, jsonData)

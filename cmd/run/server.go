@@ -47,7 +47,7 @@ func NewEndpoint(wireApp WireAppFunc) *endpoint {
 func NewEngine(endpoints ...*endpoint) *Engine {
 	return &Engine{
 		endpoints:   endpoints,
-		beforeFuncs: []func(){hello.Hello},
+		beforeFuncs: []func(...bool){hello.Hello},
 		afterFuncs:  []func(){},
 	}
 }
@@ -65,7 +65,7 @@ type endpoint struct {
 
 type Engine struct {
 	endpoints   []*endpoint
-	beforeFuncs []func()
+	beforeFuncs []func(...bool)
 	afterFuncs  []func()
 }
 
@@ -74,7 +74,7 @@ func (e *Engine) AddAfterFunc(afterFunc func()) *Engine {
 	return e
 }
 
-func (e *Engine) AddBeforeFunc(beforeFunc func()) *Engine {
+func (e *Engine) AddBeforeFunc(beforeFunc func(...bool)) *Engine {
 	e.beforeFuncs = append(e.beforeFuncs, beforeFunc)
 	return e
 }

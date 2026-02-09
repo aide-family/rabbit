@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/merr"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
@@ -12,8 +14,6 @@ import (
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 var (
@@ -56,7 +56,7 @@ func newJobServer(jobConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceSe
 		job.stopFunc = job.grpcSrv.Stop
 		apiv1.RegisterJobServer(job.grpcSrv, jobService)
 	default:
-		return nil, merr.ErrorInternal("not support protocol: %s", protocol)
+		return nil, merr.ErrorInternalServer("not support protocol: %s", protocol)
 	}
 
 	return job, nil

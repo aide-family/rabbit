@@ -3,10 +3,10 @@ package biz
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/merr"
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewEmail(
@@ -42,16 +42,16 @@ func (e *Email) AppendEmailMessage(ctx context.Context, req *bo.SendEmailBo) err
 	messageLog, err := req.ToMessageLog(emailConfig)
 	if err != nil {
 		e.helper.Errorw("msg", "create message log failed", "error", err)
-		return merr.ErrorInternal("generate message log failed").WithCause(err)
+		return merr.ErrorInternalServer("generate message log failed").WithCause(err)
 	}
 	if err := e.messageLogBiz.createMessageLog(ctx, messageLog); err != nil {
 		e.helper.Errorw("msg", "create message log failed", "error", err)
-		return merr.ErrorInternal("create message log failed").WithCause(err)
+		return merr.ErrorInternalServer("create message log failed").WithCause(err)
 	}
 
 	if err := e.jobBiz.AppendMessage(ctx, messageLog.UID); err != nil {
 		e.helper.Errorw("msg", "append email message failed", "error", err, "uid", messageLog.UID)
-		return merr.ErrorInternal("append email message failed").WithCause(err)
+		return merr.ErrorInternalServer("append email message failed").WithCause(err)
 	}
 
 	return nil
@@ -66,7 +66,7 @@ func (e *Email) AppendEmailMessageWithTemplate(ctx context.Context, req *bo.Send
 	sendEmailBo, err := req.ToSendEmailBo(templateBo)
 	if err != nil {
 		e.helper.Errorw("msg", "convert template to email template data failed", "error", err)
-		return merr.ErrorInternal("convert template to email template data failed")
+		return merr.ErrorInternalServer("convert template to email template data failed")
 	}
 	return e.AppendEmailMessage(ctx, sendEmailBo)
 }

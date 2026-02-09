@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aide-family/rabbit/pkg/enum"
+	"github.com/aide-family/magicbox/enum"
+
 	"github.com/aide-family/rabbit/pkg/message"
 )
 

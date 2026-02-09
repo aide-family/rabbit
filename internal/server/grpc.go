@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/aide-family/magicbox/jwt"
 	"github.com/aide-family/magicbox/server/middler"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/go-kratos/kratos/v2/middleware"
@@ -13,8 +14,6 @@ import (
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
-	"github.com/aide-family/rabbit/pkg/jwt"
-	rabbitMiddler "github.com/aide-family/rabbit/pkg/middler"
 )
 
 // NewGRPCServer new a gRPC server.
@@ -24,14 +23,14 @@ func NewGRPCServer(bc *conf.Bootstrap, namespaceService *service.NamespaceServic
 
 func newGRPCServer(grpcConf conf.ServerConfig, jwtConf conf.JWTConfig, namespaceService *service.NamespaceService, helper *klog.Helper) *grpc.Server {
 	selectorNamespaceMiddlewares := []middleware.Middleware{
-		rabbitMiddler.MustNamespace(),
-		rabbitMiddler.MustNamespaceExist(namespaceService.HasNamespace),
+		middler.MustNamespace(),
+		middler.MustNamespaceExist(namespaceService.HasNamespace),
 	}
 	namespaceMiddleware := selector.Server(selectorNamespaceMiddlewares...).Match(middler.AllowListMatcher(namespaceAllowList...)).Build()
 	selectorMustAuthMiddlewares := []middleware.Middleware{
-		rabbitMiddler.JwtServe(jwtConf.GetSecret(), &jwt.JwtClaims{}),
-		rabbitMiddler.MustLogin(),
-		rabbitMiddler.BindJwtToken(),
+		middler.JwtServe(jwtConf.GetSecret(), &jwt.JwtClaims{}),
+		middler.MustLogin(),
+		middler.BindJwtToken(),
 		namespaceMiddleware,
 	}
 	authMiddleware := selector.Server(selectorMustAuthMiddlewares...).Match(middler.AllowListMatcher(authAllowList...)).Build()

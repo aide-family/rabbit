@@ -3,10 +3,10 @@ package repository
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/enum"
 	"github.com/bwmarrin/snowflake"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 type MessageLog interface {

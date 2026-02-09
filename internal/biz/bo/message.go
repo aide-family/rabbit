@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
+	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	"github.com/aide-family/magicbox/strutil"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type CreateMessageLogBo struct {
@@ -69,7 +69,7 @@ func (b *MessageLogItemBo) ToMessageConfig() (*config.MessageConfig, error) {
 	case msgType == enum.MessageType_EMAIL:
 		var boConfig EmailConfigItemBo
 		if err := json.Unmarshal(configBytes, &boConfig); err != nil {
-			return nil, merr.ErrorInternal("unmarshal email config failed: %v", err)
+			return nil, merr.ErrorInternalServer("unmarshal email config failed: %v", err)
 		}
 		options, err := anypb.New(&config.MessageEmailConfig{
 			Host:     boConfig.Host,
@@ -84,7 +84,7 @@ func (b *MessageLogItemBo) ToMessageConfig() (*config.MessageConfig, error) {
 	case msgType >= enum.MessageType_WEBHOOK_OTHER && msgType < 3000:
 		var boConfig WebhookItemBo
 		if err := json.Unmarshal(configBytes, &boConfig); err != nil {
-			return nil, merr.ErrorInternal("unmarshal webhook config failed: %v", err)
+			return nil, merr.ErrorInternalServer("unmarshal webhook config failed: %v", err)
 		}
 		options, err := anypb.New(&config.MessageWebhookConfig{
 			App:     boConfig.App,
@@ -98,7 +98,7 @@ func (b *MessageLogItemBo) ToMessageConfig() (*config.MessageConfig, error) {
 		}
 		return &config.MessageConfig{MessageType: msgType, Options: options}, nil
 	default:
-		return nil, merr.ErrorInternal("unsupported message type for config conversion: %s", msgType)
+		return nil, merr.ErrorInternalServer("unsupported message type for config conversion: %s", msgType)
 	}
 }
 

@@ -4,12 +4,12 @@ package convert
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/strutil"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/data/impl/do"
-	"github.com/aide-family/rabbit/pkg/contextx"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 func ToEmailConfigDO(ctx context.Context, req *bo.CreateEmailConfigBo) *do.EmailConfig {

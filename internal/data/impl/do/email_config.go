@@ -1,8 +1,8 @@
 package do
 
 import (
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/aide-family/rabbit/pkg/enum"
 	"github.com/bwmarrin/snowflake"
 )
 

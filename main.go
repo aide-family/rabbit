@@ -6,6 +6,7 @@ import (
 
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/stdio"
+	"github.com/aide-family/magicbox/merr"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/aide-family/rabbit/cmd/run/http"
 	"github.com/aide-family/rabbit/cmd/run/job"
 	"github.com/aide-family/rabbit/cmd/version"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 var (
@@ -49,7 +49,7 @@ func init() {
 
 	logger, err := log.NewLogger(stdio.LoggerDriver())
 	if err != nil {
-		panic(merr.ErrorInternal("new logger failed with error: %v", err).WithCause(err))
+		panic(merr.ErrorInternalServer("new logger failed with error: %v", err).WithCause(err))
 	}
 	logger = klog.With(logger,
 		"ts", klog.DefaultTimestamp,

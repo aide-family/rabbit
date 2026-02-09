@@ -4,6 +4,22 @@ package data
 import (
 	"context"
 
+	_ "github.com/aide-family/magicbox/connect/orm/mysql"
+	_ "github.com/aide-family/magicbox/connect/orm/sqlite"
+	_ "github.com/aide-family/magicbox/domain/auth/v1/gormimpl"
+	_ "github.com/aide-family/magicbox/domain/namespace/v1/fileimpl"
+	_ "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl"
+	_ "github.com/aide-family/magicbox/oauth/feishu"
+	_ "github.com/aide-family/magicbox/oauth/gitee"
+	_ "github.com/aide-family/magicbox/oauth/github"
+	_ "github.com/aide-family/rabbit/pkg/message/email"
+	_ "github.com/aide-family/rabbit/pkg/message/hook/dingtalk"
+	_ "github.com/aide-family/rabbit/pkg/message/hook/feishu"
+	_ "github.com/aide-family/rabbit/pkg/message/hook/wechat"
+	_ "github.com/aide-family/rabbit/pkg/message/sms/alicloud"
+
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/connect"
 	"github.com/aide-family/magicbox/hello"
 	"github.com/aide-family/magicbox/plugin/cache"
 	"github.com/aide-family/magicbox/plugin/cache/mem"
@@ -15,8 +31,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/conf"
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/connect"
 )
 
 // ProviderSetData is a set of data providers.

@@ -1,11 +1,10 @@
 package do
 
 import (
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
-
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 type WebhookConfig struct {

@@ -5,11 +5,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/merr"
 	kconfig "github.com/go-kratos/kratos/v2/config"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
-
-	"github.com/aide-family/rabbit/pkg/config"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 var (
@@ -81,10 +80,10 @@ func (w *noOpWatcher) Stop() error {
 func Load(bc any, sources ...kconfig.Source) error {
 	c := kconfig.New(kconfig.WithSource(sources...))
 	if err := c.Load(); err != nil {
-		return merr.ErrorInternal("load config failed").WithCause(err)
+		return merr.ErrorInternalServer("load config failed").WithCause(err)
 	}
 	if err := c.Scan(bc); err != nil {
-		return merr.ErrorInternal("scan config failed").WithCause(err)
+		return merr.ErrorInternalServer("scan config failed").WithCause(err)
 	}
 	return nil
 }

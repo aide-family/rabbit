@@ -3,12 +3,12 @@ package biz
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/merr"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewWebhookConfig(
@@ -31,11 +31,11 @@ func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhook
 		return merr.ErrorParams("webhook config %s already exists", req.Name)
 	} else if !merr.IsNotFound(err) {
 		w.helper.Errorw("msg", "check webhook config exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("create webhook config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("create webhook config %s failed", req.Name).WithCause(err)
 	}
 	if err := w.webhookConfigRepo.CreateWebhookConfig(ctx, req); err != nil {
 		w.helper.Errorw("msg", "create webhook config failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("create webhook config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("create webhook config %s failed", req.Name).WithCause(err)
 	}
 	return nil
 }
@@ -44,13 +44,13 @@ func (w *WebhookConfig) UpdateWebhook(ctx context.Context, req *bo.UpdateWebhook
 	existWebhookConfig, err := w.webhookConfigRepo.GetWebhookConfigByName(ctx, req.Name)
 	if err != nil && !merr.IsNotFound(err) {
 		w.helper.Errorw("msg", "check webhook config exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternal("update webhook config %s failed", req.Name).WithCause(err)
+		return merr.ErrorInternalServer("update webhook config %s failed", req.Name).WithCause(err)
 	} else if existWebhookConfig != nil && existWebhookConfig.UID != req.UID {
 		return merr.ErrorParams("webhook config %s already exists", req.Name)
 	}
 	if err := w.webhookConfigRepo.UpdateWebhookConfig(ctx, req); err != nil {
 		w.helper.Errorw("msg", "update webhook config failed", "error", err, "uid", req.UID)
-		return merr.ErrorInternal("update webhook config %s failed", req.UID).WithCause(err)
+		return merr.ErrorInternalServer("update webhook config %s failed", req.UID).WithCause(err)
 	}
 	return nil
 }
@@ -58,7 +58,7 @@ func (w *WebhookConfig) UpdateWebhook(ctx context.Context, req *bo.UpdateWebhook
 func (w *WebhookConfig) UpdateWebhookStatus(ctx context.Context, req *bo.UpdateWebhookStatusBo) error {
 	if err := w.webhookConfigRepo.UpdateWebhookStatus(ctx, req); err != nil {
 		w.helper.Errorw("msg", "update webhook status failed", "error", err, "uid", req.UID)
-		return merr.ErrorInternal("update webhook status %s failed", req.UID).WithCause(err)
+		return merr.ErrorInternalServer("update webhook status %s failed", req.UID).WithCause(err)
 	}
 	return nil
 }
@@ -66,7 +66,7 @@ func (w *WebhookConfig) UpdateWebhookStatus(ctx context.Context, req *bo.UpdateW
 func (w *WebhookConfig) DeleteWebhook(ctx context.Context, uid snowflake.ID) error {
 	if err := w.webhookConfigRepo.DeleteWebhookConfig(ctx, uid); err != nil {
 		w.helper.Errorw("msg", "delete webhook config failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("delete webhook config %s failed", uid).WithCause(err)
+		return merr.ErrorInternalServer("delete webhook config %s failed", uid).WithCause(err)
 	}
 	return nil
 }
@@ -78,7 +78,7 @@ func (w *WebhookConfig) GetWebhook(ctx context.Context, uid snowflake.ID) (*bo.W
 			return nil, merr.ErrorNotFound("webhook config %s not found", uid)
 		}
 		w.helper.Errorw("msg", "get webhook config failed", "error", err, "uid", uid)
-		return nil, merr.ErrorInternal("get webhook config %s failed", uid).WithCause(err)
+		return nil, merr.ErrorInternalServer("get webhook config %s failed", uid).WithCause(err)
 	}
 	return webhookConfigBo, nil
 }
@@ -87,7 +87,7 @@ func (w *WebhookConfig) ListWebhook(ctx context.Context, req *bo.ListWebhookBo) 
 	pageResponseBo, err := w.webhookConfigRepo.ListWebhookConfig(ctx, req)
 	if err != nil {
 		w.helper.Errorw("msg", "list webhook config failed", "error", err, "req", req)
-		return nil, merr.ErrorInternal("list webhook config failed").WithCause(err)
+		return nil, merr.ErrorInternalServer("list webhook config failed").WithCause(err)
 	}
 	return pageResponseBo, nil
 }
@@ -96,7 +96,7 @@ func (w *WebhookConfig) SelectWebhook(ctx context.Context, req *bo.SelectWebhook
 	result, err := w.webhookConfigRepo.SelectWebhookConfig(ctx, req)
 	if err != nil {
 		w.helper.Errorw("msg", "select webhook config failed", "error", err, "req", req)
-		return nil, merr.ErrorInternal("select webhook config failed").WithCause(err)
+		return nil, merr.ErrorInternalServer("select webhook config failed").WithCause(err)
 	}
 	return result, nil
 }

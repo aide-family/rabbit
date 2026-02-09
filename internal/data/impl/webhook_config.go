@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/pointer"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
@@ -16,9 +19,6 @@ import (
 	"github.com/aide-family/rabbit/internal/data"
 	"github.com/aide-family/rabbit/internal/data/impl/convert"
 	"github.com/aide-family/rabbit/internal/data/impl/query"
-	"github.com/aide-family/rabbit/pkg/contextx"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewWebhookConfigRepository(d *data.Data) repository.WebhookConfig {
@@ -73,6 +73,9 @@ func (w *webhookConfigRepository) ListWebhookConfig(ctx context.Context, req *bo
 	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(namespace.Int64()))
 	if req.App > enum.WebhookAPP_WebhookAPP_UNKNOWN {
 		wrappers = wrappers.Where(webhookConfig.App.Eq(int32(req.App)))
+	}
+	if req.Status > enum.GlobalStatus_GlobalStatus_UNKNOWN {
+		wrappers = wrappers.Where(webhookConfig.Status.Eq(int32(req.Status)))
 	}
 	if strutil.IsNotEmpty(req.Keyword) {
 		wrappers = wrappers.Where(webhookConfig.Name.Like("%" + req.Keyword + "%"))

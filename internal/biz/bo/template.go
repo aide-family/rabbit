@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/bwmarrin/snowflake"
 
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 // CreateTemplateBo 创建模板的 BO

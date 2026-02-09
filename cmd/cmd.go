@@ -13,10 +13,9 @@ import (
 
 	"github.com/aide-family/magicbox/log"
 	"github.com/aide-family/magicbox/log/stdio"
+	"github.com/aide-family/magicbox/merr"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"github.com/spf13/cobra"
-
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 // Command groups for organized help display
@@ -43,7 +42,7 @@ func NewCmd() *cobra.Command {
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			logger, err := log.NewLogger(stdio.LoggerDriver())
 			if err != nil {
-				panic(merr.ErrorInternal("new logger failed with error: %v", err).WithCause(err))
+				panic(merr.ErrorInternalServer("new logger failed with error: %v", err).WithCause(err))
 			}
 			logger = klog.With(logger,
 				"ts", klog.DefaultTimestamp,

@@ -4,12 +4,12 @@ import (
 	"context"
 	"slices"
 
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/repository"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewMessage(
@@ -37,7 +37,7 @@ func (m *Message) SendMessage(ctx context.Context, uid snowflake.ID) error {
 			return err
 		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("get message log failed").WithCause(err)
+		return merr.ErrorInternalServer("get message log failed").WithCause(err)
 	}
 	if slices.Contains([]enum.MessageStatus{enum.MessageStatus_SENT, enum.MessageStatus_SENDING, enum.MessageStatus_CANCELLED}, messageLog.Status) {
 		m.helper.Warnw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)

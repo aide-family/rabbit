@@ -4,13 +4,13 @@ import (
 	"context"
 	"slices"
 
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 func NewMessageLog(
@@ -35,7 +35,7 @@ func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogB
 	pageResponseBo, err := m.messageLogRepo.ListMessageLog(ctx, req)
 	if err != nil {
 		m.helper.Errorw("msg", "list message log failed", "error", err)
-		return nil, merr.ErrorInternal("list message log failed")
+		return nil, merr.ErrorInternalServer("list message log failed")
 	}
 	return pageResponseBo, nil
 }
@@ -47,7 +47,7 @@ func (m *MessageLog) GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.M
 			return nil, err
 		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
-		return nil, merr.ErrorInternal("get message log failed")
+		return nil, merr.ErrorInternalServer("get message log failed")
 	}
 	return messageLogBo, nil
 }
@@ -59,7 +59,7 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 			return err
 		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("get message log failed")
+		return merr.ErrorInternalServer("get message log failed")
 	}
 	if slices.Contains([]enum.MessageStatus{enum.MessageStatus_SENT, enum.MessageStatus_SENDING, enum.MessageStatus_CANCELLED}, messageLog.Status) {
 		m.helper.Debugw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)
@@ -67,7 +67,7 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	}
 	if err := m.jobBiz.AppendMessage(ctx, uid); err != nil {
 		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("append message failed")
+		return merr.ErrorInternalServer("append message failed")
 	}
 	if err := m.messageLogRepo.MessageLogRetryIncrement(ctx, uid); err != nil {
 		m.helper.Warnw("msg", "increment message retry failed", "error", err, "uid", uid)
@@ -82,15 +82,15 @@ func (m *MessageLog) CancelMessage(ctx context.Context, uid snowflake.ID) error 
 			return err
 		}
 		m.helper.Errorw("msg", "get message log failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("get message log failed")
+		return merr.ErrorInternalServer("get message log failed")
 	}
 	if slices.Contains([]enum.MessageStatus{enum.MessageStatus_SENT, enum.MessageStatus_CANCELLED}, messageLog.Status) {
-		return merr.ErrorNotFound("message already sent or cancelled")
+		return merr.ErrorParams("message already sent or cancelled")
 	}
 	success, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, uid, messageLog.Status, enum.MessageStatus_CANCELLED)
 	if err != nil {
 		m.helper.Errorw("msg", "update message status to cancelled failed", "error", err, "uid", uid)
-		return merr.ErrorInternal("cancel message failed")
+		return merr.ErrorInternalServer("cancel message failed")
 	}
 	if !success {
 		m.helper.Warnw("msg", "message status is not sending, message cancelled failed", "uid", uid)

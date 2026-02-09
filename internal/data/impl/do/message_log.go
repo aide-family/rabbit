@@ -4,11 +4,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	"gorm.io/gorm"
-
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 const (

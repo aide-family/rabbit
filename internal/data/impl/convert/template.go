@@ -3,10 +3,11 @@ package convert
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
+
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/data/impl/do"
-	"github.com/aide-family/rabbit/pkg/contextx"
-	"github.com/aide-family/rabbit/pkg/enum"
 )
 
 func ToTemplateDO(ctx context.Context, req *bo.CreateTemplateBo) *do.Template {

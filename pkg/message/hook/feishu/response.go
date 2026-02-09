@@ -1,10 +1,9 @@
 package feishu
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
-
-	"github.com/aide-family/magicbox/serialize"
 )
 
 type response struct {
@@ -22,7 +21,7 @@ func (l *response) Error() string {
 
 func unmarshalResponse(body io.ReadCloser) error {
 	var resp response
-	if err := serialize.JSONDecoder(body, &resp); err != nil {
+	if err := json.NewDecoder(body).Decode(&resp); err != nil {
 		return err
 	}
 	return &resp

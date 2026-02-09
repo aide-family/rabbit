@@ -1,11 +1,12 @@
 package message
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
-	"github.com/aide-family/magicbox/serialize"
 	"github.com/aide-family/magicbox/strutil"
+	"go.yaml.in/yaml/v2"
 )
 
 var templateFuncMap = map[string]any{
@@ -25,6 +26,6 @@ var templateFuncMap = map[string]any{
 	"maskPhone":    strutil.MaskPhone,
 	"maskBankCard": strutil.MaskBankCard,
 	"title":        strutil.Title,
-	"json":         serialize.JSONMarshal,
-	"yaml":         serialize.YAMLMarshal,
+	"json":         json.Marshal,
+	"yaml":         yaml.Marshal,
 }

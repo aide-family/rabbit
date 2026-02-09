@@ -4,15 +4,12 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/aide-family/magicbox/message"
-	"github.com/aide-family/magicbox/message/hook"
-	"github.com/aide-family/magicbox/serialize"
+	"github.com/aide-family/magicbox/enum"
+	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
-	"github.com/aide-family/rabbit/pkg/enum"
-	"github.com/aide-family/rabbit/pkg/merr"
 )
 
 type CreateWebhookBo struct {
@@ -69,8 +66,6 @@ func NewUpdateWebhookStatusBo(req *apiv1.UpdateWebhookStatusRequest) *UpdateWebh
 	}
 }
 
-var _ hook.Config = (*WebhookItemBo)(nil)
-
 type WebhookItemBo struct {
 	UID       snowflake.ID      `json:"uid"`
 	App       enum.WebhookAPP   `json:"app"`
@@ -82,16 +77,6 @@ type WebhookItemBo struct {
 	Status    enum.GlobalStatus `json:"status"`
 	CreatedAt time.Time         `json:"-"`
 	UpdatedAt time.Time         `json:"-"`
-}
-
-// GetSecret implements hook.Config.
-func (b *WebhookItemBo) GetSecret() string {
-	return b.Secret
-}
-
-// GetURL implements hook.Config.
-func (b *WebhookItemBo) GetURL() string {
-	return b.URL
 }
 
 func (b *WebhookItemBo) ToAPIV1WebhookItem() *apiv1.WebhookItem {
@@ -113,6 +98,7 @@ type ListWebhookBo struct {
 	*PageRequestBo
 	App     enum.WebhookAPP
 	Keyword string
+	Status  enum.GlobalStatus
 }
 
 func NewListWebhookBo(req *apiv1.ListWebhookRequest) *ListWebhookBo {
@@ -120,6 +106,7 @@ func NewListWebhookBo(req *apiv1.ListWebhookRequest) *ListWebhookBo {
 		PageRequestBo: NewPageRequestBo(req.Page, req.PageSize),
 		App:           req.App,
 		Keyword:       req.Keyword,
+		Status:        req.Status,
 	}
 }
 
@@ -220,20 +207,12 @@ type SendWebhookBo struct {
 	Data string       `json:"data"`
 }
 
-// Message implements message.Message.
-func (b *SendWebhookBo) Message(message.MessageChannel) ([]byte, error) {
-	if !json.Valid([]byte(b.Data)) {
-		return nil, merr.ErrorParams("invalid json data")
-	}
-	return []byte(b.Data), nil
-}
-
 func (b *SendWebhookBo) ToMessageLog(webhookConfig *WebhookItemBo) (*MessageLogItemBo, error) {
-	messageBytes, err := serialize.JSONMarshal(b)
+	messageBytes, err := json.Marshal(b)
 	if err != nil {
 		return nil, err
 	}
-	webhookConfigBytes, err := serialize.JSONMarshal(webhookConfig)
+	webhookConfigBytes, err := json.Marshal(webhookConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -282,8 +261,8 @@ func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *TemplateItemBo) 
 		return nil, err
 	}
 	var jsonData map[string]any
-	if err := serialize.JSONUnmarshal(b.JSONData, &jsonData); err != nil {
-		return nil, merr.ErrorInternal("unmarshal json data failed").WithCause(err)
+	if err := json.Unmarshal(b.JSONData, &jsonData); err != nil {
+		return nil, merr.ErrorInternalServer("unmarshal json data failed").WithCause(err)
 	}
 
 	bodyData, err := strutil.ExecuteTextTemplate(string(webhookTemplateData), jsonData)

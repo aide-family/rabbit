@@ -11,11 +11,13 @@ ifeq ($(GOHOSTOS), windows)
 	#changed to use git-bash.exe to run find cli or other cli friendly, caused of every developer has a Git.
 	Git_Bash=$(subst \,/,$(subst cmd\,bin\bash.exe,$(dir $(shell where git))))
 	API_PROTO_FILES=$(shell $(Git_Bash) -c "find proto/rabbit -name *.proto")
+	API_PROTO_FILES_REL=$(shell $(Git_Bash) -c "find proto/rabbit -name *.proto | sed 's|^proto/rabbit/||'")
 	# Use mkdir -p equivalent for Windows
 	MKDIR=mkdir
 	RM=del /f /q
 else
 	API_PROTO_FILES=$(shell find proto/rabbit -name *.proto)
+	API_PROTO_FILES_REL=$(shell find proto/rabbit -name '*.proto' | sed 's|^proto/rabbit/||')
 	MKDIR=mkdir -p
 	RM=rm -f
 endif
@@ -40,8 +42,8 @@ init:
 conf:
 	@echo "Generating conf files"
 	protoc --proto_path=./internal/conf \
-           --proto_path=./proto/rabbit \
            --proto_path=./proto/third_party \
+		   --proto_path=./proto \
            --go_out=paths=source_relative:./internal/conf \
            --experimental_allow_proto3_optional \
            ./internal/conf/*.proto
@@ -57,14 +59,15 @@ api:
 		rm -rf ./pkg/*.pb.go; \
 		if [ ! -d "./pkg" ]; then $(MKDIR) ./pkg; fi \
 	fi
-	protoc --proto_path=./proto/rabbit \
+	protoc --proto_path=./proto \
+	       --proto_path=./proto/rabbit \
 	       --proto_path=./proto/third_party \
  	       --go_out=paths=source_relative:./pkg \
  	       --go-http_out=paths=source_relative:./pkg \
  	       --go-grpc_out=paths=source_relative:./pkg \
 	       --openapi_out=fq_schema_naming=true,default_response=false:./internal/server/swagger \
 	       --experimental_allow_proto3_optional \
-	       $(API_PROTO_FILES)
+	       $(API_PROTO_FILES_REL)
 
 .PHONY: wire
 # generate the wire files
@@ -72,28 +75,11 @@ wire:
 	@echo "Generating wire files"
 	wire ./...
 
-.PHONY: errors
-# generate errors
-errors:
-	@echo "Generating errors"
-	@if [ "$(GOHOSTOS)" = "windows" ]; then \
-		$(Git_Bash) -c "rm -rf ./pkg/merr/*.pb.go"; \
-		if [ ! -d "./pkg/merr" ]; then $(MKDIR) ./pkg/merr; fi \
-	else \
-		rm -rf ./pkg/merr/*.pb.go; \
-		if [ ! -d "./pkg/merr" ]; then $(MKDIR) ./pkg/merr; fi \
-	fi
-	protoc --proto_path=./proto/rabbit/merr \
-           --proto_path=./proto/third_party \
-           --go_out=paths=source_relative:./pkg/merr \
-           --go-errors_out=paths=source_relative:./pkg/merr \
-           ./proto/rabbit/merr/*.proto
-
 .PHONY: all
 # generate all files
 all: 
 	@git log -1 --format='%B' > description.txt
-	make api conf errors wire
+	make api conf wire
 
 .PHONY: build
 # build the rabbit binary

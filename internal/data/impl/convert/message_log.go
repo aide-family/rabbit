@@ -3,9 +3,10 @@ package convert
 import (
 	"context"
 
+	"github.com/aide-family/magicbox/contextx"
+
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/data/impl/do"
-	"github.com/aide-family/rabbit/pkg/contextx"
 )
 
 func ToMessageLogItemBo(messageLogDo *do.MessageLog) *bo.MessageLogItemBo {

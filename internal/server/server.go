@@ -6,11 +6,9 @@ import (
 	nethttp "net/http"
 	"strings"
 
-	_ "github.com/aide-family/rabbit/pkg/api/auth/feishu"
-	_ "github.com/aide-family/rabbit/pkg/api/auth/gitee"
-	_ "github.com/aide-family/rabbit/pkg/api/auth/github"
-
 	"buf.build/go/protoyaml"
+	"github.com/aide-family/magicbox/domain/auth/basic"
+	"github.com/aide-family/magicbox/oauth"
 	"github.com/go-kratos/kratos/v2/encoding"
 	"github.com/go-kratos/kratos/v2/encoding/json"
 	"github.com/go-kratos/kratos/v2/transport"
@@ -24,8 +22,6 @@ import (
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
-	"github.com/aide-family/rabbit/pkg/api"
-	"github.com/aide-family/rabbit/pkg/api/auth"
 	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
@@ -121,25 +117,25 @@ func newServer(name string, srv transport.Server) Server {
 type Servers []Server
 
 func BindSwagger(httpSrv *http.Server, bc *conf.Bootstrap) {
-	binding := api.HandlerBinding{
+	binding := basic.HandlerBinding{
 		Name:      "Swagger",
 		Enabled:   strings.EqualFold(bc.GetEnableSwagger(), "true"),
 		BasicAuth: bc.GetSwaggerBasicAuth(),
 		Handler:   nethttp.StripPrefix("/doc/", nethttp.FileServer(nethttp.FS(docFS))),
 		Path:      "/doc/",
 	}
-	api.BindHandlerWithAuth(httpSrv, binding)
+	basic.BindHandlerWithAuth(httpSrv, binding)
 }
 
 func BindMetrics(httpSrv *http.Server, bc *conf.Bootstrap) {
-	binding := api.HandlerBinding{
+	binding := basic.HandlerBinding{
 		Name:      "Metrics",
 		Enabled:   strings.EqualFold(bc.GetEnableMetrics(), "true"),
 		BasicAuth: bc.GetMetricsBasicAuth(),
 		Handler:   promhttp.Handler(),
 		Path:      "/metrics",
 	}
-	api.BindHandlerWithAuth(httpSrv, binding)
+	basic.BindHandlerWithAuth(httpSrv, binding)
 }
 
 func RegisterJobService(jobSrv *JobServer) Servers {
@@ -208,7 +204,7 @@ func RegisterHTTPService(
 	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
 	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
 
-	oauth2Handler := auth.NewOAuth2Handler(c.GetOauth2(), authService.Login)
+	oauth2Handler := oauth.NewOAuth2Handler(c.GetOauth2(), authService.Login)
 	if err := oauth2Handler.Handler(httpSrv); err != nil {
 		panic(err)
 	}
@@ -249,5 +245,7 @@ var namespaceAllowList = []string{
 
 var authAllowList = []string{
 	apiv1.OperationHealthHealthCheck,
-	auth.OperationOAuth2Reports,
+	oauth.OperationOAuth2Reports,
+	oauth.OperationOAuth2Login,
+	oauth.OperationOAuth2Callback,
 }

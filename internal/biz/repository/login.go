@@ -3,11 +3,9 @@ package repository
 import (
 	"context"
 
-	"golang.org/x/oauth2"
-
-	"github.com/aide-family/rabbit/pkg/api/auth"
+	"github.com/aide-family/magicbox/oauth"
 )
 
 type LoginRepository interface {
-	Login(ctx context.Context, oauthConfig *oauth2.Config, user auth.User) (string, error)
+	Login(ctx context.Context, req *oauth.OAuth2LoginRequest) (string, error)
 }
