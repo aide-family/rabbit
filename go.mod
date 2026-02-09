@@ -27,7 +27,7 @@ require (
 	gorm.io/plugin/dbresolver v1.6.2
 )
 
-replace github.com/aide-family/magicbox => ../magicbox
+replace github.com/aide-family/magicbox => ./magicbox
 
 require (
 	buf.build/go/protovalidate v1.1.0 // indirect

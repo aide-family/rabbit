@@ -79,6 +79,7 @@ wire:
 # generate all files
 all: 
 	@git log -1 --format='%B' > description.txt
+	git submodule update --init --recursive
 	make api conf wire
 
 .PHONY: build

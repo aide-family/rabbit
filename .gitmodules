@@ -1,3 +1,6 @@
 [submodule "proto"]
 	path = proto
 	url = https://github.com/aide-family/proto.git
+[submodule "magicbox"]
+	path = magicbox
+	url = https://github.com/aide-family/magicbox
