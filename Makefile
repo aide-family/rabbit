@@ -10,14 +10,12 @@ ifeq ($(GOHOSTOS), windows)
 	#to see https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/find.
 	#changed to use git-bash.exe to run find cli or other cli friendly, caused of every developer has a Git.
 	Git_Bash=$(subst \,/,$(subst cmd\,bin\bash.exe,$(dir $(shell where git))))
-	API_PROTO_FILES=$(shell $(Git_Bash) -c "find proto/rabbit -name *.proto")
-	API_PROTO_FILES_REL=$(shell $(Git_Bash) -c "find proto/rabbit -name *.proto | sed 's|^proto/rabbit/||'")
+	API_PROTO_FILES=$(shell $(Git_Bash) -c "find pkg/magicbox/proto/rabbit -name *.proto")
 	# Use mkdir -p equivalent for Windows
 	MKDIR=mkdir
 	RM=del /f /q
 else
-	API_PROTO_FILES=$(shell find proto/rabbit -name *.proto)
-	API_PROTO_FILES_REL=$(shell find proto/rabbit -name '*.proto' | sed 's|^proto/rabbit/||')
+	API_PROTO_FILES=$(shell find pkg/magicbox/proto/rabbit -name *.proto)
 	MKDIR=mkdir -p
 	RM=rm -f
 endif
@@ -42,8 +40,8 @@ init:
 conf:
 	@echo "Generating conf files"
 	protoc --proto_path=./internal/conf \
-           --proto_path=./proto/third_party \
-		   --proto_path=./proto \
+           --proto_path=./pkg/magicbox/proto/third_party \
+		   --proto_path=./pkg/magicbox/proto \
            --go_out=paths=source_relative:./internal/conf \
            --experimental_allow_proto3_optional \
            ./internal/conf/*.proto
@@ -59,15 +57,14 @@ api:
 		rm -rf ./pkg/*.pb.go; \
 		if [ ! -d "./pkg" ]; then $(MKDIR) ./pkg; fi \
 	fi
-	protoc --proto_path=./proto \
-	       --proto_path=./proto/rabbit \
-	       --proto_path=./proto/third_party \
- 	       --go_out=paths=source_relative:./pkg \
- 	       --go-http_out=paths=source_relative:./pkg \
- 	       --go-grpc_out=paths=source_relative:./pkg \
+	protoc --proto_path=./pkg/magicbox/proto \
+	       --proto_path=./pkg/magicbox/proto/third_party \
+ 	       --go_out=. --go_opt=module=github.com/aide-family/rabbit \
+ 	       --go-http_out=. --go-http_opt=module=github.com/aide-family/rabbit \
+ 	       --go-grpc_out=. --go-grpc_opt=module=github.com/aide-family/rabbit \
 	       --openapi_out=fq_schema_naming=true,default_response=false:./internal/server/swagger \
 	       --experimental_allow_proto3_optional \
-	       $(API_PROTO_FILES_REL)
+	       $(API_PROTO_FILES)
 
 .PHONY: wire
 # generate the wire files
@@ -79,7 +76,6 @@ wire:
 # generate all files
 all: 
 	@git log -1 --format='%B' > description.txt
-	git submodule update --init --recursive
 	make api conf wire
 
 .PHONY: build

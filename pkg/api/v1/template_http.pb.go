@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-http v2.9.0
 // - protoc             v5.29.3
-// source: api/v1/template.proto
+// source: rabbit/api/v1/template.proto
 
 package v1
 

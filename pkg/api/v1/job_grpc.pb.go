@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.29.3
-// source: api/v1/job.proto
+// source: rabbit/api/v1/job.proto
 
 package v1
 
@@ -117,5 +117,5 @@ var Job_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/v1/job.proto",
+	Metadata: "rabbit/api/v1/job.proto",
 }
