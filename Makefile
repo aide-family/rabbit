@@ -107,11 +107,11 @@ dev:
 	@echo "Running rabbit in development mode"
 	go run . run all --log-level=DEBUG
 
-.PHONY: test
+.PHONY: migrate-sqlite
 # run the tests
-test: all
-	@echo "Running tests"
-	go test ./...
+migrate-sqlite: all
+	@echo "Running migrate-sqlite"
+	RUN_DO_CODEGEN=1 go test -v -run 'TestGenerate|TestMigrateSQLite' ./internal/data/impl/do
 
 # show help
 help:

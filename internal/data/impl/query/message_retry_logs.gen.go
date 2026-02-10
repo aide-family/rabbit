@@ -31,7 +31,6 @@ func newMessageRetryLog(db *gorm.DB, opts ...gen.DOOption) messageRetryLog {
 	_messageRetryLog.UID = field.NewInt64(tableName, "uid")
 	_messageRetryLog.CreatedAt = field.NewTime(tableName, "created_at")
 	_messageRetryLog.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_messageRetryLog.DeletedAt = field.NewField(tableName, "deleted_at")
 	_messageRetryLog.Creator = field.NewInt64(tableName, "creator")
 	_messageRetryLog.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_messageRetryLog.MessageLogID = field.NewInt64(tableName, "message_log_id")
@@ -51,7 +50,6 @@ type messageRetryLog struct {
 	UID          field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
-	DeletedAt    field.Field
 	Creator      field.Int64
 	NamespaceUID field.Int64
 	MessageLogID field.Int64
@@ -77,7 +75,6 @@ func (m *messageRetryLog) updateTableName(table string) *messageRetryLog {
 	m.UID = field.NewInt64(table, "uid")
 	m.CreatedAt = field.NewTime(table, "created_at")
 	m.UpdatedAt = field.NewTime(table, "updated_at")
-	m.DeletedAt = field.NewField(table, "deleted_at")
 	m.Creator = field.NewInt64(table, "creator")
 	m.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	m.MessageLogID = field.NewInt64(table, "message_log_id")
@@ -99,12 +96,11 @@ func (m *messageRetryLog) GetFieldByName(fieldName string) (field.OrderExpr, boo
 }
 
 func (m *messageRetryLog) fillFieldMap() {
-	m.fieldMap = make(map[string]field.Expr, 10)
+	m.fieldMap = make(map[string]field.Expr, 9)
 	m.fieldMap["id"] = m.ID
 	m.fieldMap["uid"] = m.UID
 	m.fieldMap["created_at"] = m.CreatedAt
 	m.fieldMap["updated_at"] = m.UpdatedAt
-	m.fieldMap["deleted_at"] = m.DeletedAt
 	m.fieldMap["creator"] = m.Creator
 	m.fieldMap["namespace_uid"] = m.NamespaceUID
 	m.fieldMap["message_log_id"] = m.MessageLogID

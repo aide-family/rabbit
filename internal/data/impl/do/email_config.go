@@ -4,10 +4,12 @@ import (
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
+	"gorm.io/gorm"
 )
 
 type EmailConfig struct {
 	BaseModel
+	DeletedAt    gorm.DeletedAt        `gorm:"column:deleted_at;uniqueIndex:email_config__namespace_uid__name"`
 	NamespaceUID snowflake.ID          `gorm:"column:namespace_uid;uniqueIndex:email_config__namespace_uid__name"`
 	Name         string                `gorm:"column:name;uniqueIndex:email_config__namespace_uid__name"`
 	Host         string                `gorm:"column:host;"`

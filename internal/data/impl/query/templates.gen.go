@@ -31,8 +31,8 @@ func newTemplate(db *gorm.DB, opts ...gen.DOOption) template {
 	_template.UID = field.NewInt64(tableName, "uid")
 	_template.CreatedAt = field.NewTime(tableName, "created_at")
 	_template.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_template.DeletedAt = field.NewField(tableName, "deleted_at")
 	_template.Creator = field.NewInt64(tableName, "creator")
+	_template.DeletedAt = field.NewField(tableName, "deleted_at")
 	_template.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_template.Name = field.NewString(tableName, "name")
 	_template.MessageType = field.NewInt32(tableName, "message_type")
@@ -52,8 +52,8 @@ type template struct {
 	UID          field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
-	DeletedAt    field.Field
 	Creator      field.Int64
+	DeletedAt    field.Field
 	NamespaceUID field.Int64
 	Name         field.String
 	MessageType  field.Int32
@@ -79,8 +79,8 @@ func (t *template) updateTableName(table string) *template {
 	t.UID = field.NewInt64(table, "uid")
 	t.CreatedAt = field.NewTime(table, "created_at")
 	t.UpdatedAt = field.NewTime(table, "updated_at")
-	t.DeletedAt = field.NewField(table, "deleted_at")
 	t.Creator = field.NewInt64(table, "creator")
+	t.DeletedAt = field.NewField(table, "deleted_at")
 	t.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	t.Name = field.NewString(table, "name")
 	t.MessageType = field.NewInt32(table, "message_type")
@@ -107,8 +107,8 @@ func (t *template) fillFieldMap() {
 	t.fieldMap["uid"] = t.UID
 	t.fieldMap["created_at"] = t.CreatedAt
 	t.fieldMap["updated_at"] = t.UpdatedAt
-	t.fieldMap["deleted_at"] = t.DeletedAt
 	t.fieldMap["creator"] = t.Creator
+	t.fieldMap["deleted_at"] = t.DeletedAt
 	t.fieldMap["namespace_uid"] = t.NamespaceUID
 	t.fieldMap["name"] = t.Name
 	t.fieldMap["message_type"] = t.MessageType

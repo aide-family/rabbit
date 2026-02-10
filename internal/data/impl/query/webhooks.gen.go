@@ -31,11 +31,11 @@ func newWebhookConfig(db *gorm.DB, opts ...gen.DOOption) webhookConfig {
 	_webhookConfig.UID = field.NewInt64(tableName, "uid")
 	_webhookConfig.CreatedAt = field.NewTime(tableName, "created_at")
 	_webhookConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_webhookConfig.DeletedAt = field.NewField(tableName, "deleted_at")
 	_webhookConfig.Creator = field.NewInt64(tableName, "creator")
-	_webhookConfig.App = field.NewInt32(tableName, "app")
+	_webhookConfig.DeletedAt = field.NewField(tableName, "deleted_at")
 	_webhookConfig.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_webhookConfig.Name = field.NewString(tableName, "name")
+	_webhookConfig.App = field.NewInt32(tableName, "app")
 	_webhookConfig.URL = field.NewString(tableName, "url")
 	_webhookConfig.Method = field.NewInt32(tableName, "method")
 	_webhookConfig.Headers = field.NewField(tableName, "headers")
@@ -55,11 +55,11 @@ type webhookConfig struct {
 	UID          field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
-	DeletedAt    field.Field
 	Creator      field.Int64
-	App          field.Int32
+	DeletedAt    field.Field
 	NamespaceUID field.Int64
 	Name         field.String
+	App          field.Int32
 	URL          field.String
 	Method       field.Int32
 	Headers      field.Field
@@ -85,11 +85,11 @@ func (w *webhookConfig) updateTableName(table string) *webhookConfig {
 	w.UID = field.NewInt64(table, "uid")
 	w.CreatedAt = field.NewTime(table, "created_at")
 	w.UpdatedAt = field.NewTime(table, "updated_at")
-	w.DeletedAt = field.NewField(table, "deleted_at")
 	w.Creator = field.NewInt64(table, "creator")
-	w.App = field.NewInt32(table, "app")
+	w.DeletedAt = field.NewField(table, "deleted_at")
 	w.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	w.Name = field.NewString(table, "name")
+	w.App = field.NewInt32(table, "app")
 	w.URL = field.NewString(table, "url")
 	w.Method = field.NewInt32(table, "method")
 	w.Headers = field.NewField(table, "headers")
@@ -116,11 +116,11 @@ func (w *webhookConfig) fillFieldMap() {
 	w.fieldMap["uid"] = w.UID
 	w.fieldMap["created_at"] = w.CreatedAt
 	w.fieldMap["updated_at"] = w.UpdatedAt
-	w.fieldMap["deleted_at"] = w.DeletedAt
 	w.fieldMap["creator"] = w.Creator
-	w.fieldMap["app"] = w.App
+	w.fieldMap["deleted_at"] = w.DeletedAt
 	w.fieldMap["namespace_uid"] = w.NamespaceUID
 	w.fieldMap["name"] = w.Name
+	w.fieldMap["app"] = w.App
 	w.fieldMap["url"] = w.URL
 	w.fieldMap["method"] = w.Method
 	w.fieldMap["headers"] = w.Headers

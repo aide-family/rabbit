@@ -5,12 +5,14 @@ import (
 
 	"github.com/aide-family/magicbox/enum"
 	"github.com/bwmarrin/snowflake"
+	"gorm.io/gorm"
 )
 
 // Template 统一的模板结构
 type Template struct {
 	BaseModel
 
+	DeletedAt    gorm.DeletedAt    `gorm:"column:deleted_at;uniqueIndex:template__namespace_uid__name"`
 	NamespaceUID snowflake.ID      `gorm:"column:namespace_uid;uniqueIndex:template__namespace_uid__name"`
 	Name         string            `gorm:"column:name;uniqueIndex:template__namespace_uid__name"`
 	MessageType  enum.MessageType  `gorm:"column:message_type;default:0"`

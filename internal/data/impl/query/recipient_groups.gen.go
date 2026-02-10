@@ -31,8 +31,8 @@ func newRecipientGroup(db *gorm.DB, opts ...gen.DOOption) recipientGroup {
 	_recipientGroup.UID = field.NewInt64(tableName, "uid")
 	_recipientGroup.CreatedAt = field.NewTime(tableName, "created_at")
 	_recipientGroup.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_recipientGroup.DeletedAt = field.NewField(tableName, "deleted_at")
 	_recipientGroup.Creator = field.NewInt64(tableName, "creator")
+	_recipientGroup.DeletedAt = field.NewField(tableName, "deleted_at")
 	_recipientGroup.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_recipientGroup.Name = field.NewString(tableName, "name")
 	_recipientGroup.Metadata = field.NewField(tableName, "metadata")
@@ -74,8 +74,8 @@ type recipientGroup struct {
 	UID          field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
-	DeletedAt    field.Field
 	Creator      field.Int64
+	DeletedAt    field.Field
 	NamespaceUID field.Int64
 	Name         field.String
 	Metadata     field.Field
@@ -107,8 +107,8 @@ func (r *recipientGroup) updateTableName(table string) *recipientGroup {
 	r.UID = field.NewInt64(table, "uid")
 	r.CreatedAt = field.NewTime(table, "created_at")
 	r.UpdatedAt = field.NewTime(table, "updated_at")
-	r.DeletedAt = field.NewField(table, "deleted_at")
 	r.Creator = field.NewInt64(table, "creator")
+	r.DeletedAt = field.NewField(table, "deleted_at")
 	r.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	r.Name = field.NewString(table, "name")
 	r.Metadata = field.NewField(table, "metadata")
@@ -134,8 +134,8 @@ func (r *recipientGroup) fillFieldMap() {
 	r.fieldMap["uid"] = r.UID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
-	r.fieldMap["deleted_at"] = r.DeletedAt
 	r.fieldMap["creator"] = r.Creator
+	r.fieldMap["deleted_at"] = r.DeletedAt
 	r.fieldMap["namespace_uid"] = r.NamespaceUID
 	r.fieldMap["name"] = r.Name
 	r.fieldMap["metadata"] = r.Metadata

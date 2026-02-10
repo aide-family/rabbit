@@ -31,8 +31,8 @@ func newEmailConfig(db *gorm.DB, opts ...gen.DOOption) emailConfig {
 	_emailConfig.UID = field.NewInt64(tableName, "uid")
 	_emailConfig.CreatedAt = field.NewTime(tableName, "created_at")
 	_emailConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_emailConfig.DeletedAt = field.NewField(tableName, "deleted_at")
 	_emailConfig.Creator = field.NewInt64(tableName, "creator")
+	_emailConfig.DeletedAt = field.NewField(tableName, "deleted_at")
 	_emailConfig.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_emailConfig.Name = field.NewString(tableName, "name")
 	_emailConfig.Host = field.NewString(tableName, "host")
@@ -54,8 +54,8 @@ type emailConfig struct {
 	UID          field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
-	DeletedAt    field.Field
 	Creator      field.Int64
+	DeletedAt    field.Field
 	NamespaceUID field.Int64
 	Name         field.String
 	Host         field.String
@@ -83,8 +83,8 @@ func (e *emailConfig) updateTableName(table string) *emailConfig {
 	e.UID = field.NewInt64(table, "uid")
 	e.CreatedAt = field.NewTime(table, "created_at")
 	e.UpdatedAt = field.NewTime(table, "updated_at")
-	e.DeletedAt = field.NewField(table, "deleted_at")
 	e.Creator = field.NewInt64(table, "creator")
+	e.DeletedAt = field.NewField(table, "deleted_at")
 	e.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	e.Name = field.NewString(table, "name")
 	e.Host = field.NewString(table, "host")
@@ -113,8 +113,8 @@ func (e *emailConfig) fillFieldMap() {
 	e.fieldMap["uid"] = e.UID
 	e.fieldMap["created_at"] = e.CreatedAt
 	e.fieldMap["updated_at"] = e.UpdatedAt
-	e.fieldMap["deleted_at"] = e.DeletedAt
 	e.fieldMap["creator"] = e.Creator
+	e.fieldMap["deleted_at"] = e.DeletedAt
 	e.fieldMap["namespace_uid"] = e.NamespaceUID
 	e.fieldMap["name"] = e.Name
 	e.fieldMap["host"] = e.Host

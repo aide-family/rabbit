@@ -31,7 +31,6 @@ func newRecipientMember(db *gorm.DB, opts ...gen.DOOption) recipientMember {
 	_recipientMember.UID = field.NewInt64(tableName, "uid")
 	_recipientMember.CreatedAt = field.NewTime(tableName, "created_at")
 	_recipientMember.UpdatedAt = field.NewTime(tableName, "updated_at")
-	_recipientMember.DeletedAt = field.NewField(tableName, "deleted_at")
 	_recipientMember.Creator = field.NewInt64(tableName, "creator")
 	_recipientMember.NamespaceUID = field.NewInt64(tableName, "namespace_uid")
 	_recipientMember.UserUID = field.NewInt64(tableName, "user_uid")
@@ -52,7 +51,6 @@ type recipientMember struct {
 	UID          field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
-	DeletedAt    field.Field
 	Creator      field.Int64
 	NamespaceUID field.Int64
 	UserUID      field.Int64
@@ -79,7 +77,6 @@ func (r *recipientMember) updateTableName(table string) *recipientMember {
 	r.UID = field.NewInt64(table, "uid")
 	r.CreatedAt = field.NewTime(table, "created_at")
 	r.UpdatedAt = field.NewTime(table, "updated_at")
-	r.DeletedAt = field.NewField(table, "deleted_at")
 	r.Creator = field.NewInt64(table, "creator")
 	r.NamespaceUID = field.NewInt64(table, "namespace_uid")
 	r.UserUID = field.NewInt64(table, "user_uid")
@@ -102,12 +99,11 @@ func (r *recipientMember) GetFieldByName(fieldName string) (field.OrderExpr, boo
 }
 
 func (r *recipientMember) fillFieldMap() {
-	r.fieldMap = make(map[string]field.Expr, 11)
+	r.fieldMap = make(map[string]field.Expr, 10)
 	r.fieldMap["id"] = r.ID
 	r.fieldMap["uid"] = r.UID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
-	r.fieldMap["deleted_at"] = r.DeletedAt
 	r.fieldMap["creator"] = r.Creator
 	r.fieldMap["namespace_uid"] = r.NamespaceUID
 	r.fieldMap["user_uid"] = r.UserUID

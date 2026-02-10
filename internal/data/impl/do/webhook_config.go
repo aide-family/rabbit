@@ -5,14 +5,16 @@ import (
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
+	"gorm.io/gorm"
 )
 
 type WebhookConfig struct {
 	BaseModel
 
-	App          enum.WebhookAPP             `gorm:"column:app;default:0"`
+	DeletedAt    gorm.DeletedAt              `gorm:"column:deleted_at;uniqueIndex:webhook_config__namespace_uid__name"`
 	NamespaceUID snowflake.ID                `gorm:"column:namespace_uid;uniqueIndex:webhook_config__namespace_uid__name"`
 	Name         string                      `gorm:"column:name;uniqueIndex:webhook_config__namespace_uid__name"`
+	App          enum.WebhookAPP             `gorm:"column:app;default:0"`
 	URL          string                      `gorm:"column:url;uniqueIndex"`
 	Method       enum.HTTPMethod             `gorm:"column:method;default:0"`
 	Headers      *safety.Map[string, string] `gorm:"column:headers;type:json;"`

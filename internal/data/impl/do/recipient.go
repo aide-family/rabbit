@@ -5,11 +5,12 @@ import (
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
+	"gorm.io/gorm"
 )
 
 type RecipientGroup struct {
 	BaseModel
-
+	DeletedAt    gorm.DeletedAt              `gorm:"column:deleted_at;uniqueIndex:recipient_group__namespace_uid__name"`
 	NamespaceUID snowflake.ID                `gorm:"column:namespace_uid;uniqueIndex:recipient_group__namespace_uid__name"`
 	Name         string                      `gorm:"column:name;uniqueIndex:recipient_group__namespace_uid__name"`
 	Metadata     *safety.Map[string, string] `gorm:"column:metadata;type:json;"`

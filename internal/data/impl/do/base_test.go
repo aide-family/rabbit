@@ -66,6 +66,9 @@ func migrateSQLite() error {
 }
 
 func TestGenerate(t *testing.T) {
+	if testing.Short() || os.Getenv("RUN_DO_CODEGEN") == "" {
+		t.Skip("skipping codegen test in short mode or when RUN_DO_CODEGEN is unset")
+	}
 	generate()
 }
 
@@ -74,6 +77,9 @@ func TestGenerate(t *testing.T) {
 // }
 
 func TestMigrateSQLite(t *testing.T) {
+	if testing.Short() || os.Getenv("RUN_DO_CODEGEN") == "" {
+		t.Skip("skipping sqlite migrate test in short mode or when RUN_DO_CODEGEN is unset")
+	}
 	if err := migrateSQLite(); err != nil {
 		t.Fatalf("migrate sqlite failed: %v", err)
 	}
