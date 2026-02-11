@@ -6,6 +6,9 @@ import (
 
 	authmodel "github.com/aide-family/magicbox/domain/auth/v1/gormimpl/model"
 	namespacemodel "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl/model"
+	"github.com/aide-family/magicbox/hello"
+	"github.com/aide-family/magicbox/safety"
+	"github.com/bwmarrin/snowflake"
 	"github.com/glebarez/sqlite"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
@@ -64,8 +67,31 @@ func migrateSQLite() error {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	return db.AutoMigrate(append(do.Models(), &authmodel.User{},
-		&namespacemodel.Namespace{})...)
+
+	if err := db.AutoMigrate(append(do.Models(), &authmodel.User{},
+		&namespacemodel.Namespace{})...); err != nil {
+		return err
+	}
+	node, err := snowflake.NewNode(hello.NodeID())
+	if err != nil {
+		return err
+	}
+	db = db.Debug()
+	for _, name := range []string{"dev", "prod", "test"} {
+		item := &namespacemodel.Namespace{
+			Name: name,
+			Metadata: safety.NewMap(map[string]string{
+				"test": "test",
+			}),
+			Status:  1,
+			Creator: snowflake.ID(1),
+			UID:     node.Generate(),
+		}
+		if err := db.Create(item).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func TestGenerate(t *testing.T) {
