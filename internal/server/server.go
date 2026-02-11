@@ -240,7 +240,7 @@ var namespaceAllowList = []string{
 	apiv1.OperationNamespaceDeleteNamespace,
 	apiv1.OperationNamespaceGetNamespace,
 	apiv1.OperationNamespaceListNamespace,
-	apiv1.OperationHealthHealthCheck,
+	apiv1.OperationNamespaceSelectNamespace,
 }
 
 var authAllowList = []string{
