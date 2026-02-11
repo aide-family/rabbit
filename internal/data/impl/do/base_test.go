@@ -4,6 +4,8 @@ import (
 	"os"
 	"testing"
 
+	authmodel "github.com/aide-family/magicbox/domain/auth/v1/gormimpl/model"
+	namespacemodel "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl/model"
 	"github.com/glebarez/sqlite"
 	klog "github.com/go-kratos/kratos/v2/log"
 	"gorm.io/driver/mysql"
@@ -62,7 +64,8 @@ func migrateSQLite() error {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	return db.AutoMigrate(do.Models()...)
+	return db.AutoMigrate(append(do.Models(), &authmodel.User{},
+		&namespacemodel.Namespace{})...)
 }
 
 func TestGenerate(t *testing.T) {

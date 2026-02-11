@@ -109,7 +109,7 @@ dev:
 
 .PHONY: migrate-sqlite
 # run the tests
-migrate-sqlite: all
+migrate-sqlite:
 	@echo "Running migrate-sqlite"
 	RUN_DO_CODEGEN=1 go test -v -run 'TestGenerate|TestMigrateSQLite' ./internal/data/impl/do
 
