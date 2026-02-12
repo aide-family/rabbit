@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"buf.build/go/protoyaml"
+	magicboxapiv1 "github.com/aide-family/magicbox/api/v1"
 	"github.com/aide-family/magicbox/domain/auth/basic"
 	"github.com/aide-family/magicbox/oauth"
 	"github.com/go-kratos/kratos/v2/encoding"
@@ -196,8 +197,8 @@ func RegisterHTTPService(
 	templateService *service.TemplateService,
 	messageLogService *service.MessageLogService,
 ) Servers {
-	apiv1.RegisterHealthHTTPServer(httpSrv, healthService)
-	apiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+	magicboxapiv1.RegisterHealthHTTPServer(httpSrv, healthService)
+	magicboxapiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
 	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
 	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
 	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
@@ -223,8 +224,8 @@ func RegisterGRPCService(
 	templateService *service.TemplateService,
 	messageLogService *service.MessageLogService,
 ) Servers {
-	apiv1.RegisterHealthServer(grpcSrv, healthService)
-	apiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
+	magicboxapiv1.RegisterHealthServer(grpcSrv, healthService)
+	magicboxapiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
 	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
 	apiv1.RegisterSenderServer(grpcSrv, senderService)
@@ -234,17 +235,17 @@ func RegisterGRPCService(
 }
 
 var namespaceAllowList = []string{
-	apiv1.OperationNamespaceCreateNamespace,
-	apiv1.OperationNamespaceUpdateNamespace,
-	apiv1.OperationNamespaceUpdateNamespaceStatus,
-	apiv1.OperationNamespaceDeleteNamespace,
-	apiv1.OperationNamespaceGetNamespace,
-	apiv1.OperationNamespaceListNamespace,
-	apiv1.OperationNamespaceSelectNamespace,
+	magicboxapiv1.OperationNamespaceCreateNamespace,
+	magicboxapiv1.OperationNamespaceUpdateNamespace,
+	magicboxapiv1.OperationNamespaceUpdateNamespaceStatus,
+	magicboxapiv1.OperationNamespaceDeleteNamespace,
+	magicboxapiv1.OperationNamespaceGetNamespace,
+	magicboxapiv1.OperationNamespaceListNamespace,
+	magicboxapiv1.OperationNamespaceSelectNamespace,
 }
 
 var authAllowList = []string{
-	apiv1.OperationHealthHealthCheck,
+	magicboxapiv1.OperationHealthHealthCheck,
 	oauth.OperationOAuth2Reports,
 	oauth.OperationOAuth2Login,
 	oauth.OperationOAuth2Callback,

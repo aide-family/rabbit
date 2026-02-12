@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	magicboxapiv1 "github.com/aide-family/magicbox/api/v1"
 	"github.com/aide-family/magicbox/config"
 	"github.com/aide-family/magicbox/connect"
 	"github.com/aide-family/magicbox/contextx"
@@ -129,7 +130,7 @@ func (m *messageRepository) sendMessage(namespaceUID, messageUID snowflake.ID) e
 }
 
 func (m *messageRepository) loadMessageLogs() error {
-	req := &bo.SelectNamespaceBo{
+	req := &magicboxapiv1.SelectNamespaceRequest{
 		Status: enum.GlobalStatus_ENABLED,
 		Limit:  1000,
 	}

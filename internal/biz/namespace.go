@@ -3,11 +3,14 @@ package biz
 import (
 	"context"
 
+	magicboxapiv1 "github.com/aide-family/magicbox/api/v1"
+	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/merr"
+	"github.com/aide-family/magicbox/strutil/cnst"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
 
-	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/biz/repository"
 )
 
@@ -16,38 +19,33 @@ func NewNamespace(
 	helper *klog.Helper,
 ) *Namespace {
 	return &Namespace{
-		namespaceRepo: namespaceRepo,
-		helper:        klog.NewHelper(klog.With(helper.Logger(), "biz", "namespace")),
+		Namespace: namespaceRepo,
+		helper:    klog.NewHelper(klog.With(helper.Logger(), "biz", "namespace")),
 	}
 }
 
 type Namespace struct {
-	helper        *klog.Helper
-	namespaceRepo repository.Namespace
+	helper *klog.Helper
+	repository.Namespace
 }
 
-func (n *Namespace) GetNamespace(ctx context.Context, uid snowflake.ID) (*bo.NamespaceItemBo, error) {
-	namespaceItemBo, err := n.namespaceRepo.GetNamespace(ctx, uid)
+func (n *Namespace) HasNamespace(ctx context.Context) (snowflake.ID, error) {
+	namespace := contextx.GetNamespace(ctx)
+	if namespace <= 0 {
+		return 0, merr.ErrorForbidden("namespace is required, please set the namespace in the request header or metadata, Example: %s: default", cnst.HTTPHeaderXNamespace)
+	}
+	req := &magicboxapiv1.GetNamespaceRequest{
+		Uid: namespace.Int64(),
+	}
+	namespaceItemBo, err := n.GetNamespace(ctx, req)
 	if err != nil {
 		if merr.IsNotFound(err) {
-			return nil, merr.ErrorNotFound("namespace %s not found", uid)
+			return 0, merr.ErrorForbidden("namespace %s not allowed", namespace)
 		}
-
-		n.helper.Errorw("msg", "get namespace failed", "error", err, "uid", uid)
-		return nil, merr.ErrorInternalServer("get namespace %s failed", uid).WithCause(err)
+		return 0, err
 	}
-	return namespaceItemBo, nil
-}
-
-func (n *Namespace) SelectNamespace(ctx context.Context, req *bo.SelectNamespaceBo) (*bo.SelectNamespaceBoResult, error) {
-	result, err := n.namespaceRepo.SelectNamespace(ctx, req)
-	if err != nil {
-		n.helper.Errorw("msg", "select namespace failed", "error", err, "req", req)
-		return nil, merr.ErrorInternalServer("select namespace failed").WithCause(err)
+	if namespaceItemBo.Status != enum.GlobalStatus_ENABLED {
+		return 0, merr.ErrorForbidden("namespace %s is not allowed", namespace)
 	}
-	return &bo.SelectNamespaceBoResult{
-		Items:   result.Items,
-		Total:   result.Total,
-		LastUID: result.LastUID,
-	}, nil
+	return snowflake.ParseInt64(namespaceItemBo.Uid), nil
 }

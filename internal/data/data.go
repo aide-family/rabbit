@@ -7,7 +7,6 @@ import (
 	_ "github.com/aide-family/magicbox/connect/orm/mysql"
 	_ "github.com/aide-family/magicbox/connect/orm/sqlite"
 	_ "github.com/aide-family/magicbox/domain/auth/v1/gormimpl"
-	_ "github.com/aide-family/magicbox/domain/namespace/v1/fileimpl"
 	_ "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl"
 	_ "github.com/aide-family/magicbox/oauth/feishu"
 	_ "github.com/aide-family/magicbox/oauth/gitee"

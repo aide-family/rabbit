@@ -6,8 +6,8 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	apiv1 "github.com/aide-family/magicbox/api/v1"
 	"github.com/aide-family/rabbit/internal/biz"
-	apiv1 "github.com/aide-family/rabbit/pkg/api/v1"
 )
 
 func NewHealthService(healthBiz *biz.Health) *HealthService {

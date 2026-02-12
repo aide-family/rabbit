@@ -1,14 +1,7 @@
 package repository
 
-import (
-	"context"
-
-	"github.com/bwmarrin/snowflake"
-
-	"github.com/aide-family/rabbit/internal/biz/bo"
-)
+import magicboxapiv1 "github.com/aide-family/magicbox/api/v1"
 
 type Namespace interface {
-	GetNamespace(ctx context.Context, uid snowflake.ID) (*bo.NamespaceItemBo, error)
-	SelectNamespace(ctx context.Context, req *bo.SelectNamespaceBo) (*bo.SelectNamespaceBoResult, error)
+	magicboxapiv1.NamespaceServer
 }
