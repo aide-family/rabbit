@@ -6,20 +6,14 @@ import (
 	nethttp "net/http"
 	"strings"
 
-	"buf.build/go/protoyaml"
 	magicboxapiv1 "github.com/aide-family/magicbox/api/v1"
 	"github.com/aide-family/magicbox/domain/auth/basic"
 	"github.com/aide-family/magicbox/oauth"
-	"github.com/go-kratos/kratos/v2/encoding"
-	"github.com/go-kratos/kratos/v2/encoding/json"
 	"github.com/go-kratos/kratos/v2/transport"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
 	"github.com/google/wire"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.yaml.in/yaml/v2"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/aide-family/rabbit/internal/conf"
 	"github.com/aide-family/rabbit/internal/service"
@@ -29,65 +23,12 @@ import (
 //go:embed swagger
 var docFS embed.FS
 
-type protoYAMLCodec struct {
-	marshalOptions   protoyaml.MarshalOptions
-	unmarshalOptions protoyaml.UnmarshalOptions
-}
-
-func newProtoYAMLCodec() *protoYAMLCodec {
-	return &protoYAMLCodec{
-		marshalOptions: protoyaml.MarshalOptions{
-			UseProtoNames:   true,
-			EmitUnpopulated: false, // 过滤 0 值和空值
-			Indent:          2,
-		},
-		unmarshalOptions: protoyaml.UnmarshalOptions{
-			DiscardUnknown: true,
-		},
-	}
-}
-
-// Marshal implements encoding.Codec.
-func (c *protoYAMLCodec) Marshal(v any) ([]byte, error) {
-	switch m := v.(type) {
-	case protoreflect.ProtoMessage:
-		return c.marshalOptions.Marshal(m)
-	default:
-		return yaml.Marshal(m)
-	}
-}
-
-// Unmarshal implements encoding.Codec.
-func (c *protoYAMLCodec) Unmarshal(data []byte, v any) error {
-	switch m := v.(type) {
-	case protoreflect.ProtoMessage:
-		return c.unmarshalOptions.Unmarshal(data, m)
-	default:
-		return yaml.Unmarshal(data, m)
-	}
-}
-
-// Name implements encoding.Codec.
-func (c *protoYAMLCodec) Name() string {
-	return "yaml"
-}
-
 var (
 	ProviderSetServerAll  = wire.NewSet(NewHTTPServer, NewGRPCServer, NewJobServer, RegisterService)
 	ProviderSetServerHTTP = wire.NewSet(NewHTTPServer, RegisterHTTPService)
 	ProviderSetServerGRPC = wire.NewSet(NewGRPCServer, RegisterGRPCService)
 	ProviderSetServerJob  = wire.NewSet(NewJobServer, RegisterJobService)
 )
-
-// init initializes the json.MarshalOptions.
-func init() {
-	json.MarshalOptions = protojson.MarshalOptions{
-		// UseEnumNumbers:  true, // Emit enum values as numbers instead of their string representation (default is string).
-		UseProtoNames:   true, // Use the field names defined in the proto file as the output field names.
-		EmitUnpopulated: true, // Emit fields even if they are unset or empty.
-	}
-	encoding.RegisterCodec(newProtoYAMLCodec())
-}
 
 type Server interface {
 	transport.Server

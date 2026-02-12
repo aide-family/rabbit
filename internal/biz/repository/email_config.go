@@ -9,7 +9,7 @@ import (
 )
 
 type EmailConfig interface {
-	CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) error
+	CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) (snowflake.ID, error)
 	UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmailConfigBo) error
 	UpdateEmailConfigStatus(ctx context.Context, req *bo.UpdateEmailConfigStatusBo) error
 	DeleteEmailConfig(ctx context.Context, uid snowflake.ID) error

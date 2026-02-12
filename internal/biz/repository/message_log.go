@@ -10,7 +10,7 @@ import (
 )
 
 type MessageLog interface {
-	CreateMessageLog(ctx context.Context, messageLog *bo.MessageLogItemBo) error
+	CreateMessageLog(ctx context.Context, messageLog *bo.CreateMessageLogBo) (snowflake.ID, error)
 	ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*bo.MessageLogItemBo], error)
 	GetMessageLog(ctx context.Context, uid snowflake.ID) (*bo.MessageLogItemBo, error)
 	GetAllMessageLogs(ctx context.Context, status enum.MessageStatus) ([]*bo.MessageLogItemBo, error)
@@ -20,5 +20,7 @@ type MessageLog interface {
 	UpdateMessageLogStatusIf(ctx context.Context, uid snowflake.ID, oldStatus, newStatus enum.MessageStatus) (bool, error)
 	// UpdateMessageLogLastErrorIf 条件更新消息最后错误，只有当前状态匹配时才更新，用于实现 CAS 操作
 	UpdateMessageLogLastErrorIf(ctx context.Context, uid snowflake.ID, oldStatus enum.MessageStatus, lastError string) (bool, error)
+	// UpdateMessageLogStatusSuccessIf 条件更新消息状态为成功，只有当前状态匹配时才更新，用于实现 CAS 操作
+	UpdateMessageLogStatusSuccessIf(ctx context.Context, uid snowflake.ID) (bool, error)
 	MessageLogRetryIncrement(ctx context.Context, uid snowflake.ID) error
 }

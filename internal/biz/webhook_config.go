@@ -26,18 +26,19 @@ type WebhookConfig struct {
 	webhookConfigRepo repository.WebhookConfig
 }
 
-func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhookBo) error {
-	if _, err := w.webhookConfigRepo.GetWebhookConfigByName(ctx, req.Name); err == nil {
-		return merr.ErrorParams("webhook config %s already exists", req.Name)
+func (w *WebhookConfig) CreateWebhook(ctx context.Context, req *bo.CreateWebhookBo) (snowflake.ID, error) {
+	if webhookConfig, err := w.webhookConfigRepo.GetWebhookConfigByName(ctx, req.Name); err == nil {
+		return 0, merr.ErrorParams("webhook config %s already exists, uid: %s", req.Name, webhookConfig.UID)
 	} else if !merr.IsNotFound(err) {
 		w.helper.Errorw("msg", "check webhook config exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternalServer("create webhook config %s failed", req.Name).WithCause(err)
+		return 0, merr.ErrorInternalServer("create webhook config %s failed", req.Name).WithCause(err)
 	}
-	if err := w.webhookConfigRepo.CreateWebhookConfig(ctx, req); err != nil {
+	uid, err := w.webhookConfigRepo.CreateWebhookConfig(ctx, req)
+	if err != nil {
 		w.helper.Errorw("msg", "create webhook config failed", "error", err, "name", req.Name)
-		return merr.ErrorInternalServer("create webhook config %s failed", req.Name).WithCause(err)
+		return 0, merr.ErrorInternalServer("create webhook config %s failed", req.Name).WithCause(err)
 	}
-	return nil
+	return uid, nil
 }
 
 func (w *WebhookConfig) UpdateWebhook(ctx context.Context, req *bo.UpdateWebhookBo) error {

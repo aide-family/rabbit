@@ -9,7 +9,7 @@ import (
 )
 
 type WebhookConfig interface {
-	CreateWebhookConfig(ctx context.Context, req *bo.CreateWebhookBo) error
+	CreateWebhookConfig(ctx context.Context, req *bo.CreateWebhookBo) (snowflake.ID, error)
 	UpdateWebhookConfig(ctx context.Context, req *bo.UpdateWebhookBo) error
 	UpdateWebhookStatus(ctx context.Context, req *bo.UpdateWebhookStatusBo) error
 	DeleteWebhookConfig(ctx context.Context, uid snowflake.ID) error

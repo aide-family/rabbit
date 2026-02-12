@@ -26,18 +26,19 @@ type EmailConfig struct {
 	emailConfigRepo repository.EmailConfig
 }
 
-func (c *EmailConfig) CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) error {
-	if _, err := c.emailConfigRepo.GetEmailConfigByName(ctx, req.Name); err == nil {
-		return merr.ErrorParams("email config %s already exists", req.Name)
+func (c *EmailConfig) CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) (snowflake.ID, error) {
+	if emailConfig, err := c.emailConfigRepo.GetEmailConfigByName(ctx, req.Name); err == nil {
+		return 0, merr.ErrorParams("email config %s already exists, uid: %s", req.Name, emailConfig.UID)
 	} else if !merr.IsNotFound(err) {
 		c.helper.Errorw("msg", "check email config exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternalServer("create email config %s failed", req.Name).WithCause(err)
+		return 0, merr.ErrorInternalServer("create email config %s failed", req.Name).WithCause(err)
 	}
-	if err := c.emailConfigRepo.CreateEmailConfig(ctx, req); err != nil {
+	uid, err := c.emailConfigRepo.CreateEmailConfig(ctx, req)
+	if err != nil {
 		c.helper.Errorw("msg", "create email config failed", "error", err, "name", req.Name)
-		return merr.ErrorInternalServer("create email config %s failed", req.Name).WithCause(err)
+		return 0, merr.ErrorInternalServer("create email config %s failed", req.Name).WithCause(err)
 	}
-	return nil
+	return uid, nil
 }
 
 func (c *EmailConfig) UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmailConfigBo) error {

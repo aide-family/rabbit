@@ -9,7 +9,7 @@ import (
 )
 
 type Template interface {
-	CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) error
+	CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) (snowflake.ID, error)
 	UpdateTemplate(ctx context.Context, req *bo.UpdateTemplateBo) error
 	UpdateTemplateStatus(ctx context.Context, req *bo.UpdateTemplateStatusBo) error
 	DeleteTemplate(ctx context.Context, uid snowflake.ID) error

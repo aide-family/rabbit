@@ -173,8 +173,11 @@ func (t *templateRepository) UpdateTemplateStatus(ctx context.Context, req *bo.U
 }
 
 // CreateTemplate implements [repository.Template].
-func (t *templateRepository) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) error {
+func (t *templateRepository) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) (snowflake.ID, error) {
 	template := query.Template
 	templateDO := convert.ToTemplateDO(ctx, req)
-	return template.WithContext(ctx).Create(templateDO)
+	if err := template.WithContext(ctx).Create(templateDO); err != nil {
+		return 0, err
+	}
+	return templateDO.UID, nil
 }

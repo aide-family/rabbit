@@ -2,10 +2,11 @@
 package bo
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/aide-family/magicbox/encoding"
+	"github.com/aide-family/magicbox/encoding/json"
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/strutil"
@@ -24,22 +25,20 @@ type SendEmailBo struct {
 	Headers     http.Header  `json:"headers"`
 }
 
-func (b *SendEmailBo) ToMessageLog(emailConfig *EmailConfigItemBo) (*MessageLogItemBo, error) {
-	messageBytes, err := json.Marshal(b)
+func (b *SendEmailBo) ToMessageLog(emailConfig *EmailConfigItemBo) (*CreateMessageLogBo, error) {
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
+	messageBytes, err := jsonCodec.Marshal(b)
 	if err != nil {
 		return nil, err
 	}
-	emailConfigBytes, err := json.Marshal(emailConfig)
+	emailConfigBytes, err := jsonCodec.Marshal(emailConfig)
 	if err != nil {
 		return nil, err
 	}
-	return &MessageLogItemBo{
-		SendAt:      time.Now(),
-		Message:     strutil.EncryptString(messageBytes),
-		Config:      strutil.EncryptString(emailConfigBytes),
-		MessageType: enum.MessageType_EMAIL,
-		Status:      enum.MessageStatus_PENDING,
-	}, nil
+	return NewCreateMessageLogBo(strutil.EncryptString(messageBytes), strutil.EncryptString(emailConfigBytes), enum.MessageType_EMAIL), nil
 }
 
 func NewSendEmailBo(req *apiv1.SendEmailRequest) *SendEmailBo {
@@ -67,7 +66,11 @@ type SendEmailWithTemplateBo struct {
 }
 
 func NewSendEmailWithTemplateBo(req *apiv1.SendEmailWithTemplateRequest) (*SendEmailWithTemplateBo, error) {
-	if !json.Valid([]byte(req.JsonData)) {
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
+	if !jsonCodec.Valid([]byte(req.JsonData)) {
 		return nil, merr.ErrorParams("invalid json data")
 	}
 	return &SendEmailWithTemplateBo{
@@ -91,7 +94,11 @@ func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateBo *TemplateItemBo) (*Se
 		return nil, err
 	}
 	var jsonData map[string]any
-	if err := json.Unmarshal(b.JSONData, &jsonData); err != nil {
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
+	if err := jsonCodec.Unmarshal(b.JSONData, &jsonData); err != nil {
 		return nil, merr.ErrorInternalServer("unmarshal json data failed").WithCause(err)
 	}
 

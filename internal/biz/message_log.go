@@ -99,6 +99,15 @@ func (m *MessageLog) CancelMessage(ctx context.Context, uid snowflake.ID) error 
 	return nil
 }
 
-func (m *MessageLog) createMessageLog(ctx context.Context, messageLog *bo.MessageLogItemBo) error {
-	return m.messageLogRepo.CreateMessageLog(ctx, messageLog)
+func (m *MessageLog) createMessageLog(ctx context.Context, messageLog *bo.CreateMessageLogBo) (snowflake.ID, error) {
+	uid, err := m.messageLogRepo.CreateMessageLog(ctx, messageLog)
+	if err != nil {
+		m.helper.Errorw("msg", "create message log failed", "error", err)
+		return 0, err
+	}
+	if err := m.jobBiz.AppendMessage(ctx, uid); err != nil {
+		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
+		return 0, err
+	}
+	return uid, nil
 }

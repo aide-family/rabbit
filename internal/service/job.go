@@ -25,5 +25,5 @@ func (s *JobService) SendMessage(ctx context.Context, req *apiv1.JobSendMessageR
 	if err := s.jobBiz.AppendMessage(ctx, snowflake.ParseInt64(req.Uid)); err != nil {
 		return nil, err
 	}
-	return &apiv1.JobSendReply{Message: "success"}, nil
+	return &apiv1.JobSendReply{Uid: req.Uid}, nil
 }

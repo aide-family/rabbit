@@ -748,7 +748,9 @@ components:
                     type: string
         rabbit.api.v1.CreateEmailConfigReply:
             type: object
-            properties: {}
+            properties:
+                uid:
+                    type: string
         rabbit.api.v1.CreateEmailConfigRequest:
             type: object
             properties:
@@ -765,7 +767,9 @@ components:
                     type: string
         rabbit.api.v1.CreateTemplateReply:
             type: object
-            properties: {}
+            properties:
+                uid:
+                    type: string
         rabbit.api.v1.CreateTemplateRequest:
             type: object
             properties:
@@ -798,7 +802,9 @@ components:
                          }
         rabbit.api.v1.CreateWebhookReply:
             type: object
-            properties: {}
+            properties:
+                uid:
+                    type: string
         rabbit.api.v1.CreateWebhookRequest:
             type: object
             properties:
@@ -869,10 +875,7 @@ components:
         rabbit.api.v1.JobSendReply:
             type: object
             properties:
-                code:
-                    type: integer
-                    format: int32
-                message:
+                uid:
                     type: string
         rabbit.api.v1.ListEmailConfigReply:
             type: object
@@ -1055,10 +1058,7 @@ components:
         rabbit.api.v1.SendReply:
             type: object
             properties:
-                code:
-                    type: integer
-                    format: int32
-                message:
+                uid:
                     type: string
         rabbit.api.v1.SendWebhookRequest:
             type: object

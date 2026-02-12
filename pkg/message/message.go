@@ -63,3 +63,19 @@ func HTMLFormatter(format string, data any) (string, error) {
 	}
 	return resultIoWriter.String(), nil
 }
+
+func NewMessage(messageType enum.MessageType, body []byte) Message {
+	return &defaultMessage{
+		messageType: messageType,
+		body:        body,
+	}
+}
+
+// messageLogBody 实现 message.Message，用于把 messageLog 的 Message 字段传给 sender.Send。
+type defaultMessage struct {
+	messageType enum.MessageType
+	body        []byte
+}
+
+func (m *defaultMessage) Type() enum.MessageType   { return m.messageType }
+func (m *defaultMessage) Marshal() ([]byte, error) { return m.body, nil }

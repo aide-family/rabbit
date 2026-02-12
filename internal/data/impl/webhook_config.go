@@ -176,8 +176,11 @@ func (w *webhookConfigRepository) UpdateWebhookStatus(ctx context.Context, req *
 }
 
 // CreateWebhookConfig implements [repository.WebhookConfig].
-func (w *webhookConfigRepository) CreateWebhookConfig(ctx context.Context, req *bo.CreateWebhookBo) error {
+func (w *webhookConfigRepository) CreateWebhookConfig(ctx context.Context, req *bo.CreateWebhookBo) (snowflake.ID, error) {
 	webhookConfig := query.WebhookConfig
 	webhookConfigDO := convert.ToWebhookConfigDO(ctx, req)
-	return webhookConfig.WithContext(ctx).Create(webhookConfigDO)
+	if err := webhookConfig.WithContext(ctx).Create(webhookConfigDO); err != nil {
+		return 0, err
+	}
+	return webhookConfigDO.UID, nil
 }

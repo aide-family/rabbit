@@ -30,10 +30,13 @@ type emailConfigRepository struct {
 }
 
 // CreateEmailConfig implements [repository.EmailConfig].
-func (e *emailConfigRepository) CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) error {
+func (e *emailConfigRepository) CreateEmailConfig(ctx context.Context, req *bo.CreateEmailConfigBo) (snowflake.ID, error) {
 	emailConfigMutation := query.EmailConfig
-	emailConfigDO := convert.ToEmailConfigDO(ctx, req)
-	return emailConfigMutation.WithContext(ctx).Create(emailConfigDO)
+	emailConfigDo := convert.ToEmailConfigDo(ctx, req)
+	if err := emailConfigMutation.WithContext(ctx).Create(emailConfigDo); err != nil {
+		return 0, err
+	}
+	return emailConfigDo.UID, nil
 }
 
 // DeleteEmailConfig implements [repository.EmailConfig].

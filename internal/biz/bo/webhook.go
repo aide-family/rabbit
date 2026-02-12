@@ -1,9 +1,10 @@
 package bo
 
 import (
-	"encoding/json"
 	"time"
 
+	"github.com/aide-family/magicbox/encoding"
+	"github.com/aide-family/magicbox/encoding/json"
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/strutil"
@@ -207,22 +208,20 @@ type SendWebhookBo struct {
 	Data string       `json:"data"`
 }
 
-func (b *SendWebhookBo) ToMessageLog(webhookConfig *WebhookItemBo) (*MessageLogItemBo, error) {
-	messageBytes, err := json.Marshal(b)
+func (b *SendWebhookBo) ToMessageLog(webhookConfig *WebhookItemBo) (*CreateMessageLogBo, error) {
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
+	messageBytes, err := jsonCodec.Marshal(b)
 	if err != nil {
 		return nil, err
 	}
-	webhookConfigBytes, err := json.Marshal(webhookConfig)
+	webhookConfigBytes, err := jsonCodec.Marshal(webhookConfig)
 	if err != nil {
 		return nil, err
 	}
-	return &MessageLogItemBo{
-		SendAt:      time.Now(),
-		Message:     strutil.EncryptString(messageBytes),
-		Config:      strutil.EncryptString(webhookConfigBytes),
-		MessageType: enum.MessageType(webhookConfig.App),
-		Status:      enum.MessageStatus_PENDING,
-	}, nil
+	return NewCreateMessageLogBo(strutil.EncryptString(messageBytes), strutil.EncryptString(webhookConfigBytes), enum.MessageType(webhookConfig.App)), nil
 }
 
 func NewSendWebhookBo(req *apiv1.SendWebhookRequest) *SendWebhookBo {
@@ -239,7 +238,11 @@ type SendWebhookWithTemplateBo struct {
 }
 
 func NewSendWebhookWithTemplateBo(req *apiv1.SendWebhookWithTemplateRequest) (*SendWebhookWithTemplateBo, error) {
-	if !json.Valid([]byte(req.JsonData)) {
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
+	if !jsonCodec.Valid([]byte(req.JsonData)) {
 		return nil, merr.ErrorParams("invalid json data")
 	}
 	return &SendWebhookWithTemplateBo{
@@ -261,7 +264,11 @@ func (b *SendWebhookWithTemplateBo) ToSendWebhookBo(templateDo *TemplateItemBo) 
 		return nil, err
 	}
 	var jsonData map[string]any
-	if err := json.Unmarshal(b.JSONData, &jsonData); err != nil {
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
+	if err := jsonCodec.Unmarshal(b.JSONData, &jsonData); err != nil {
 		return nil, merr.ErrorInternalServer("unmarshal json data failed").WithCause(err)
 	}
 

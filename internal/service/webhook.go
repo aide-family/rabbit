@@ -23,10 +23,11 @@ type WebhookService struct {
 
 func (s *WebhookService) CreateWebhook(ctx context.Context, req *apiv1.CreateWebhookRequest) (*apiv1.CreateWebhookReply, error) {
 	createBo := bo.NewCreateWebhookBo(req)
-	if err := s.webhookConfigBiz.CreateWebhook(ctx, createBo); err != nil {
+	uid, err := s.webhookConfigBiz.CreateWebhook(ctx, createBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CreateWebhookReply{}, nil
+	return &apiv1.CreateWebhookReply{Uid: uid.Int64()}, nil
 }
 
 func (s *WebhookService) UpdateWebhook(ctx context.Context, req *apiv1.UpdateWebhookRequest) (*apiv1.UpdateWebhookReply, error) {

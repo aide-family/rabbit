@@ -26,18 +26,19 @@ type Template struct {
 	templateRepo repository.Template
 }
 
-func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) error {
-	if _, err := t.templateRepo.GetTemplateByName(ctx, req.Name); err == nil {
-		return merr.ErrorParams("template %s already exists", req.Name)
+func (t *Template) CreateTemplate(ctx context.Context, req *bo.CreateTemplateBo) (snowflake.ID, error) {
+	if template, err := t.templateRepo.GetTemplateByName(ctx, req.Name); err == nil {
+		return 0, merr.ErrorParams("template %s already exists, uid: %s", req.Name, template.UID)
 	} else if !merr.IsNotFound(err) {
 		t.helper.Errorw("msg", "check template exists failed", "error", err, "name", req.Name)
-		return merr.ErrorInternalServer("create template %s failed", req.Name).WithCause(err)
+		return 0, merr.ErrorInternalServer("create template %s failed", req.Name).WithCause(err)
 	}
-	if err := t.templateRepo.CreateTemplate(ctx, req); err != nil {
+	uid, err := t.templateRepo.CreateTemplate(ctx, req)
+	if err != nil {
 		t.helper.Errorw("msg", "create template failed", "error", err, "name", req.Name)
-		return merr.ErrorInternalServer("create template %s failed", req.Name).WithCause(err)
+		return 0, merr.ErrorInternalServer("create template %s failed", req.Name).WithCause(err)
 	}
-	return nil
+	return uid, nil
 }
 
 func (t *Template) UpdateTemplate(ctx context.Context, req *bo.UpdateTemplateBo) error {

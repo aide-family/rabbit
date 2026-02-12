@@ -1,10 +1,11 @@
 package bo
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/aide-family/magicbox/config"
+	"github.com/aide-family/magicbox/encoding"
+	"github.com/aide-family/magicbox/encoding/json"
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/merr"
 	"github.com/aide-family/magicbox/strutil"
@@ -15,18 +16,16 @@ import (
 )
 
 type CreateMessageLogBo struct {
-	SendAt      time.Time
-	Message     string
+	Message     strutil.EncryptString
+	Config      strutil.EncryptString
 	MessageType enum.MessageType
-	Status      enum.MessageStatus
 }
 
-func NewCreateMessageLogBo(sendAt time.Time, message string, messageType enum.MessageType, status enum.MessageStatus) *CreateMessageLogBo {
+func NewCreateMessageLogBo(message, config strutil.EncryptString, messageType enum.MessageType) *CreateMessageLogBo {
 	return &CreateMessageLogBo{
-		SendAt:      sendAt,
 		Message:     message,
+		Config:      config,
 		MessageType: messageType,
-		Status:      status,
 	}
 }
 
@@ -65,34 +64,27 @@ func (b *MessageLogItemBo) ToAPIV1MessageLogItem() *apiv1.MessageLogItem {
 func (b *MessageLogItemBo) ToMessageConfig() (*config.MessageConfig, error) {
 	configBytes := []byte(string(b.Config))
 	msgType := b.MessageType
+	jsonCodec, ok := encoding.GetCodec(json.Name)
+	if !ok {
+		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
+	}
 	switch {
 	case msgType == enum.MessageType_EMAIL:
-		var boConfig EmailConfigItemBo
-		if err := json.Unmarshal(configBytes, &boConfig); err != nil {
+		var messageEmailConfig config.MessageEmailConfig
+		if err := jsonCodec.Unmarshal(configBytes, &messageEmailConfig); err != nil {
 			return nil, merr.ErrorInternalServer("unmarshal email config failed: %v", err)
 		}
-		options, err := anypb.New(&config.MessageEmailConfig{
-			Host:     boConfig.Host,
-			Port:     boConfig.Port,
-			Username: boConfig.Username,
-			Password: boConfig.Password,
-		})
+		options, err := anypb.New(&messageEmailConfig)
 		if err != nil {
 			return nil, err
 		}
 		return &config.MessageConfig{MessageType: msgType, Options: options}, nil
 	case msgType >= enum.MessageType_WEBHOOK_OTHER && msgType < 3000:
-		var boConfig WebhookItemBo
-		if err := json.Unmarshal(configBytes, &boConfig); err != nil {
+		var messageWebhookConfig config.MessageWebhookConfig
+		if err := jsonCodec.Unmarshal(configBytes, &messageWebhookConfig); err != nil {
 			return nil, merr.ErrorInternalServer("unmarshal webhook config failed: %v", err)
 		}
-		options, err := anypb.New(&config.MessageWebhookConfig{
-			App:     boConfig.App,
-			Url:     boConfig.URL,
-			Secret:  boConfig.Secret,
-			Method:  boConfig.Method,
-			Headers: boConfig.Headers,
-		})
+		options, err := anypb.New(&messageWebhookConfig)
 		if err != nil {
 			return nil, err
 		}

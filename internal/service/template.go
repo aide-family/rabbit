@@ -26,10 +26,11 @@ func (s *TemplateService) CreateTemplate(ctx context.Context, req *apiv1.CreateT
 	if err != nil {
 		return nil, err
 	}
-	if err := s.templateBiz.CreateTemplate(ctx, createBo); err != nil {
+	uid, err := s.templateBiz.CreateTemplate(ctx, createBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CreateTemplateReply{}, nil
+	return &apiv1.CreateTemplateReply{Uid: uid.Int64()}, nil
 }
 
 func (s *TemplateService) UpdateTemplate(ctx context.Context, req *apiv1.UpdateTemplateRequest) (*apiv1.UpdateTemplateReply, error) {

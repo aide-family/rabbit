@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aide-family/magicbox/contextx"
+	"github.com/aide-family/magicbox/enum"
 
 	"github.com/aide-family/rabbit/internal/biz/bo"
 	"github.com/aide-family/rabbit/internal/data/impl/do"
@@ -25,16 +26,13 @@ func ToMessageLogItemBo(messageLogDo *do.MessageLog) *bo.MessageLogItemBo {
 	}
 }
 
-func ToMessageLogDO(ctx context.Context, messageLogBo *bo.MessageLogItemBo) *do.MessageLog {
+func ToMessageLogDo(ctx context.Context, messageLog *bo.CreateMessageLogBo) *do.MessageLog {
 	model := &do.MessageLog{
 		NamespaceUID: contextx.GetNamespace(ctx),
-		SendAt:       messageLogBo.SendAt,
-		Message:      messageLogBo.Message,
-		Config:       messageLogBo.Config,
-		Type:         messageLogBo.MessageType,
-		Status:       messageLogBo.Status,
-		RetryTotal:   messageLogBo.RetryTotal,
-		LastError:    messageLogBo.LastError,
+		Message:      messageLog.Message,
+		Config:       messageLog.Config,
+		Type:         messageLog.MessageType,
+		Status:       enum.MessageStatus_PENDING,
 	}
 	model.WithCreator(contextx.GetUserUID(ctx))
 	return model

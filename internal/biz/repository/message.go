@@ -8,7 +8,6 @@ import (
 
 type Message interface {
 	AppendMessage(ctx context.Context, messageUID snowflake.ID) error
-	SendMessage(ctx context.Context, messageUID snowflake.ID) error
 	Stop(ctx context.Context) error
 	Start(ctx context.Context) error
 }

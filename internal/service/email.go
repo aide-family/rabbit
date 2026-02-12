@@ -24,10 +24,11 @@ type EmailService struct {
 
 func (s *EmailService) CreateEmailConfig(ctx context.Context, req *apiv1.CreateEmailConfigRequest) (*apiv1.CreateEmailConfigReply, error) {
 	createEmailConfigBo := bo.NewCreateEmailConfigBo(req)
-	if err := s.emailConfigBiz.CreateEmailConfig(ctx, createEmailConfigBo); err != nil {
+	uid, err := s.emailConfigBiz.CreateEmailConfig(ctx, createEmailConfigBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CreateEmailConfigReply{}, nil
+	return &apiv1.CreateEmailConfigReply{Uid: uid.Int64()}, nil
 }
 
 func (s *EmailService) UpdateEmailConfig(ctx context.Context, req *apiv1.UpdateEmailConfigRequest) (*apiv1.UpdateEmailConfigReply, error) {

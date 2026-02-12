@@ -12,7 +12,7 @@ import (
 	"github.com/aide-family/rabbit/internal/data/impl/do"
 )
 
-func ToEmailConfigDO(ctx context.Context, req *bo.CreateEmailConfigBo) *do.EmailConfig {
+func ToEmailConfigDo(ctx context.Context, req *bo.CreateEmailConfigBo) *do.EmailConfig {
 	model := &do.EmailConfig{
 		NamespaceUID: contextx.GetNamespace(ctx),
 		Name:         req.Name,

@@ -215,26 +215,47 @@ func (m *messageLogRepository) UpdateMessageLogLastErrorIf(ctx context.Context, 
 	return result.RowsAffected == 1, nil
 }
 
-// CreateMessageLog implements [repository.MessageLog].
-func (m *messageLogRepository) CreateMessageLog(ctx context.Context, req *bo.MessageLogItemBo) error {
-	tableName, err := m.getTableName(ctx, req)
+func (m *messageLogRepository) UpdateMessageLogStatusSuccessIf(ctx context.Context, uid snowflake.ID) (bool, error) {
+	namespace := contextx.GetNamespace(ctx)
+	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
+	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
+		return false, merr.ErrorNotFound("message log %d not found", uid.Int64())
+	}
+	bizQuery := query.Use(m.DB().Table(tableName))
+	messageLog := bizQuery.MessageLog
+	messageLogTable := messageLog.As(tableName)
+	wrappers := messageLog.WithContext(ctx)
+	wheres := []gen.Condition{
+		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
+	}
+	wrappers = wrappers.Where(wheres...)
+	result, err := wrappers.UpdateColumnSimple(messageLogTable.Status.Value(int32(enum.MessageStatus_SENT)))
 	if err != nil {
-		return err
+		return false, err
+	}
+	return result.RowsAffected == 1, nil
+}
+
+// CreateMessageLog implements [repository.MessageLog].
+func (m *messageLogRepository) CreateMessageLog(ctx context.Context, req *bo.CreateMessageLogBo) (snowflake.ID, error) {
+	messageLogDo := convert.ToMessageLogDo(ctx, req)
+	tableName, err := m.getTableName(ctx, time.Now())
+	if err != nil {
+		return 0, err
 	}
 	bizQuery := query.Use(m.DB().Table(tableName))
 	messageLog := bizQuery.MessageLog
 	mutation := messageLog.WithContext(ctx)
-	messageLogDO := convert.ToMessageLogDO(ctx, req)
-	if err := mutation.Create(messageLogDO); err != nil {
-		return err
+	if err := mutation.Create(messageLogDo); err != nil {
+		return 0, err
 	}
-	req.UID = messageLogDO.UID
-	return nil
+	return messageLogDo.UID, nil
 }
 
-func (m *messageLogRepository) getTableName(ctx context.Context, req *bo.MessageLogItemBo) (string, error) {
+func (m *messageLogRepository) getTableName(ctx context.Context, timeAt time.Time) (string, error) {
 	namespace := contextx.GetNamespace(ctx)
-	tableName := do.GenMessageLogTableName(namespace, req.SendAt)
+	tableName := do.GenMessageLogTableName(namespace, timeAt)
 
 	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err == nil && do.HasTable(m.DB(), tableName) {
 		return tableName, nil

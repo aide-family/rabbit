@@ -29,15 +29,16 @@ func (s *SenderService) SendMessage(ctx context.Context, req *apiv1.SendMessageR
 	if err := s.messageBiz.SendMessage(ctx, snowflake.ParseInt64(req.Uid)); err != nil {
 		return nil, err
 	}
-	return &apiv1.SendReply{}, nil
+	return &apiv1.SendReply{Uid: req.Uid}, nil
 }
 
 func (s *SenderService) SendEmail(ctx context.Context, req *apiv1.SendEmailRequest) (*apiv1.SendReply, error) {
 	sendEmailBo := bo.NewSendEmailBo(req)
-	if err := s.emailBiz.AppendEmailMessage(ctx, sendEmailBo); err != nil {
+	uid, err := s.emailBiz.AppendEmailMessage(ctx, sendEmailBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.SendReply{}, nil
+	return &apiv1.SendReply{Uid: uid.Int64()}, nil
 }
 
 func (s *SenderService) SendEmailWithTemplate(ctx context.Context, req *apiv1.SendEmailWithTemplateRequest) (*apiv1.SendReply, error) {
@@ -45,18 +46,20 @@ func (s *SenderService) SendEmailWithTemplate(ctx context.Context, req *apiv1.Se
 	if err != nil {
 		return nil, err
 	}
-	if err := s.emailBiz.AppendEmailMessageWithTemplate(ctx, sendEmailWithTemplateBo); err != nil {
+	uid, err := s.emailBiz.AppendEmailMessageWithTemplate(ctx, sendEmailWithTemplateBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.SendReply{}, nil
+	return &apiv1.SendReply{Uid: uid.Int64()}, nil
 }
 
 func (s *SenderService) SendWebhook(ctx context.Context, req *apiv1.SendWebhookRequest) (*apiv1.SendReply, error) {
 	sendWebhookBo := bo.NewSendWebhookBo(req)
-	if err := s.webhookBiz.AppendWebhookMessage(ctx, sendWebhookBo); err != nil {
+	uid, err := s.webhookBiz.AppendWebhookMessage(ctx, sendWebhookBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.SendReply{}, nil
+	return &apiv1.SendReply{Uid: uid.Int64()}, nil
 }
 
 func (s *SenderService) SendWebhookWithTemplate(ctx context.Context, req *apiv1.SendWebhookWithTemplateRequest) (*apiv1.SendReply, error) {
@@ -64,8 +67,9 @@ func (s *SenderService) SendWebhookWithTemplate(ctx context.Context, req *apiv1.
 	if err != nil {
 		return nil, err
 	}
-	if err := s.webhookBiz.AppendWebhookMessageWithTemplate(ctx, sendWebhookWithTemplateBo); err != nil {
+	uid, err := s.webhookBiz.AppendWebhookMessageWithTemplate(ctx, sendWebhookWithTemplateBo)
+	if err != nil {
 		return nil, err
 	}
-	return &apiv1.SendReply{}, nil
+	return &apiv1.SendReply{Uid: uid.Int64()}, nil
 }
