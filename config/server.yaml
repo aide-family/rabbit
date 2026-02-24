@@ -69,6 +69,7 @@ jobCore:
   workerTotal: ${MOON_RABBIT_JOB_CORE_WORKER_TOTAL:10}
   timeout: "${MOON_RABBIT_JOB_CORE_TIMEOUT:10s}"
   bufferSize: ${MOON_RABBIT_JOB_CORE_BUFFER_SIZE:1000}
+  maxRetry: ${MOON_RABBIT_JOB_CORE_MAX_RETRY:2}
 
 oauth2:
   enable: ${MOON_RABBIT_OAUTH2_ENABLE:true}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/aide-family/magicbox/contextx"
@@ -26,6 +27,10 @@ import (
 	"github.com/aide-family/rabbit/internal/data/impl/do"
 	"github.com/aide-family/rabbit/internal/data/impl/query"
 )
+
+// messageLogTableCreateMu serializes creation of message_logs base table and rename,
+// to avoid "index already exists" when GORM CreateTable runs concurrently (SQLite does not use CREATE INDEX IF NOT EXISTS).
+var messageLogTableCreateMu sync.Mutex
 
 func NewMessageLogRepository(d *data.Data) repository.MessageLog {
 	query.SetDefault(d.DB())
@@ -250,6 +255,7 @@ func (m *messageLogRepository) UpdateMessageLogStatusSendingIf(ctx context.Conte
 	wheres := []gen.Condition{
 		messageLogTable.UID.Eq(uid.Int64()),
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
+		messageLogTable.Status.Eq(int32(oldStatus)),
 	}
 	wrappers = wrappers.Where(wheres...)
 	columns := []field.AssignExpr{
@@ -287,6 +293,8 @@ func (m *messageLogRepository) getTableName(ctx context.Context, timeAt time.Tim
 		return tableName, nil
 	}
 	if !do.HasTable(m.DB(), tableName) {
+		messageLogTableCreateMu.Lock()
+		defer messageLogTableCreateMu.Unlock()
 		initModel := &do.MessageLog{}
 		oldTableName := initModel.TableName()
 		if !do.HasTable(m.DB(), oldTableName) {

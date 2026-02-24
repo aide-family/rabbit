@@ -2,11 +2,11 @@ package impl
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"time"
 
-	magicboxapiv1 "github.com/aide-family/magicbox/api/v1"
 	"github.com/aide-family/magicbox/config"
 	"github.com/aide-family/magicbox/connect"
 	"github.com/aide-family/magicbox/contextx"
@@ -30,17 +30,16 @@ func NewMessageRepository(
 	c *conf.Bootstrap,
 	d *data.Data,
 	messageLogRepo repository.MessageLog,
-	namespaceRepo repository.Namespace,
 ) (repository.Message, error) {
 	jobCore := c.GetJobCore()
 	repo := &messageRepository{
 		Data:           d,
 		messageLogRepo: messageLogRepo,
-		namespaceRepo:  namespaceRepo,
 		clusters:       safety.NewSyncMap(make(map[string]ClusterSender)),
 		messageChan:    make(chan *state.MessageTask, jobCore.GetBufferSize()),
 		stopChan:       make(chan struct{}),
 		workerTotal:    int(jobCore.GetWorkerTotal()),
+		maxRetryCount:  int(jobCore.GetMaxRetry()),
 		timeout:        jobCore.GetTimeout().AsDuration(),
 		wg:             sync.WaitGroup{},
 	}
@@ -52,7 +51,7 @@ func NewMessageRepository(
 	state.RegisterMessageTaskProcess(enum.MessageStatus_CANCELLED, repo.cancelledMessageTaskProcess)
 	for _, value := range enum.MessageStatus_value {
 		status := enum.MessageStatus(value)
-		state.RegisterMessageTaskState(status, state.NewMessageTaskState(status))
+		state.RegisterMessageTaskState(status, state.NewMessageTaskState(status, repo.timeout))
 	}
 
 	query.SetDefault(d.DB())
@@ -62,129 +61,112 @@ func NewMessageRepository(
 	if err := repo.Start(context.Background()); err != nil {
 		return nil, err
 	}
-	if err := repo.loadMessageLogs(); err != nil {
-		return nil, err
-	}
 	d.AppendClose("messageRepo", func() error { return repo.Stop(context.Background()) })
 	return repo, nil
 }
 
 type messageRepository struct {
 	messageLogRepo repository.MessageLog
-	namespaceRepo  repository.Namespace
 	stopChan       chan struct{}
 	messageChan    chan *state.MessageTask
 	wg             sync.WaitGroup
 	workerTotal    int
 	timeout        time.Duration
 	clusters       *safety.SyncMap[string, ClusterSender]
+	maxRetryCount  int
 	*data.Data
 }
 
-func (m *messageRepository) pendingMessageTaskProcess(task *state.MessageTask) (enum.MessageStatus, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	defer cancel()
-	ctx = contextx.WithNamespace(ctx, task.NamespaceUID)
-	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, task.MessageUID)
+func (m *messageRepository) unknownMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
+	changed, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, task.MessageUID, enum.MessageStatus_MessageStatus_UNKNOWN, enum.MessageStatus_PENDING)
 	if err != nil {
-		return 0, false
+		return err
 	}
-
-	if messageLog.Status != enum.MessageStatus_PENDING {
-		return 0, false
+	if !changed {
+		return nil
 	}
-	changed, err := m.messageLogRepo.UpdateMessageLogStatusSendingIf(ctx, messageLog.UID, enum.MessageStatus_PENDING)
-	if err != nil {
-		return 0, false
-	}
-
-	return enum.MessageStatus_SENDING, changed
+	task.SetNextStatus(enum.MessageStatus_PENDING)
+	return nil
 }
 
-func (m *messageRepository) sendingMessageTaskProcess(task *state.MessageTask) (enum.MessageStatus, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	defer cancel()
-	ctx = contextx.WithNamespace(ctx, task.NamespaceUID)
+func (m *messageRepository) pendingMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
+	changed, err := m.messageLogRepo.UpdateMessageLogStatusSendingIf(ctx, task.MessageUID, enum.MessageStatus_PENDING)
+	if err != nil {
+		return err
+	}
+	if !changed {
+		return nil
+	}
+	task.SetNextStatus(enum.MessageStatus_SENDING)
+	return nil
+}
+
+func (m *messageRepository) sendingMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
 	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, task.MessageUID)
 	if err != nil {
-		return 0, false
+		return err
 	}
-
-	if messageLog.Status != enum.MessageStatus_SENDING {
-		return 0, false
-	}
-
 	driver, ok := message.GetDriver(messageLog.MessageType)
 	if !ok {
-		return 0, false
+		return merr.ErrorInternalServer("message driver not found, message type %s", messageLog.MessageType)
 	}
 	msgConfig, err := messageLog.ToMessageConfig()
 	if err != nil {
-		return 0, false
+		return merr.ErrorInternalServer("message config convert failed, message type %s, error %v", messageLog.MessageType, err)
 	}
 	sender, err := driver(msgConfig)
 	if err != nil {
-		return 0, false
+		return merr.ErrorInternalServer("message driver create failed, message type %s, error %v", messageLog.MessageType, err)
 	}
 	msg := message.NewMessage(messageLog.MessageType, []byte(messageLog.Message))
-	if err := sender.Send(ctx, msg); err != nil {
-		changed, err := m.messageLogRepo.UpdateMessageLogLastErrorIf(ctx, task.MessageUID, enum.MessageStatus_SENDING, err.Error())
-		if err != nil {
-			return 0, false
+	if err = sender.Send(ctx, msg); err != nil {
+		changed, _err := m.messageLogRepo.UpdateMessageLogLastErrorIf(ctx, task.MessageUID, enum.MessageStatus_SENDING, err.Error())
+		if _err != nil {
+			return errors.Join(err, _err)
 		}
-		return enum.MessageStatus_FAILED, changed
+		if changed {
+			task.SetNextStatus(enum.MessageStatus_FAILED)
+		}
+		return nil
 	}
 	changed, err := m.messageLogRepo.UpdateMessageLogStatusSuccessIf(ctx, task.MessageUID)
 	if err != nil {
-		return 0, false
+		return err
 	}
-	return enum.MessageStatus_SENT, changed
+	if changed {
+		task.SetNextStatus(enum.MessageStatus_SENT)
+	}
+
+	return nil
 }
 
-func (m *messageRepository) sentMessageTaskProcess(task *state.MessageTask) (enum.MessageStatus, bool) {
-	return 0, false
+func (m *messageRepository) sentMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
+	task.StopNext()
+	return nil
 }
 
-func (m *messageRepository) cancelledMessageTaskProcess(task *state.MessageTask) (enum.MessageStatus, bool) {
-	return 0, false
+func (m *messageRepository) cancelledMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
+	task.StopNext()
+	return nil
 }
 
-func (m *messageRepository) failedMessageTaskProcess(task *state.MessageTask) (enum.MessageStatus, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	defer cancel()
-	ctx = contextx.WithNamespace(ctx, task.NamespaceUID)
-	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, task.MessageUID)
-	if err != nil {
-		return 0, false
+func (m *messageRepository) failedMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
+	if task.IsMaxRetry() {
+		task.StopNext()
+		return nil
 	}
-	if messageLog.Status != enum.MessageStatus_FAILED || task.IsMaxRetry() {
-		return 0, false
-	}
+
 	changed, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, task.MessageUID, enum.MessageStatus_FAILED, enum.MessageStatus_PENDING)
 	if err != nil {
-		return 0, false
+		return err
 	}
 
-	return enum.MessageStatus_PENDING, changed
-}
-
-func (m *messageRepository) unknownMessageTaskProcess(task *state.MessageTask) (enum.MessageStatus, bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
-	defer cancel()
-	ctx = contextx.WithNamespace(ctx, task.NamespaceUID)
-	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, task.MessageUID)
-	if err != nil {
-		return 0, false
+	if !changed {
+		task.StopNext()
+		return nil
 	}
-	if messageLog.Status == enum.MessageStatus_MessageStatus_UNKNOWN {
-		changed, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, task.MessageUID, enum.MessageStatus_MessageStatus_UNKNOWN, enum.MessageStatus_PENDING)
-		if err != nil {
-			return 0, false
-		}
-		return enum.MessageStatus_PENDING, changed
-	}
-
-	return messageLog.Status, true
+	task.Retry()
+	return nil
 }
 
 // AppendMessage implements [repository.Message].
@@ -193,74 +175,30 @@ func (m *messageRepository) AppendMessage(ctx context.Context, messageUID snowfl
 		NamespaceUID: contextx.GetNamespace(ctx),
 		MessageUID:   messageUID,
 	}
+	return m.appendMessageToChannel(ctx, task)
+}
+
+func (m *messageRepository) appendMessageToChannel(ctx context.Context, task *state.MessageTask) error {
+	task.AvailableRetryCount(m.maxRetryCount)
 	select {
 	case m.messageChan <- task:
-		klog.Context(ctx).Debugw("msg", "append message success", "messageUID", messageUID)
+		klog.Context(ctx).Debugw("msg", "append message success", "task", task)
 		return nil
 	default:
-		klog.Context(ctx).Debugw("msg", "append message channel full", "messageUID", messageUID)
+		klog.Context(ctx).Debugw("msg", "append message channel full", "task", task)
 		if task.IsMaxRetry() {
 			klog.Context(ctx).Warnw("msg", "append message retry count reached max", "task", task)
 			return nil
 		}
 
 		for _, cluster := range m.clusters.Values() {
-			if err := cluster.Send(ctx, messageUID); err != nil {
+			if err := cluster.Send(ctx, task.MessageUID); err != nil {
 				klog.Warnw("msg", "send message to cluster failed", "error", err, "cluster", cluster)
 			}
 		}
 		klog.Context(ctx).Debugw("msg", "append message retry", "task", task)
-		task.RetryIncrement()
-		return m.AppendMessage(ctx, messageUID)
-	}
-}
-
-func (m *messageRepository) loadMessageLogs() error {
-	req := &magicboxapiv1.SelectNamespaceRequest{
-		Status: enum.GlobalStatus_ENABLED,
-		Limit:  1000,
-	}
-	wg := sync.WaitGroup{}
-	for {
-		selectNamespaceBoResult, err := m.namespaceRepo.SelectNamespace(context.Background(), req)
-		if err != nil {
-			return err
-		}
-
-		wg.Go(func() {
-			bufferChan := make(chan struct{}, 3)
-			for _, namespace := range selectNamespaceBoResult.Items {
-				bufferChan <- struct{}{}
-				go func(namespaceUID snowflake.ID) {
-					m.loadMessageLogsForNamespace(namespaceUID)
-					<-bufferChan
-				}(snowflake.ParseInt64(namespace.Value))
-			}
-		})
-		if !selectNamespaceBoResult.HasMore {
-			break
-		}
-		req.LastUID = selectNamespaceBoResult.LastUID
-	}
-
-	wg.Wait()
-	return nil
-}
-
-func (m *messageRepository) loadMessageLogsForNamespace(namespaceUID snowflake.ID) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	ctx = contextx.WithNamespace(ctx, namespaceUID)
-	messageLogs, err := m.messageLogRepo.GetAllMessageLogs(ctx, enum.MessageStatus_PENDING)
-	if err != nil {
-		klog.Warnw("msg", "load message logs for namespace failed", "error", err, "namespaceUID", namespaceUID)
-		return
-	}
-	for _, messageLog := range messageLogs {
-		m.messageChan <- &state.MessageTask{
-			NamespaceUID: messageLog.NamespaceUID,
-			MessageUID:   messageLog.UID,
-		}
+		task.Retry()
+		return m.appendMessageToChannel(ctx, task)
 	}
 }
 
@@ -290,7 +228,7 @@ func (m *messageRepository) processMessageTask(task *state.MessageTask) {
 		klog.Warnw("msg", "message task state not found", "status", messageLog.Status)
 		return
 	}
-	messageTaskState.Process(ctx, task)
+	messageTaskState.Process(task)
 }
 
 // Start implements [repository.Message].

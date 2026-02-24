@@ -15,20 +15,23 @@ import (
 
 func NewMessageLog(
 	messageLogRepo repository.MessageLog,
+	messageRetryLogRepo repository.MessageRetryLog,
 	jobBiz *Job,
 	helper *klog.Helper,
 ) *MessageLog {
 	return &MessageLog{
-		messageLogRepo: messageLogRepo,
-		jobBiz:         jobBiz,
-		helper:         klog.NewHelper(klog.With(helper.Logger(), "biz", "messageLog")),
+		messageLogRepo:      messageLogRepo,
+		messageRetryLogRepo: messageRetryLogRepo,
+		jobBiz:              jobBiz,
+		helper:              klog.NewHelper(klog.With(helper.Logger(), "biz", "messageLog")),
 	}
 }
 
 type MessageLog struct {
-	helper         *klog.Helper
-	messageLogRepo repository.MessageLog
-	jobBiz         *Job
+	helper              *klog.Helper
+	messageLogRepo      repository.MessageLog
+	messageRetryLogRepo repository.MessageRetryLog
+	jobBiz              *Job
 }
 
 func (m *MessageLog) ListMessageLog(ctx context.Context, req *bo.ListMessageLogBo) (*bo.PageResponseBo[*bo.MessageLogItemBo], error) {
@@ -63,14 +66,18 @@ func (m *MessageLog) RetryMessage(ctx context.Context, uid snowflake.ID) error {
 	}
 	if slices.Contains([]enum.MessageStatus{enum.MessageStatus_SENT, enum.MessageStatus_SENDING, enum.MessageStatus_CANCELLED}, messageLog.Status) {
 		m.helper.Debugw("msg", "message already sent or sending or cancelled", "uid", uid, "status", messageLog.Status)
-		return nil
+		return merr.ErrorParams("message status is %s, cannot retry", messageLog.Status)
+	}
+	if err := m.messageLogRepo.MessageLogRetryIncrement(ctx, uid); err != nil {
+		m.helper.Warnw("msg", "increment message retry failed", "error", err, "uid", uid)
 	}
 	if err := m.jobBiz.AppendMessage(ctx, uid); err != nil {
 		m.helper.Errorw("msg", "append message failed", "error", err, "uid", uid)
 		return merr.ErrorInternalServer("append message failed")
 	}
-	if err := m.messageLogRepo.MessageLogRetryIncrement(ctx, uid); err != nil {
-		m.helper.Warnw("msg", "increment message retry failed", "error", err, "uid", uid)
+	if err := m.messageRetryLogRepo.CreateMessageRetryLog(ctx, messageLog); err != nil {
+		m.helper.Errorw("msg", "create message retry log failed", "error", err, "uid", uid)
+		return merr.ErrorInternalServer("create message retry log failed")
 	}
 	return nil
 }

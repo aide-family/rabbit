@@ -13,4 +13,5 @@ var ProviderSetImpl = wire.NewSet(
 	NewMessageLogRepository,
 	NewMessageRepository,
 	NewTemplateRepository,
+	NewMessageRetryLogRepository,
 )

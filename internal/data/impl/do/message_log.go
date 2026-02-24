@@ -31,6 +31,16 @@ func (m *MessageLog) TableName() string {
 	return TableNameMessageLog
 }
 
+func (m *MessageLog) BeforeCreate(tx *gorm.DB) (err error) {
+	if err := m.BaseModel.BeforeCreate(tx); err != nil {
+		return err
+	}
+	if m.SendAt.IsZero() {
+		m.SendAt = time.Now()
+	}
+	return nil
+}
+
 func GenMessageLogTableName(namespace snowflake.ID, sendAt time.Time) string {
 	weekStart := getFirstMonday(sendAt)
 	return strings.Join([]string{TableNameMessageLog, namespace.String(), weekStart.Format("20060102")}, "__")

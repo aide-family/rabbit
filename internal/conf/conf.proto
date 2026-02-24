@@ -46,4 +46,5 @@ message JobCore {
 	int32 workerTotal = 1;
 	google.protobuf.Duration timeout = 2;
 	uint32 bufferSize = 3;
+	uint32 maxRetry = 4;
 }
