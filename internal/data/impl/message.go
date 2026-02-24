@@ -12,6 +12,7 @@ import (
 	"github.com/aide-family/magicbox/contextx"
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/merr"
+	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
 	"github.com/bwmarrin/snowflake"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -36,6 +37,7 @@ func NewMessageRepository(
 		Data:           d,
 		messageLogRepo: messageLogRepo,
 		namespaceRepo:  namespaceRepo,
+		clusters:       safety.NewSyncMap(make(map[string]ClusterSender)),
 		messageChan:    make(chan *state.MessageTask, jobCore.GetBufferSize()),
 		stopChan:       make(chan struct{}),
 		workerTotal:    int(jobCore.GetWorkerTotal()),
@@ -75,8 +77,7 @@ type messageRepository struct {
 	wg             sync.WaitGroup
 	workerTotal    int
 	timeout        time.Duration
-	clustersMu     sync.RWMutex
-	clusters       []ClusterSender
+	clusters       *safety.SyncMap[string, ClusterSender]
 	*data.Data
 }
 
@@ -202,9 +203,8 @@ func (m *messageRepository) AppendMessage(ctx context.Context, messageUID snowfl
 			klog.Context(ctx).Warnw("msg", "append message retry count reached max", "task", task)
 			return nil
 		}
-		m.clustersMu.RLock()
-		defer m.clustersMu.RUnlock()
-		for _, cluster := range m.clusters {
+
+		for _, cluster := range m.clusters.Values() {
 			if err := cluster.Send(ctx, messageUID); err != nil {
 				klog.Warnw("msg", "send message to cluster failed", "error", err, "cluster", cluster)
 			}
@@ -310,9 +310,7 @@ func (m *messageRepository) Stop(_ context.Context) error {
 	close(m.stopChan)
 	m.wg.Wait()
 	klog.Infow("msg", "message worker stopped")
-	m.clustersMu.RLock()
-	defer m.clustersMu.RUnlock()
-	for _, cluster := range m.clusters {
+	for _, cluster := range m.clusters.Values() {
 		if err := cluster.Close(); err != nil {
 			klog.Warnw("msg", "close cluster failed", "error", err, "name", cluster.Name())
 		}
@@ -359,11 +357,7 @@ func (c *clusterSender) Close() error {
 }
 
 func (m *messageRepository) initClusters(c *config.ClusterConfig) error {
-	clusterEndpoints := strutil.SplitSkipEmpty(c.GetEndpoints(), ",")
-	clusterTimeout := c.GetTimeout().AsDuration()
-	clusterName := c.GetName()
-	protocol := c.GetProtocol().String()
-	clusters := make([]ClusterSender, 0, len(clusterEndpoints))
+	clusterEndpoints, clusterTimeout, clusterName, protocol := strutil.SplitSkipEmpty(c.GetEndpoints(), ","), c.GetTimeout().AsDuration(), c.GetName(), c.GetProtocol().String()
 	for _, clusterEndpoint := range clusterEndpoints {
 		opts := []connect.InitOption{
 			connect.WithDiscovery(m.Registry()),
@@ -399,10 +393,8 @@ func (m *messageRepository) initClusters(c *config.ClusterConfig) error {
 			return merr.ErrorInternalServer("unknown protocol: %s", protocol)
 		}
 
-		clusters = append(clusters, clusterSender)
+		m.clusters.Set(name, clusterSender)
 	}
-	m.clustersMu.Lock()
-	defer m.clustersMu.Unlock()
-	m.clusters = clusters
+
 	return nil
 }
