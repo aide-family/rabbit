@@ -92,7 +92,7 @@ func (m *messageRepository) pendingMessageTaskProcess(task *state.MessageTask) (
 	if messageLog.Status != enum.MessageStatus_PENDING {
 		return 0, false
 	}
-	changed, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, messageLog.UID, enum.MessageStatus_PENDING, enum.MessageStatus_SENDING)
+	changed, err := m.messageLogRepo.UpdateMessageLogStatusSendingIf(ctx, messageLog.UID, enum.MessageStatus_PENDING)
 	if err != nil {
 		return 0, false
 	}

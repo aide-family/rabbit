@@ -101,6 +101,11 @@ build-exe: all
 	@git log -1 --format='%B' > description.txt
 	GOOS=windows GOARCH=amd64 go build -ldflags "-X main.Version=$(VERSION) -X main.BuildTime=$(BUILD_TIME) -X main.Author=$(AUTHOR) -X main.Email=$(AUTHOR_EMAIL) -X main.Repo=$(REPO)" -o bin/rabbit.exe main.go
 
+.PHONY: clean
+# clean the rabbit binary
+clean:
+	@echo "Cleaning rabbit"
+	rm -rf ./bin
 
 .PHONY: dev
 # run the rabbit binary in development mode

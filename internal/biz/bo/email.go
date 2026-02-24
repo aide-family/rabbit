@@ -83,7 +83,7 @@ func NewSendEmailWithTemplateBo(req *apiv1.SendEmailWithTemplateRequest) (*SendE
 }
 
 func (b *SendEmailWithTemplateBo) ToSendEmailBo(templateBo *TemplateItemBo) (*SendEmailBo, error) {
-	if templateBo.MessageType < 1000 || templateBo.MessageType >= 2000 {
+	if templateBo.MessageType != enum.MessageType_EMAIL {
 		return nil, merr.ErrorParams("invalid template message type, expected email type, got %d", templateBo.MessageType)
 	}
 	if templateBo.Status != enum.GlobalStatus_ENABLED {

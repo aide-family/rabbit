@@ -237,6 +237,32 @@ func (m *messageLogRepository) UpdateMessageLogStatusSuccessIf(ctx context.Conte
 	return result.RowsAffected == 1, nil
 }
 
+func (m *messageLogRepository) UpdateMessageLogStatusSendingIf(ctx context.Context, uid snowflake.ID, oldStatus enum.MessageStatus) (bool, error) {
+	namespace := contextx.GetNamespace(ctx)
+	tableName := do.GenMessageLogTableName(namespace, time.UnixMilli(uid.Time()))
+	if _, err := m.Cache().Get(ctx, cache.K(tableName)); err != nil && !do.HasTable(m.DB(), tableName) {
+		return false, merr.ErrorNotFound("message log %d not found", uid.Int64())
+	}
+	bizQuery := query.Use(m.DB().Table(tableName))
+	messageLog := bizQuery.MessageLog
+	messageLogTable := messageLog.As(tableName)
+	wrappers := messageLog.WithContext(ctx)
+	wheres := []gen.Condition{
+		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
+	}
+	wrappers = wrappers.Where(wheres...)
+	columns := []field.AssignExpr{
+		messageLogTable.Status.Value(int32(enum.MessageStatus_SENDING)),
+		messageLogTable.SendAt.Value(time.Now()),
+	}
+	result, err := wrappers.UpdateColumnSimple(columns...)
+	if err != nil {
+		return false, err
+	}
+	return result.RowsAffected == 1, nil
+}
+
 // CreateMessageLog implements [repository.MessageLog].
 func (m *messageLogRepository) CreateMessageLog(ctx context.Context, req *bo.CreateMessageLogBo) (snowflake.ID, error) {
 	messageLogDo := convert.ToMessageLogDo(ctx, req)
