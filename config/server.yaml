@@ -31,17 +31,36 @@ jwt:
   expire: "${MOON_RABBIT_JWT_EXPIRE:600s}"
   issuer: "${MOON_RABBIT_JWT_ISSUER:rabbit}"
 
+# namespaceConfig:
+#   driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
+#   version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
+#   options:
+#     '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}"
+#     dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:SQLITE}
+#     debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
+#     useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
+#     options:
+#       '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
+#       dsn: "${MOON_RABBIT_NAMESPACE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+
 namespaceConfig:
   driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
   version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
   options:
     '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}"
-    dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:SQLITE}
+    dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:POSTGRES}
     debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
     useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
     options:
-      '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
-      dsn: "${MOON_RABBIT_NAMESPACE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+      '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.PostgreSQLOptions}"
+      username: ${MOON_RABBIT_NAMESPACE_POSTGRES_OPTIONS_USERNAME:root}
+      password: ${MOON_RABBIT_NAMESPACE_POSTGRES_OPTIONS_PASSWORD:123456}
+      host: ${MOON_RABBIT_NAMESPACE_POSTGRES_OPTIONS_HOST:localhost}
+      port: ${MOON_RABBIT_NAMESPACE_POSTGRES_OPTIONS_PORT:5432}
+      database: ${MOON_RABBIT_NAMESPACE_POSTGRES_OPTIONS_DATABASE:rabbit}
+      parameters:
+        sslmode: disable
+        TimeZone: Asia/Shanghai
 
 loginConfig:
   driver: ${MOON_RABBIT_LOGIN_DRIVER:GORM}
@@ -103,13 +122,28 @@ oauth2:
         - user:email
       loginUrl: ${MOON_RABBIT_OAUTH2_CONFIGS_LOGIN_URL:https://open.feishu.cn/open-apis/authen/v1/authorize}
 
+# database:
+#   dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:SQLITE}
+#   debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
+#   useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
+#   options:
+#     '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
+#     dsn: "${MOON_RABBIT_DATABASE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+
 database:
-  dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:SQLITE}
+  dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:POSTGRES}
   debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
   useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
   options:
-    '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
-    dsn: "${MOON_RABBIT_DATABASE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+    '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.PostgreSQLOptions}"
+    username: ${MOON_RABBIT_DATABASE_POSTGRES_OPTIONS_USERNAME:root}
+    password: ${MOON_RABBIT_DATABASE_POSTGRES_OPTIONS_PASSWORD:123456}
+    host: ${MOON_RABBIT_DATABASE_POSTGRES_OPTIONS_HOST:localhost}
+    port: ${MOON_RABBIT_DATABASE_POSTGRES_OPTIONS_PORT:5432}
+    database: ${MOON_RABBIT_DATABASE_POSTGRES_OPTIONS_DATABASE:rabbit}
+    parameters:
+      sslmode: disable
+      TimeZone: Asia/Shanghai
 
 jobCluster:
   name: ${MOON_RABBIT_JOB_CLUSTER_NAME:rabbit}

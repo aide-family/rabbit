@@ -16,6 +16,6 @@ func NewCmd() *cobra.Command {
 			"group": cmd.DatabaseCommands,
 		},
 	}
-	schemaCmd.AddCommand(newSQLCmd())
+	schemaCmd.AddCommand(newSQLCmd(), newMigrateCmd())
 	return schemaCmd
 }
