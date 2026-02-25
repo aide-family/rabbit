@@ -29,11 +29,10 @@ func New(c *config.MessageConfig) (message.Sender, error) {
 	if err := anypb.UnmarshalTo(c.GetOptions(), options, proto.UnmarshalOptions{Merge: true}); err != nil {
 		return nil, merr.ErrorInternalServer("unmarshal webhook config failed: %v", err)
 	}
-	return &wechatHookSender{cli: httpx.NewClient(httpx.GetHTTPClient()), config: options}, nil
+	return &wechatHookSender{config: options}, nil
 }
 
 type wechatHookSender struct {
-	cli    *httpx.Client
 	config *config.MessageWebhookConfig
 }
 
@@ -46,9 +45,11 @@ func (w *wechatHookSender) Send(ctx context.Context, msg message.Message) error 
 		httpx.WithHeaders(map[string][]string{
 			"Content-Type": {"application/json"},
 		}),
-		httpx.WithQuery(url.Values{
-			"key": {w.config.GetSecret()},
-		}),
+	}
+	if secret := w.config.GetSecret(); secret != "" {
+		opts = append(opts, httpx.WithQuery(url.Values{
+			"key": {secret},
+		}))
 	}
 	newMessage := &Message{}
 	var ok bool
@@ -66,7 +67,8 @@ func (w *wechatHookSender) Send(ctx context.Context, msg message.Message) error 
 	if err != nil {
 		return err
 	}
-	resp, err := w.cli.Post(ctx, w.config.GetUrl(), jsonBytes, opts...)
+	client := httpx.NewClient(httpx.GetHTTPClient())
+	resp, err := client.Post(ctx, w.config.GetUrl(), jsonBytes, opts...)
 	if err != nil {
 		return err
 	}

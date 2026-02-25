@@ -155,8 +155,9 @@ func (m *messageLogRepository) ListMessageLog(ctx context.Context, req *bo.ListM
 		req.WithTotal(total)
 		wrappers = wrappers.Limit(req.Limit()).Offset(req.Offset())
 	}
+	wrappers = wrappers.Order(clause.OrderByColumn{Column: clause.Column{Name: messageLogTable.SendAt.ColumnName().String()}, Desc: true})
 	var messageLogs []*do.MessageLog
-	if err := wrappers.Order(messageLogTable.CreatedAt.Desc()).Find(&messageLogs).Error; err != nil {
+	if err := wrappers.Find(&messageLogs).Error; err != nil {
 		return nil, err
 	}
 	messageLogItems := make([]*bo.MessageLogItemBo, 0, len(messageLogs))
@@ -323,6 +324,6 @@ func (m *messageLogRepository) MessageLogRetryIncrement(ctx context.Context, uid
 	messageLog := bizQuery.MessageLog
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
-	_, err := wrappers.UpdateColumnSimple(messageLogTable.RetryTotal.Add(1))
+	_, err := wrappers.UpdateColumnSimple(messageLogTable.RetryTotal.Add(1), messageLogTable.Status.Value(int32(enum.MessageStatus_PENDING)))
 	return err
 }

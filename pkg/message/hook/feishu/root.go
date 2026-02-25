@@ -5,8 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"strconv"
-	"time"
 
 	"github.com/aide-family/magicbox/enum"
 
@@ -33,7 +31,7 @@ type Content struct {
 
 type Message struct {
 	MsgType   MessageType `json:"msg_type"`
-	Content   *Content    `json:"content,omitempty"`
+	Content   *Content    `json:"content"`
 	Timestamp string      `json:"timestamp"`
 	Sign      string      `json:"sign"`
 }
@@ -46,13 +44,17 @@ func (m *Message) Type() enum.MessageType {
 	return enum.MessageType_WEBHOOK_FEISHU
 }
 
-// Signature fills timestamp and sign for Feishu webhook. Always regenerates so timestamp is within 1 hour.
-// Algorithm: sign = base64(HMAC-SHA256(key=secret, message=timestamp+"\n"+secret)).
 func (m *Message) Signature(secret string) error {
-	m.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
-	payload := m.Timestamp + "\n" + secret
-	h := hmac.New(sha256.New, []byte(secret))
-	h.Write([]byte(payload))
+	// 正确拼接 timestamp 和 secret，使用换行符分隔
+	signString := m.Timestamp + "\n" + secret
+
+	h := hmac.New(sha256.New, []byte(signString))
+	var data []byte
+	_, err := h.Write(data)
+	if err != nil {
+		return err
+	}
+
 	m.Sign = base64.StdEncoding.EncodeToString(h.Sum(nil))
 	return nil
 }

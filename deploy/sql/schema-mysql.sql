@@ -54,18 +54,16 @@ CREATE TABLE `message_retry_logs` (
 
 -- Table: namespaces
 CREATE TABLE `namespaces` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `uid` bigint NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
   `creator` bigint NOT NULL,
-  `deleted_at` datetime DEFAULT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
   `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `metadata` json DEFAULT NULL,
   `status` int NOT NULL DEFAULT '0',
   `remark` varchar(1000) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_namespaces_uid` (`uid`),
   UNIQUE KEY `idx__namespace__name__deleted_at` (`deleted_at`,`name`),
   KEY `idx_namespaces_creator` (`creator`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -147,8 +145,8 @@ CREATE TABLE `templates` (
 -- Table: user_oauth2s
 CREATE TABLE `user_oauth2s` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
   `open_id` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   `email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
@@ -159,25 +157,22 @@ CREATE TABLE `user_oauth2s` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx__oauth2_user__app__open_id` (`open_id`,`app`),
   KEY `idx__oauth2_user__email` (`email`),
-  KEY `idx__oauth2_user__user_uid` (`user_id`),
   KEY `idx__oauth2_user__user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Table: users
 CREATE TABLE `users` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
-  `uid` bigint NOT NULL,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL,
-  `deleted_at` datetime DEFAULT NULL,
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
   `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   `nickname` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   `email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `avatar` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   `remark` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
-  `status` tinyint NOT NULL DEFAULT '0',
+  `status` tinyint unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `idx_users_uid` (`uid`),
   UNIQUE KEY `idx__user__email__deleted_at` (`deleted_at`,`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

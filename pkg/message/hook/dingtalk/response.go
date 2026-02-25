@@ -23,5 +23,8 @@ func unmarshalResponse(body io.ReadCloser) error {
 	if err := json.NewDecoder(body).Decode(&resp); err != nil {
 		return err
 	}
-	return &resp
+	if resp.Error() != "" {
+		return &resp
+	}
+	return nil
 }

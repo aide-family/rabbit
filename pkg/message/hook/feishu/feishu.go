@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/aide-family/magicbox/config"
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/httpx"
 	"github.com/aide-family/magicbox/merr"
+	klog "github.com/go-kratos/kratos/v2/log"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -60,6 +63,8 @@ func (f *feishuHookSender) Send(ctx context.Context, message message.Message) er
 			return err
 		}
 	}
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	feishuMessage.Timestamp = timestamp
 	if err := feishuMessage.Signature(f.config.GetSecret()); err != nil {
 		return err
 	}
@@ -73,6 +78,7 @@ func (f *feishuHookSender) Send(ctx context.Context, message message.Message) er
 	if err != nil {
 		return err
 	}
+	klog.Debugf("feishu message: %s", string(jsonBytes))
 	resp, err := f.cli.Post(ctx, u.String(), jsonBytes, opts...)
 	if err != nil {
 		return err

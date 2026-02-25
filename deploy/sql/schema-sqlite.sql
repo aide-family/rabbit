@@ -16,10 +16,9 @@ CREATE INDEX `idx__message_retry_log__message_log_id` ON `message_retry_logs`(`m
 CREATE INDEX `idx__message_retry_log__namespace_uid` ON `message_retry_logs`(`namespace_uid`);
 
 -- Table: namespaces
-CREATE TABLE `namespaces` (`id` integer PRIMARY KEY AUTOINCREMENT,`uid` integer NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`creator` integer NOT NULL,`deleted_at` datetime,`name` varchar(100) NOT NULL,`metadata` json,`status` integer NOT NULL DEFAULT 0,`remark` varchar(1000) NOT NULL DEFAULT "");
+CREATE TABLE `namespaces` (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`creator` integer NOT NULL,`deleted_at` datetime,`name` varchar(100) NOT NULL,`metadata` json,`status` integer NOT NULL DEFAULT 0,`remark` varchar(1000) NOT NULL DEFAULT "");
 CREATE UNIQUE INDEX `idx__namespace__name__deleted_at` ON `namespaces`(`deleted_at`,`name`);
 CREATE INDEX `idx_namespaces_creator` ON `namespaces`(`creator`);
-CREATE UNIQUE INDEX `idx_namespaces_uid` ON `namespaces`(`uid`);
 
 -- Table: recipient_group__email_configs
 CREATE TABLE `recipient_group__email_configs` (`recipient_group_id` integer,`email_config_id` integer,PRIMARY KEY (`recipient_group_id`,`email_config_id`));
@@ -52,7 +51,7 @@ CREATE INDEX `idx__oauth2_user__email` ON `user_oauth2s`(`email`);
 CREATE INDEX `idx__oauth2_user__user_id` ON `user_oauth2s`(`user_id`);
 
 -- Table: users
-CREATE TABLE `users` (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`deleted_at` datetime,`name` varchar(100) NOT NULL DEFAULT "",`nickname` varchar(100) NOT NULL DEFAULT "",`email` varchar(100) NOT NULL,`avatar` varchar(100) NOT NULL DEFAULT "",`remark` varchar(100) NOT NULL DEFAULT "",`status` tinyint NOT NULL DEFAULT 0);
+CREATE TABLE `users` (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`deleted_at` datetime,`name` varchar(100) NOT NULL DEFAULT "",`nickname` varchar(100) NOT NULL DEFAULT "",`email` varchar(100) NOT NULL,`avatar` varchar(100) NOT NULL DEFAULT "",`remark` varchar(100) NOT NULL DEFAULT "",`status` integer NOT NULL DEFAULT 0);
 CREATE UNIQUE INDEX `idx__user__email__deleted_at` ON `users`(`deleted_at`,`email`);
 
 -- Table: webhooks

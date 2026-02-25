@@ -101,7 +101,18 @@ func (m *messageRepository) pendingMessageTaskProcess(ctx context.Context, task 
 	return nil
 }
 
-func (m *messageRepository) sendingMessageTaskProcess(ctx context.Context, task *state.MessageTask) error {
+func (m *messageRepository) sendingMessageTaskProcess(ctx context.Context, task *state.MessageTask) (err error) {
+	defer func() {
+		if err != nil {
+			changed, _err := m.messageLogRepo.UpdateMessageLogLastErrorIf(ctx, task.MessageUID, enum.MessageStatus_SENDING, err.Error())
+			if _err != nil {
+				err = errors.Join(err, _err)
+			}
+			if changed {
+				task.SetNextStatus(enum.MessageStatus_FAILED)
+			}
+		}
+	}()
 	messageLog, err := m.messageLogRepo.GetMessageLogWithLock(ctx, task.MessageUID)
 	if err != nil {
 		return err
@@ -120,14 +131,7 @@ func (m *messageRepository) sendingMessageTaskProcess(ctx context.Context, task 
 	}
 	msg := message.NewMessage(messageLog.MessageType, []byte(messageLog.Message))
 	if err = sender.Send(ctx, msg); err != nil {
-		changed, _err := m.messageLogRepo.UpdateMessageLogLastErrorIf(ctx, task.MessageUID, enum.MessageStatus_SENDING, err.Error())
-		if _err != nil {
-			return errors.Join(err, _err)
-		}
-		if changed {
-			task.SetNextStatus(enum.MessageStatus_FAILED)
-		}
-		return nil
+		return err
 	}
 	changed, err := m.messageLogRepo.UpdateMessageLogStatusSuccessIf(ctx, task.MessageUID)
 	if err != nil {
@@ -156,15 +160,10 @@ func (m *messageRepository) failedMessageTaskProcess(ctx context.Context, task *
 		return nil
 	}
 
-	changed, err := m.messageLogRepo.UpdateMessageLogStatusIf(ctx, task.MessageUID, enum.MessageStatus_FAILED, enum.MessageStatus_PENDING)
-	if err != nil {
+	if err := m.messageLogRepo.MessageLogRetryIncrement(ctx, task.MessageUID); err != nil {
 		return err
 	}
 
-	if !changed {
-		task.StopNext()
-		return nil
-	}
 	task.Retry()
 	return nil
 }

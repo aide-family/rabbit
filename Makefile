@@ -76,8 +76,13 @@ wire:
 # generate all files
 all: 
 	@git log -1 --format='%B' > description.txt
-	git submodule update --remote --recursive --force
 	make api conf wire
+
+.PHONY: submodule
+# update the submodule
+submodule:
+	@echo "Updating submodule"
+	git submodule update --remote --recursive --force
 
 .PHONY: build
 # build the rabbit binary
