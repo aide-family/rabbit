@@ -57,6 +57,7 @@ func (w *wechatHookSender) Send(ctx context.Context, msg message.Message) error 
 		if err != nil {
 			return err
 		}
+		newMessage = &Message{}
 		if err := json.Unmarshal(jsonBytes, newMessage); err != nil {
 			return err
 		}

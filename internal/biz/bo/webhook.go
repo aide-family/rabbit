@@ -213,15 +213,11 @@ func (b *SendWebhookBo) ToMessageLog(webhookConfig *WebhookItemBo) (*CreateMessa
 	if !ok {
 		return nil, merr.ErrorInternalServer("%s codec not found", json.Name)
 	}
-	messageBytes, err := jsonCodec.Marshal(b)
-	if err != nil {
-		return nil, err
-	}
 	webhookConfigBytes, err := jsonCodec.Marshal(webhookConfig)
 	if err != nil {
 		return nil, err
 	}
-	return NewCreateMessageLogBo(strutil.EncryptString(messageBytes), strutil.EncryptString(webhookConfigBytes), enum.MessageType(webhookConfig.App)), nil
+	return NewCreateMessageLogBo(strutil.EncryptString(b.Data), strutil.EncryptString(webhookConfigBytes), enum.MessageType(webhookConfig.App)), nil
 }
 
 func NewSendWebhookBo(req *apiv1.SendWebhookRequest) *SendWebhookBo {

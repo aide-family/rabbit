@@ -55,6 +55,7 @@ func (f *feishuHookSender) Send(ctx context.Context, message message.Message) er
 		if err != nil {
 			return err
 		}
+		feishuMessage = &Message{}
 		if err := json.Unmarshal(jsonBytes, feishuMessage); err != nil {
 			return err
 		}

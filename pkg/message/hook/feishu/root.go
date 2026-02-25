@@ -46,22 +46,13 @@ func (m *Message) Type() enum.MessageType {
 	return enum.MessageType_WEBHOOK_FEISHU
 }
 
+// Signature fills timestamp and sign for Feishu webhook. Always regenerates so timestamp is within 1 hour.
+// Algorithm: sign = base64(HMAC-SHA256(key=secret, message=timestamp+"\n"+secret)).
 func (m *Message) Signature(secret string) error {
-	if m.Timestamp != "" && m.Sign != "" {
-		return nil
-	}
 	m.Timestamp = strconv.FormatInt(time.Now().Unix(), 10)
-	// timestamp + key sha256, then base64 encode
-	signString := m.Timestamp + "\n" + secret
-
-	var data []byte
-	h := hmac.New(sha256.New, []byte(signString))
-	_, err := h.Write(data)
-	if err != nil {
-		return err
-	}
-
-	signature := base64.StdEncoding.EncodeToString(h.Sum(nil))
-	m.Sign = signature
+	payload := m.Timestamp + "\n" + secret
+	h := hmac.New(sha256.New, []byte(secret))
+	h.Write([]byte(payload))
+	m.Sign = base64.StdEncoding.EncodeToString(h.Sum(nil))
 	return nil
 }
