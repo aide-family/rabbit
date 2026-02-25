@@ -37,7 +37,7 @@ func ToWebhookConfigItemBo(webhookConfigDO *do.WebhookConfig) *bo.WebhookItemBo 
 		webhookConfigDO.Headers = safety.NewMap(make(map[string]string))
 	}
 	return &bo.WebhookItemBo{
-		UID:       webhookConfigDO.UID,
+		UID:       webhookConfigDO.ID,
 		App:       webhookConfigDO.App,
 		Name:      webhookConfigDO.Name,
 		URL:       webhookConfigDO.URL,
@@ -52,7 +52,7 @@ func ToWebhookConfigItemBo(webhookConfigDO *do.WebhookConfig) *bo.WebhookItemBo 
 
 func ToWebhookConfigItemSelectBo(webhookConfigDO *do.WebhookConfig) *bo.WebhookItemSelectBo {
 	return &bo.WebhookItemSelectBo{
-		UID:      webhookConfigDO.UID,
+		UID:      webhookConfigDO.ID,
 		Name:     webhookConfigDO.Name,
 		Status:   webhookConfigDO.Status,
 		Disabled: webhookConfigDO.Status == enum.GlobalStatus_DISABLED || webhookConfigDO.DeletedAt.Valid,

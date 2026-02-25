@@ -36,14 +36,14 @@ func (e *emailConfigRepository) CreateEmailConfig(ctx context.Context, req *bo.C
 	if err := emailConfigMutation.WithContext(ctx).Create(emailConfigDo); err != nil {
 		return 0, err
 	}
-	return emailConfigDo.UID, nil
+	return emailConfigDo.ID, nil
 }
 
 // DeleteEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) DeleteEmailConfig(ctx context.Context, uid snowflake.ID) error {
 	namespace := contextx.GetNamespace(ctx)
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(namespace.Int64()), emailConfig.UID.Eq(uid.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(namespace.Int64()), emailConfig.ID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
@@ -51,7 +51,7 @@ func (e *emailConfigRepository) DeleteEmailConfig(ctx context.Context, uid snowf
 // GetEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) GetEmailConfig(ctx context.Context, uid snowflake.ID) (*bo.EmailConfigItemBo, error) {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.UID.Eq(uid.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.ID.Eq(uid.Int64()))
 	emailConfigDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -131,14 +131,14 @@ func (e *emailConfigRepository) SelectEmailConfig(ctx context.Context, req *bo.S
 
 	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
 	if req.LastUID > 0 {
-		wrappers = wrappers.Where(emailConfig.UID.Lt(req.LastUID.Int64()))
+		wrappers = wrappers.Where(emailConfig.ID.Lt(req.LastUID.Int64()))
 	}
 
 	// 限制返回数量
 	wrappers = wrappers.Limit(int(req.Limit))
 
 	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
-	emailConfigs, err := wrappers.Order(emailConfig.UID.Desc()).Find()
+	emailConfigs, err := wrappers.Order(emailConfig.ID.Desc()).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (e *emailConfigRepository) SelectEmailConfig(ctx context.Context, req *bo.S
 	// 获取最后一个UID，用于下次分页
 	var lastUID snowflake.ID
 	if len(emailConfigs) > 0 {
-		lastUID = emailConfigs[len(emailConfigs)-1].UID
+		lastUID = emailConfigs[len(emailConfigs)-1].ID
 	}
 	emailConfigItems := make([]*bo.EmailConfigItemSelectBo, 0, len(emailConfigs))
 	for _, emailConfig := range emailConfigs {
@@ -163,7 +163,7 @@ func (e *emailConfigRepository) SelectEmailConfig(ctx context.Context, req *bo.S
 // UpdateEmailConfig implements [repository.EmailConfig].
 func (e *emailConfigRepository) UpdateEmailConfig(ctx context.Context, req *bo.UpdateEmailConfigBo) error {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.UID.Eq(req.UID.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.ID.Eq(req.UID.Int64()))
 	columns := []field.AssignExpr{
 		emailConfig.Name.Value(req.Name),
 		emailConfig.Host.Value(req.Host),
@@ -178,7 +178,7 @@ func (e *emailConfigRepository) UpdateEmailConfig(ctx context.Context, req *bo.U
 // UpdateEmailConfigStatus implements [repository.EmailConfig].
 func (e *emailConfigRepository) UpdateEmailConfigStatus(ctx context.Context, req *bo.UpdateEmailConfigStatusBo) error {
 	emailConfig := query.EmailConfig
-	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.UID.Eq(req.UID.Int64()))
+	wrappers := emailConfig.WithContext(ctx).Where(emailConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), emailConfig.ID.Eq(req.UID.Int64()))
 	_, err := wrappers.UpdateColumn(emailConfig.Status, req.Status)
 	return err
 }

@@ -13,7 +13,7 @@ import (
 func ToMessageLogItemBo(messageLogDo *do.MessageLog) *bo.MessageLogItemBo {
 	return &bo.MessageLogItemBo{
 		NamespaceUID: messageLogDo.NamespaceUID,
-		UID:          messageLogDo.UID,
+		UID:          messageLogDo.ID,
 		SendAt:       messageLogDo.SendAt,
 		Message:      messageLogDo.Message,
 		Config:       messageLogDo.Config,

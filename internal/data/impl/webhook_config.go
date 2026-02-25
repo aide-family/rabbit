@@ -33,7 +33,7 @@ type webhookConfigRepository struct {
 // DeleteWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) DeleteWebhookConfig(ctx context.Context, uid snowflake.ID) error {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(uid.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.ID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
@@ -41,7 +41,7 @@ func (w *webhookConfigRepository) DeleteWebhookConfig(ctx context.Context, uid s
 // GetWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) GetWebhookConfig(ctx context.Context, uid snowflake.ID) (*bo.WebhookItemBo, error) {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(uid.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.ID.Eq(uid.Int64()))
 	webhookConfigDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -123,14 +123,14 @@ func (w *webhookConfigRepository) SelectWebhookConfig(ctx context.Context, req *
 
 	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
 	if req.LastUID > 0 {
-		wrappers = wrappers.Where(webhookConfig.UID.Lt(req.LastUID.Int64()))
+		wrappers = wrappers.Where(webhookConfig.ID.Lt(req.LastUID.Int64()))
 	}
 
 	// 限制返回数量
 	wrappers = wrappers.Limit(int(req.Limit))
 
 	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
-	webhookConfigs, err := wrappers.Order(webhookConfig.UID.Desc()).Find()
+	webhookConfigs, err := wrappers.Order(webhookConfig.ID.Desc()).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (w *webhookConfigRepository) SelectWebhookConfig(ctx context.Context, req *
 	// 获取最后一个UID，用于下次分页
 	var lastUID snowflake.ID
 	if len(webhookConfigs) > 0 {
-		lastUID = webhookConfigs[len(webhookConfigs)-1].UID
+		lastUID = webhookConfigs[len(webhookConfigs)-1].ID
 	}
 	webhookConfigItems := make([]*bo.WebhookItemSelectBo, 0, len(webhookConfigs))
 	for _, webhookConfig := range webhookConfigs {
@@ -155,7 +155,7 @@ func (w *webhookConfigRepository) SelectWebhookConfig(ctx context.Context, req *
 // UpdateWebhookConfig implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) UpdateWebhookConfig(ctx context.Context, req *bo.UpdateWebhookBo) error {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(req.UID.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.ID.Eq(req.UID.Int64()))
 	columns := []field.AssignExpr{
 		webhookConfig.Name.Value(req.Name),
 		webhookConfig.URL.Value(req.URL),
@@ -170,7 +170,7 @@ func (w *webhookConfigRepository) UpdateWebhookConfig(ctx context.Context, req *
 // UpdateWebhookStatus implements [repository.WebhookConfig].
 func (w *webhookConfigRepository) UpdateWebhookStatus(ctx context.Context, req *bo.UpdateWebhookStatusBo) error {
 	webhookConfig := query.WebhookConfig
-	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.UID.Eq(req.UID.Int64()))
+	wrappers := webhookConfig.WithContext(ctx).Where(webhookConfig.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), webhookConfig.ID.Eq(req.UID.Int64()))
 	_, err := wrappers.UpdateColumn(webhookConfig.Status, req.Status)
 	return err
 }
@@ -182,5 +182,5 @@ func (w *webhookConfigRepository) CreateWebhookConfig(ctx context.Context, req *
 	if err := webhookConfig.WithContext(ctx).Create(webhookConfigDO); err != nil {
 		return 0, err
 	}
-	return webhookConfigDO.UID, nil
+	return webhookConfigDO.ID, nil
 }

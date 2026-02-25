@@ -27,8 +27,7 @@ func newTemplate(db *gorm.DB, opts ...gen.DOOption) template {
 
 	tableName := _template.templateDo.TableName()
 	_template.ALL = field.NewAsterisk(tableName)
-	_template.ID = field.NewUint32(tableName, "id")
-	_template.UID = field.NewInt64(tableName, "uid")
+	_template.ID = field.NewInt64(tableName, "id")
 	_template.CreatedAt = field.NewTime(tableName, "created_at")
 	_template.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_template.Creator = field.NewInt64(tableName, "creator")
@@ -48,8 +47,7 @@ type template struct {
 	templateDo
 
 	ALL          field.Asterisk
-	ID           field.Uint32
-	UID          field.Int64
+	ID           field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
 	Creator      field.Int64
@@ -75,8 +73,7 @@ func (t template) As(alias string) *template {
 
 func (t *template) updateTableName(table string) *template {
 	t.ALL = field.NewAsterisk(table)
-	t.ID = field.NewUint32(table, "id")
-	t.UID = field.NewInt64(table, "uid")
+	t.ID = field.NewInt64(table, "id")
 	t.CreatedAt = field.NewTime(table, "created_at")
 	t.UpdatedAt = field.NewTime(table, "updated_at")
 	t.Creator = field.NewInt64(table, "creator")
@@ -102,9 +99,8 @@ func (t *template) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (t *template) fillFieldMap() {
-	t.fieldMap = make(map[string]field.Expr, 11)
+	t.fieldMap = make(map[string]field.Expr, 10)
 	t.fieldMap["id"] = t.ID
-	t.fieldMap["uid"] = t.UID
 	t.fieldMap["created_at"] = t.CreatedAt
 	t.fieldMap["updated_at"] = t.UpdatedAt
 	t.fieldMap["creator"] = t.Creator

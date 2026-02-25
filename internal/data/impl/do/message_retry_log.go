@@ -9,8 +9,8 @@ import (
 type MessageRetryLog struct {
 	BaseModel
 
-	NamespaceUID snowflake.ID `gorm:"column:namespace_uid;index"`
-	MessageLogID snowflake.ID `gorm:"column:message_log_id"`
+	NamespaceUID snowflake.ID `gorm:"column:namespace_uid;index:idx__message_retry_log__namespace_uid"`
+	MessageLogID snowflake.ID `gorm:"column:message_log_id;index:idx__message_retry_log__message_log_id"`
 	RetryAt      time.Time    `gorm:"column:retry_at"`
 }
 

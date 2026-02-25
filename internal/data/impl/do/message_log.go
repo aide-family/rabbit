@@ -17,7 +17,7 @@ const (
 type MessageLog struct {
 	BaseModel
 
-	NamespaceUID snowflake.ID          `gorm:"column:namespace_uid;index"`
+	NamespaceUID snowflake.ID          `gorm:"column:namespace_uid;index:idx__message_log__namespace_uid"`
 	SendAt       time.Time             `gorm:"column:send_at;"`
 	Message      strutil.EncryptString `gorm:"column:message;"`
 	Config       strutil.EncryptString `gorm:"column:config;"`

@@ -27,8 +27,7 @@ func newEmailConfig(db *gorm.DB, opts ...gen.DOOption) emailConfig {
 
 	tableName := _emailConfig.emailConfigDo.TableName()
 	_emailConfig.ALL = field.NewAsterisk(tableName)
-	_emailConfig.ID = field.NewUint32(tableName, "id")
-	_emailConfig.UID = field.NewInt64(tableName, "uid")
+	_emailConfig.ID = field.NewInt64(tableName, "id")
 	_emailConfig.CreatedAt = field.NewTime(tableName, "created_at")
 	_emailConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_emailConfig.Creator = field.NewInt64(tableName, "creator")
@@ -50,8 +49,7 @@ type emailConfig struct {
 	emailConfigDo
 
 	ALL          field.Asterisk
-	ID           field.Uint32
-	UID          field.Int64
+	ID           field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
 	Creator      field.Int64
@@ -79,8 +77,7 @@ func (e emailConfig) As(alias string) *emailConfig {
 
 func (e *emailConfig) updateTableName(table string) *emailConfig {
 	e.ALL = field.NewAsterisk(table)
-	e.ID = field.NewUint32(table, "id")
-	e.UID = field.NewInt64(table, "uid")
+	e.ID = field.NewInt64(table, "id")
 	e.CreatedAt = field.NewTime(table, "created_at")
 	e.UpdatedAt = field.NewTime(table, "updated_at")
 	e.Creator = field.NewInt64(table, "creator")
@@ -108,9 +105,8 @@ func (e *emailConfig) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (e *emailConfig) fillFieldMap() {
-	e.fieldMap = make(map[string]field.Expr, 13)
+	e.fieldMap = make(map[string]field.Expr, 12)
 	e.fieldMap["id"] = e.ID
-	e.fieldMap["uid"] = e.UID
 	e.fieldMap["created_at"] = e.CreatedAt
 	e.fieldMap["updated_at"] = e.UpdatedAt
 	e.fieldMap["creator"] = e.Creator

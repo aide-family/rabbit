@@ -16,6 +16,7 @@ import (
 	"github.com/aide-family/rabbit/cmd/run/grpc"
 	"github.com/aide-family/rabbit/cmd/run/http"
 	"github.com/aide-family/rabbit/cmd/run/job"
+	"github.com/aide-family/rabbit/cmd/schema"
 	"github.com/aide-family/rabbit/cmd/version"
 )
 
@@ -65,6 +66,7 @@ func main() {
 
 	children := []*cobra.Command{
 		version.NewCmd(),
+		schema.NewCmd(),
 		runCmd,
 	}
 	cmd.Execute(cmd.NewCmd(), children...)

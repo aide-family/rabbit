@@ -24,7 +24,7 @@ func ToTemplateDO(ctx context.Context, req *bo.CreateTemplateBo) *do.Template {
 
 func ToTemplateItemBo(templateDO *do.Template) *bo.TemplateItemBo {
 	return &bo.TemplateItemBo{
-		UID:         templateDO.UID,
+		UID:         templateDO.ID,
 		Name:        templateDO.Name,
 		MessageType: templateDO.MessageType,
 		JSONData:    string(templateDO.JSONData),
@@ -36,7 +36,7 @@ func ToTemplateItemBo(templateDO *do.Template) *bo.TemplateItemBo {
 
 func ToTemplateItemSelectBo(templateDO *do.Template) *bo.TemplateItemSelectBo {
 	return &bo.TemplateItemSelectBo{
-		UID:      templateDO.UID,
+		UID:      templateDO.ID,
 		Name:     templateDO.Name,
 		Status:   templateDO.Status,
 		Disabled: templateDO.Status == enum.GlobalStatus_DISABLED || templateDO.DeletedAt.Valid,

@@ -27,8 +27,7 @@ func newRecipientGroup(db *gorm.DB, opts ...gen.DOOption) recipientGroup {
 
 	tableName := _recipientGroup.recipientGroupDo.TableName()
 	_recipientGroup.ALL = field.NewAsterisk(tableName)
-	_recipientGroup.ID = field.NewUint32(tableName, "id")
-	_recipientGroup.UID = field.NewInt64(tableName, "uid")
+	_recipientGroup.ID = field.NewInt64(tableName, "id")
 	_recipientGroup.CreatedAt = field.NewTime(tableName, "created_at")
 	_recipientGroup.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_recipientGroup.Creator = field.NewInt64(tableName, "creator")
@@ -70,8 +69,7 @@ type recipientGroup struct {
 	recipientGroupDo
 
 	ALL          field.Asterisk
-	ID           field.Uint32
-	UID          field.Int64
+	ID           field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
 	Creator      field.Int64
@@ -103,8 +101,7 @@ func (r recipientGroup) As(alias string) *recipientGroup {
 
 func (r *recipientGroup) updateTableName(table string) *recipientGroup {
 	r.ALL = field.NewAsterisk(table)
-	r.ID = field.NewUint32(table, "id")
-	r.UID = field.NewInt64(table, "uid")
+	r.ID = field.NewInt64(table, "id")
 	r.CreatedAt = field.NewTime(table, "created_at")
 	r.UpdatedAt = field.NewTime(table, "updated_at")
 	r.Creator = field.NewInt64(table, "creator")
@@ -129,9 +126,8 @@ func (r *recipientGroup) GetFieldByName(fieldName string) (field.OrderExpr, bool
 }
 
 func (r *recipientGroup) fillFieldMap() {
-	r.fieldMap = make(map[string]field.Expr, 14)
+	r.fieldMap = make(map[string]field.Expr, 13)
 	r.fieldMap["id"] = r.ID
-	r.fieldMap["uid"] = r.UID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
 	r.fieldMap["creator"] = r.Creator

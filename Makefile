@@ -117,7 +117,13 @@ dev:
 # run the tests
 migrate-sqlite:
 	@echo "Running migrate-sqlite"
-	RUN_DO_CODEGEN=1 go test -v -run 'TestGenerate|TestMigrateSQLite' ./internal/data/impl/do
+	go test -v -run 'TestGenerate|TestMigrateSQLite' ./internal/data/impl/do
+
+.PHONY: schema-sql
+# generate full DDL from table models (deploy/sql/schema.sql)
+schema-sql:
+	@echo "Generating schema SQL from models"
+	go run . schema sql sqlite -o deploy/sql/schema.sql
 
 # show help
 help:

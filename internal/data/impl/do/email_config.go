@@ -11,7 +11,7 @@ type EmailConfig struct {
 	BaseModel
 	DeletedAt    gorm.DeletedAt        `gorm:"column:deleted_at;uniqueIndex:email_config__namespace_uid__name"`
 	NamespaceUID snowflake.ID          `gorm:"column:namespace_uid;uniqueIndex:email_config__namespace_uid__name"`
-	Name         string                `gorm:"column:name;uniqueIndex:email_config__namespace_uid__name"`
+	Name         string                `gorm:"column:name;size:191;uniqueIndex:email_config__namespace_uid__name"`
 	Host         string                `gorm:"column:host;"`
 	Port         int32                 `gorm:"column:port;"`
 	Username     string                `gorm:"column:username;"`

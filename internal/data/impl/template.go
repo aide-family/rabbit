@@ -32,7 +32,7 @@ type templateRepository struct {
 // DeleteTemplate implements [repository.Template].
 func (t *templateRepository) DeleteTemplate(ctx context.Context, uid snowflake.ID) error {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(uid.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.ID.Eq(uid.Int64()))
 	_, err := wrappers.Delete()
 	return err
 }
@@ -40,7 +40,7 @@ func (t *templateRepository) DeleteTemplate(ctx context.Context, uid snowflake.I
 // GetTemplate implements [repository.Template].
 func (t *templateRepository) GetTemplate(ctx context.Context, uid snowflake.ID) (*bo.TemplateItemBo, error) {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(uid.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.ID.Eq(uid.Int64()))
 	templateDO, err := wrappers.First()
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -122,14 +122,14 @@ func (t *templateRepository) SelectTemplate(ctx context.Context, req *bo.SelectT
 
 	// 游标分页：如果提供了lastUID，则查询UID小于lastUID的记录
 	if req.LastUID > 0 {
-		wrappers = wrappers.Where(template.UID.Lt(req.LastUID.Int64()))
+		wrappers = wrappers.Where(template.ID.Lt(req.LastUID.Int64()))
 	}
 
 	// 限制返回数量
 	wrappers = wrappers.Limit(int(req.Limit))
 
 	// 按UID倒序排列（snowflake ID按时间生成，与CreatedAt一致）
-	templates, err := wrappers.Order(template.UID.Desc()).Find()
+	templates, err := wrappers.Order(template.ID.Desc()).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (t *templateRepository) SelectTemplate(ctx context.Context, req *bo.SelectT
 	// 获取最后一个UID，用于下次分页
 	var lastUID snowflake.ID
 	if len(templates) > 0 {
-		lastUID = templates[len(templates)-1].UID
+		lastUID = templates[len(templates)-1].ID
 	}
 	templateItems := make([]*bo.TemplateItemSelectBo, 0, len(templates))
 	for _, template := range templates {
@@ -154,7 +154,7 @@ func (t *templateRepository) SelectTemplate(ctx context.Context, req *bo.SelectT
 // UpdateTemplate implements [repository.Template].
 func (t *templateRepository) UpdateTemplate(ctx context.Context, req *bo.UpdateTemplateBo) error {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(req.UID.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.ID.Eq(req.UID.Int64()))
 	columns := []field.AssignExpr{
 		template.Name.Value(req.Name),
 		template.MessageType.Value(int32(req.MessageType)),
@@ -167,7 +167,7 @@ func (t *templateRepository) UpdateTemplate(ctx context.Context, req *bo.UpdateT
 // UpdateTemplateStatus implements [repository.Template].
 func (t *templateRepository) UpdateTemplateStatus(ctx context.Context, req *bo.UpdateTemplateStatusBo) error {
 	template := query.Template
-	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.UID.Eq(req.UID.Int64()))
+	wrappers := template.WithContext(ctx).Where(template.NamespaceUID.Eq(contextx.GetNamespace(ctx).Int64()), template.ID.Eq(req.UID.Int64()))
 	_, err := wrappers.UpdateColumn(template.Status, req.Status)
 	return err
 }
@@ -179,5 +179,5 @@ func (t *templateRepository) CreateTemplate(ctx context.Context, req *bo.CreateT
 	if err := template.WithContext(ctx).Create(templateDO); err != nil {
 		return 0, err
 	}
-	return templateDO.UID, nil
+	return templateDO.ID, nil
 }

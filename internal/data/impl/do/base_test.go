@@ -1,7 +1,6 @@
 package do_test
 
 import (
-	"os"
 	"testing"
 
 	authmodel "github.com/aide-family/magicbox/domain/auth/v1/gormimpl/model"
@@ -33,10 +32,6 @@ var genConfig = gen.Config{
 }
 
 func generate() {
-	klog.Debugw("msg", "remove all files")
-	os.RemoveAll(genConfig.OutPath)
-	klog.Debugw("msg", "remove all files success", "path", genConfig.OutPath)
-
 	g := gen.NewGenerator(genConfig)
 
 	klog.Debugw("msg", "generate code start")
@@ -64,11 +59,10 @@ func migrateSQLite() error {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	db = db.Debug()
 
-	models := append(do.Models(),
-		&authmodel.User{},
-		&namespacemodel.Namespace{},
-	)
+	models := append(do.Models(), authmodel.Models()...)
+	models = append(models, namespacemodel.Models()...)
 	if err := db.AutoMigrate(models...); err != nil {
 		return err
 	}
@@ -76,20 +70,14 @@ func migrateSQLite() error {
 }
 
 func TestGenerate(t *testing.T) {
-	if testing.Short() || os.Getenv("RUN_DO_CODEGEN") == "" {
-		t.Skip("skipping codegen test in short mode or when RUN_DO_CODEGEN is unset")
-	}
 	generate()
 }
 
-// func TestMigrateMysql(t *testing.T) {
-// 	migrateMysql()
-// }
+func TestMigrateMysql(t *testing.T) {
+	// migrateMysql()
+}
 
 func TestMigrateSQLite(t *testing.T) {
-	if testing.Short() || os.Getenv("RUN_DO_CODEGEN") == "" {
-		t.Skip("skipping sqlite migrate test in short mode or when RUN_DO_CODEGEN is unset")
-	}
 	if err := migrateSQLite(); err != nil {
 		t.Fatalf("migrate sqlite failed: %v", err)
 	}

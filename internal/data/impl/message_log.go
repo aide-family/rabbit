@@ -90,7 +90,7 @@ func (m *messageLogRepository) getMessageLog(ctx context.Context, uid snowflake.
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
-		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.ID.Eq(uid.Int64()),
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
 	}
 	wrappers = wrappers.Where(wheres...).Clauses(clauses...)
@@ -179,7 +179,7 @@ func (m *messageLogRepository) UpdateMessageLogStatusIf(ctx context.Context, uid
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
-		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.ID.Eq(uid.Int64()),
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
 		messageLogTable.Status.Eq(int32(oldStatus)),
 	}
@@ -204,7 +204,7 @@ func (m *messageLogRepository) UpdateMessageLogLastErrorIf(ctx context.Context, 
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
-		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.ID.Eq(uid.Int64()),
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
 		messageLogTable.Status.Eq(int32(oldStatus)),
 	}
@@ -231,7 +231,7 @@ func (m *messageLogRepository) UpdateMessageLogStatusSuccessIf(ctx context.Conte
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
-		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.ID.Eq(uid.Int64()),
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
 	}
 	wrappers = wrappers.Where(wheres...)
@@ -253,7 +253,7 @@ func (m *messageLogRepository) UpdateMessageLogStatusSendingIf(ctx context.Conte
 	messageLogTable := messageLog.As(tableName)
 	wrappers := messageLog.WithContext(ctx)
 	wheres := []gen.Condition{
-		messageLogTable.UID.Eq(uid.Int64()),
+		messageLogTable.ID.Eq(uid.Int64()),
 		messageLogTable.NamespaceUID.Eq(namespace.Int64()),
 		messageLogTable.Status.Eq(int32(oldStatus)),
 	}
@@ -282,7 +282,7 @@ func (m *messageLogRepository) CreateMessageLog(ctx context.Context, req *bo.Cre
 	if err := mutation.Create(messageLogDo); err != nil {
 		return 0, err
 	}
-	return messageLogDo.UID, nil
+	return messageLogDo.ID, nil
 }
 
 func (m *messageLogRepository) getTableName(ctx context.Context, timeAt time.Time) (string, error) {

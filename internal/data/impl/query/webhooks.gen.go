@@ -27,8 +27,7 @@ func newWebhookConfig(db *gorm.DB, opts ...gen.DOOption) webhookConfig {
 
 	tableName := _webhookConfig.webhookConfigDo.TableName()
 	_webhookConfig.ALL = field.NewAsterisk(tableName)
-	_webhookConfig.ID = field.NewUint32(tableName, "id")
-	_webhookConfig.UID = field.NewInt64(tableName, "uid")
+	_webhookConfig.ID = field.NewInt64(tableName, "id")
 	_webhookConfig.CreatedAt = field.NewTime(tableName, "created_at")
 	_webhookConfig.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_webhookConfig.Creator = field.NewInt64(tableName, "creator")
@@ -51,8 +50,7 @@ type webhookConfig struct {
 	webhookConfigDo
 
 	ALL          field.Asterisk
-	ID           field.Uint32
-	UID          field.Int64
+	ID           field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
 	Creator      field.Int64
@@ -81,8 +79,7 @@ func (w webhookConfig) As(alias string) *webhookConfig {
 
 func (w *webhookConfig) updateTableName(table string) *webhookConfig {
 	w.ALL = field.NewAsterisk(table)
-	w.ID = field.NewUint32(table, "id")
-	w.UID = field.NewInt64(table, "uid")
+	w.ID = field.NewInt64(table, "id")
 	w.CreatedAt = field.NewTime(table, "created_at")
 	w.UpdatedAt = field.NewTime(table, "updated_at")
 	w.Creator = field.NewInt64(table, "creator")
@@ -111,9 +108,8 @@ func (w *webhookConfig) GetFieldByName(fieldName string) (field.OrderExpr, bool)
 }
 
 func (w *webhookConfig) fillFieldMap() {
-	w.fieldMap = make(map[string]field.Expr, 14)
+	w.fieldMap = make(map[string]field.Expr, 13)
 	w.fieldMap["id"] = w.ID
-	w.fieldMap["uid"] = w.UID
 	w.fieldMap["created_at"] = w.CreatedAt
 	w.fieldMap["updated_at"] = w.UpdatedAt
 	w.fieldMap["creator"] = w.Creator

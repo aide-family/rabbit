@@ -28,7 +28,7 @@ func ToEmailConfigDo(ctx context.Context, req *bo.CreateEmailConfigBo) *do.Email
 
 func ToEmailConfigBO(emailConfigDO *do.EmailConfig) *bo.EmailConfigItemBo {
 	return &bo.EmailConfigItemBo{
-		UID:       emailConfigDO.UID,
+		UID:       emailConfigDO.ID,
 		Name:      emailConfigDO.Name,
 		Host:      emailConfigDO.Host,
 		Port:      emailConfigDO.Port,
@@ -42,7 +42,7 @@ func ToEmailConfigBO(emailConfigDO *do.EmailConfig) *bo.EmailConfigItemBo {
 
 func ToEmailConfigItemSelectBO(emailConfigDO *do.EmailConfig) *bo.EmailConfigItemSelectBo {
 	return &bo.EmailConfigItemSelectBo{
-		UID:      emailConfigDO.UID,
+		UID:      emailConfigDO.ID,
 		Name:     emailConfigDO.Name,
 		Status:   enum.GlobalStatus(emailConfigDO.Status),
 		Disabled: emailConfigDO.Status != enum.GlobalStatus_ENABLED || emailConfigDO.DeletedAt.Valid,

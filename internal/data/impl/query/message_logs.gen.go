@@ -27,8 +27,7 @@ func newMessageLog(db *gorm.DB, opts ...gen.DOOption) messageLog {
 
 	tableName := _messageLog.messageLogDo.TableName()
 	_messageLog.ALL = field.NewAsterisk(tableName)
-	_messageLog.ID = field.NewUint32(tableName, "id")
-	_messageLog.UID = field.NewInt64(tableName, "uid")
+	_messageLog.ID = field.NewInt64(tableName, "id")
 	_messageLog.CreatedAt = field.NewTime(tableName, "created_at")
 	_messageLog.UpdatedAt = field.NewTime(tableName, "updated_at")
 	_messageLog.Creator = field.NewInt64(tableName, "creator")
@@ -50,8 +49,7 @@ type messageLog struct {
 	messageLogDo
 
 	ALL          field.Asterisk
-	ID           field.Uint32
-	UID          field.Int64
+	ID           field.Int64
 	CreatedAt    field.Time
 	UpdatedAt    field.Time
 	Creator      field.Int64
@@ -79,8 +77,7 @@ func (m messageLog) As(alias string) *messageLog {
 
 func (m *messageLog) updateTableName(table string) *messageLog {
 	m.ALL = field.NewAsterisk(table)
-	m.ID = field.NewUint32(table, "id")
-	m.UID = field.NewInt64(table, "uid")
+	m.ID = field.NewInt64(table, "id")
 	m.CreatedAt = field.NewTime(table, "created_at")
 	m.UpdatedAt = field.NewTime(table, "updated_at")
 	m.Creator = field.NewInt64(table, "creator")
@@ -108,9 +105,8 @@ func (m *messageLog) GetFieldByName(fieldName string) (field.OrderExpr, bool) {
 }
 
 func (m *messageLog) fillFieldMap() {
-	m.fieldMap = make(map[string]field.Expr, 13)
+	m.fieldMap = make(map[string]field.Expr, 12)
 	m.fieldMap["id"] = m.ID
-	m.fieldMap["uid"] = m.UID
 	m.fieldMap["created_at"] = m.CreatedAt
 	m.fieldMap["updated_at"] = m.UpdatedAt
 	m.fieldMap["creator"] = m.Creator

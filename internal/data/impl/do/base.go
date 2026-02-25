@@ -23,11 +23,10 @@ func Models() []any {
 }
 
 type BaseModel struct {
-	ID        uint32       `gorm:"column:id;primaryKey;autoIncrement"`
-	UID       snowflake.ID `gorm:"column:uid;uniqueIndex"`
+	ID        snowflake.ID `gorm:"column:id;primaryKey"`
 	CreatedAt time.Time    `gorm:"column:created_at;"`
 	UpdatedAt time.Time    `gorm:"column:updated_at;"`
-	Creator   snowflake.ID `gorm:"column:creator;index"`
+	Creator   snowflake.ID `gorm:"column:creator"`
 }
 
 func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
@@ -38,7 +37,7 @@ func (b *BaseModel) BeforeCreate(tx *gorm.DB) (err error) {
 	if err != nil {
 		return err
 	}
-	b.UID = node.Generate()
+	b.ID = node.Generate()
 	return nil
 }
 
