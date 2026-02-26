@@ -36,6 +36,10 @@ func newRecipientMember(db *gorm.DB, opts ...gen.DOOption) recipientMember {
 	_recipientMember.Email = field.NewField(tableName, "email")
 	_recipientMember.Phone = field.NewField(tableName, "phone")
 	_recipientMember.Status = field.NewInt32(tableName, "status")
+	_recipientMember.Name = field.NewString(tableName, "name")
+	_recipientMember.Nickname = field.NewString(tableName, "nickname")
+	_recipientMember.Avatar = field.NewString(tableName, "avatar")
+	_recipientMember.Remark = field.NewString(tableName, "remark")
 
 	_recipientMember.fillFieldMap()
 
@@ -55,6 +59,10 @@ type recipientMember struct {
 	Email        field.Field
 	Phone        field.Field
 	Status       field.Int32
+	Name         field.String
+	Nickname     field.String
+	Avatar       field.String
+	Remark       field.String
 
 	fieldMap map[string]field.Expr
 }
@@ -80,6 +88,10 @@ func (r *recipientMember) updateTableName(table string) *recipientMember {
 	r.Email = field.NewField(table, "email")
 	r.Phone = field.NewField(table, "phone")
 	r.Status = field.NewInt32(table, "status")
+	r.Name = field.NewString(table, "name")
+	r.Nickname = field.NewString(table, "nickname")
+	r.Avatar = field.NewString(table, "avatar")
+	r.Remark = field.NewString(table, "remark")
 
 	r.fillFieldMap()
 
@@ -96,7 +108,7 @@ func (r *recipientMember) GetFieldByName(fieldName string) (field.OrderExpr, boo
 }
 
 func (r *recipientMember) fillFieldMap() {
-	r.fieldMap = make(map[string]field.Expr, 9)
+	r.fieldMap = make(map[string]field.Expr, 13)
 	r.fieldMap["id"] = r.ID
 	r.fieldMap["created_at"] = r.CreatedAt
 	r.fieldMap["updated_at"] = r.UpdatedAt
@@ -106,6 +118,10 @@ func (r *recipientMember) fillFieldMap() {
 	r.fieldMap["email"] = r.Email
 	r.fieldMap["phone"] = r.Phone
 	r.fieldMap["status"] = r.Status
+	r.fieldMap["name"] = r.Name
+	r.fieldMap["nickname"] = r.Nickname
+	r.fieldMap["avatar"] = r.Avatar
+	r.fieldMap["remark"] = r.Remark
 }
 
 func (r recipientMember) clone(db *gorm.DB) recipientMember {

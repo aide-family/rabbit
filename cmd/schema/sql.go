@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	authmodel "github.com/aide-family/magicbox/domain/auth/v1/gormimpl/model"
+	membermodel "github.com/aide-family/magicbox/domain/member/v1/gormimpl/model"
 	namespacemodel "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl/model"
 	"github.com/glebarez/sqlite"
 	klog "github.com/go-kratos/kratos/v2/log"
@@ -32,7 +33,10 @@ var (
 
 // models returns all models in migration order: namespace and auth first (referenced by do models), then do models.
 func models() []any {
-	return append(append(namespacemodel.Models(), authmodel.Models()...), do.Models()...)
+	models := append(namespacemodel.Models(), authmodel.Models()...)
+	models = append(models, membermodel.Models()...)
+	models = append(models, do.Models()...)
+	return models
 }
 
 func newSQLCmd() *cobra.Command {

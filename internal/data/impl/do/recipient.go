@@ -1,11 +1,12 @@
 package do
 
 import (
+	"github.com/bwmarrin/snowflake"
+	"gorm.io/gorm"
+
 	"github.com/aide-family/magicbox/enum"
 	"github.com/aide-family/magicbox/safety"
 	"github.com/aide-family/magicbox/strutil"
-	"github.com/bwmarrin/snowflake"
-	"gorm.io/gorm"
 )
 
 type RecipientGroup struct {
@@ -32,7 +33,11 @@ type RecipientMember struct {
 	UserUID      snowflake.ID          `gorm:"column:user_uid;uniqueIndex:recipient_member__namespace_uid__user_uid"`
 	Email        strutil.EncryptString `gorm:"column:email"`
 	Phone        strutil.EncryptString `gorm:"column:phone"`
-	Status       enum.GlobalStatus     `gorm:"column:status;default:0"`
+	Status       enum.MemberStatus     `gorm:"column:status;default:1"`
+	Name         string                `gorm:"column:name"`
+	Nickname     string                `gorm:"column:nickname"`
+	Avatar       string                `gorm:"column:avatar"`
+	Remark       string                `gorm:"column:remark"`
 }
 
 func (RecipientMember) TableName() string {

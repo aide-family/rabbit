@@ -6,6 +6,12 @@
 CREATE TABLE `email_configs` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`creator` integer,`deleted_at` datetime,`namespace_uid` integer,`name` text,`host` text,`port` integer,`username` text,`password` text,`status` integer DEFAULT 0);
 CREATE UNIQUE INDEX `email_config__namespace_uid__name` ON `email_configs`(`deleted_at`,`namespace_uid`,`name`);
 
+-- Table: members
+CREATE TABLE `members` (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`deleted_at` datetime,`creator` integer NOT NULL,`namespace_uid` integer NOT NULL,`user_uid` integer NOT NULL,`status` integer NOT NULL DEFAULT 1,`name` text NOT NULL DEFAULT "",`nickname` text NOT NULL DEFAULT "",`avatar` text NOT NULL DEFAULT "",`remark` text NOT NULL DEFAULT "",`email` text NOT NULL DEFAULT "",`phone` text NOT NULL DEFAULT "");
+CREATE UNIQUE INDEX `idx__member__namespace_uid__user_uid` ON `members`(`namespace_uid`,`user_uid`);
+CREATE INDEX `idx_members_creator` ON `members`(`creator`);
+CREATE INDEX `idx_members_deleted_at` ON `members`(`deleted_at`);
+
 -- Table: message_logs
 CREATE TABLE `message_logs` (`id` integer PRIMARY KEY AUTOINCREMENT,`created_at` datetime,`updated_at` datetime,`creator` integer,`namespace_uid` integer,`send_at` datetime,`message` text,`config` text,`type` integer DEFAULT 0,`status` integer DEFAULT 0,`retry_total` integer DEFAULT 0,`last_error` text);
 CREATE INDEX `idx__message_log__namespace_uid` ON `message_logs`(`namespace_uid`);

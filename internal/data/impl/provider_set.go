@@ -7,6 +7,7 @@ import "github.com/google/wire"
 var ProviderSetImpl = wire.NewSet(
 	NewHealthRepository,
 	NewNamespaceRepository,
+	NewMemberRepository,
 	NewLoginRepository,
 	NewEmailConfigRepository,
 	NewWebhookConfigRepository,
@@ -14,4 +15,6 @@ var ProviderSetImpl = wire.NewSet(
 	NewMessageRepository,
 	NewTemplateRepository,
 	NewMessageRetryLogRepository,
+	NewRecipientGroupRepository,
+	NewRecipientMemberRepository,
 )

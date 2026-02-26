@@ -20,6 +20,28 @@ CREATE TABLE `email_configs` (
   UNIQUE KEY `email_config__namespace_uid__name` (`deleted_at`,`namespace_uid`,`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Table: members
+CREATE TABLE `members` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `created_at` datetime(3) NOT NULL,
+  `updated_at` datetime(3) NOT NULL,
+  `deleted_at` datetime(3) DEFAULT NULL,
+  `creator` bigint NOT NULL,
+  `namespace_uid` bigint NOT NULL,
+  `user_uid` bigint NOT NULL,
+  `status` int NOT NULL DEFAULT '1',
+  `name` varchar(191) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `nickname` varchar(191) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `avatar` varchar(191) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `remark` varchar(191) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `email` varchar(191) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  `phone` varchar(191) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx__member__namespace_uid__user_uid` (`namespace_uid`,`user_uid`),
+  KEY `idx_members_deleted_at` (`deleted_at`),
+  KEY `idx_members_creator` (`creator`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- Table: message_logs
 CREATE TABLE `message_logs` (
   `id` bigint NOT NULL AUTO_INCREMENT,

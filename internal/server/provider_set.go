@@ -94,11 +94,13 @@ func RegisterService(
 	authService *service.AuthService,
 	healthService *service.HealthService,
 	namespaceService *service.NamespaceService,
+	memberService *service.MemberService,
 	emailService *service.EmailService,
 	webhookService *service.WebhookService,
 	senderService *service.SenderService,
 	templateService *service.TemplateService,
 	messageLogService *service.MessageLogService,
+	recipientGroupService *service.RecipientGroupService,
 ) Servers {
 	var srvs Servers
 
@@ -106,20 +108,24 @@ func RegisterService(
 		authService,
 		healthService,
 		namespaceService,
+		memberService,
 		emailService,
 		webhookService,
 		senderService,
 		templateService,
 		messageLogService,
+		recipientGroupService,
 	)...)
 	srvs = append(srvs, RegisterGRPCService(c, grpcSrv,
 		healthService,
 		namespaceService,
+		memberService,
 		emailService,
 		webhookService,
 		senderService,
 		templateService,
 		messageLogService,
+		recipientGroupService,
 	)...)
 	srvs = append(srvs, RegisterJobService(jobSrv)...)
 	return srvs
@@ -132,19 +138,23 @@ func RegisterHTTPService(
 	authService *service.AuthService,
 	healthService *service.HealthService,
 	namespaceService *service.NamespaceService,
+	memberService *service.MemberService,
 	emailService *service.EmailService,
 	webhookService *service.WebhookService,
 	senderService *service.SenderService,
 	templateService *service.TemplateService,
 	messageLogService *service.MessageLogService,
+	recipientGroupService *service.RecipientGroupService,
 ) Servers {
 	magicboxapiv1.RegisterHealthHTTPServer(httpSrv, healthService)
 	magicboxapiv1.RegisterNamespaceHTTPServer(httpSrv, namespaceService)
+	magicboxapiv1.RegisterMemberHTTPServer(httpSrv, memberService)
 	apiv1.RegisterEmailHTTPServer(httpSrv, emailService)
 	apiv1.RegisterWebhookHTTPServer(httpSrv, webhookService)
 	apiv1.RegisterSenderHTTPServer(httpSrv, senderService)
 	apiv1.RegisterTemplateHTTPServer(httpSrv, templateService)
 	apiv1.RegisterMessageLogHTTPServer(httpSrv, messageLogService)
+	apiv1.RegisterRecipientGroupServiceHTTPServer(httpSrv, recipientGroupService)
 
 	oauth2Handler := oauth.NewOAuth2Handler(c.GetOauth2(), authService.Login)
 	if err := oauth2Handler.Handler(httpSrv); err != nil {
@@ -159,19 +169,23 @@ func RegisterGRPCService(
 	grpcSrv *grpc.Server,
 	healthService *service.HealthService,
 	namespaceService *service.NamespaceService,
+	memberService *service.MemberService,
 	emailService *service.EmailService,
 	webhookService *service.WebhookService,
 	senderService *service.SenderService,
 	templateService *service.TemplateService,
 	messageLogService *service.MessageLogService,
+	recipientGroupService *service.RecipientGroupService,
 ) Servers {
 	magicboxapiv1.RegisterHealthServer(grpcSrv, healthService)
 	magicboxapiv1.RegisterNamespaceServer(grpcSrv, namespaceService)
+	magicboxapiv1.RegisterMemberServer(grpcSrv, memberService)
 	apiv1.RegisterEmailServer(grpcSrv, emailService)
 	apiv1.RegisterWebhookServer(grpcSrv, webhookService)
 	apiv1.RegisterSenderServer(grpcSrv, senderService)
 	apiv1.RegisterTemplateServer(grpcSrv, templateService)
 	apiv1.RegisterMessageLogServer(grpcSrv, messageLogService)
+	apiv1.RegisterRecipientGroupServiceServer(grpcSrv, recipientGroupService)
 	return Servers{newServer("grpc", grpcSrv)}
 }
 

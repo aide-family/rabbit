@@ -20,6 +20,28 @@ CREATE TABLE "email_configs" (
 );
 CREATE UNIQUE INDEX email_config__namespace_uid__name ON public.email_configs USING btree (deleted_at, namespace_uid, name);
 
+-- Table: members
+CREATE TABLE "members" (
+  "id" bigint DEFAULT nextval('members_id_seq'::regclass) NOT NULL,
+  "created_at" timestamp(6) with time zone NOT NULL,
+  "updated_at" timestamp(6) with time zone NOT NULL,
+  "deleted_at" timestamp(6) with time zone,
+  "creator" bigint NOT NULL,
+  "namespace_uid" bigint NOT NULL,
+  "user_uid" bigint NOT NULL,
+  "status" integer DEFAULT 1 NOT NULL,
+  "name" character varying DEFAULT ''::character varying NOT NULL,
+  "nickname" character varying DEFAULT ''::character varying NOT NULL,
+  "avatar" character varying DEFAULT ''::character varying NOT NULL,
+  "remark" character varying DEFAULT ''::character varying NOT NULL,
+  "email" character varying DEFAULT ''::character varying NOT NULL,
+  "phone" character varying DEFAULT ''::character varying NOT NULL,
+  PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX idx__member__namespace_uid__user_uid ON public.members USING btree (namespace_uid, user_uid);
+CREATE INDEX idx_members_creator ON public.members USING btree (creator);
+CREATE INDEX idx_members_deleted_at ON public.members USING btree (deleted_at);
+
 -- Table: message_logs
 CREATE TABLE "message_logs" (
   "id" bigint DEFAULT nextval('message_logs_id_seq'::regclass) NOT NULL,

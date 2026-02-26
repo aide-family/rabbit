@@ -8,6 +8,7 @@ import (
 	_ "github.com/aide-family/magicbox/connect/orm/postgres"
 	_ "github.com/aide-family/magicbox/connect/orm/sqlite"
 	_ "github.com/aide-family/magicbox/domain/auth/v1/gormimpl"
+	_ "github.com/aide-family/magicbox/domain/member/v1/gormimpl"
 	_ "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl"
 	_ "github.com/aide-family/magicbox/oauth/feishu"
 	_ "github.com/aide-family/magicbox/oauth/gitee"

@@ -82,6 +82,26 @@ namespaceConfig:
         parseTime: 'true'
         loc: 'Local'
 
+memberConfig:
+  driver: ${MOON_RABBIT_MEMBER_DRIVER:GORM}
+  version: ${MOON_RABBIT_MEMBER_VERSION:v1}
+  options:
+    '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
+    dialector: ${MOON_RABBIT_MEMBER_DIALECTOR:MYSQL}
+    debug: ${MOON_RABBIT_MEMBER_DEBUG:true}
+    useSystemLogger: ${MOON_RABBIT_MEMBER_USE_SYSTEM_LOGGER:false}
+    options:
+      '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
+      username: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_USERNAME:root}
+      password: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_PASSWORD:123456}
+      host: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_HOST:localhost}
+      port: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_PORT:3306}
+      database: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_DATABASE:rabbit}
+      parameters:
+        charset: utf8mb4
+        parseTime: 'true'
+        loc: Local
+
 # loginConfig:
 #   driver: ${MOON_RABBIT_LOGIN_DRIVER:GORM}
 #   version: ${MOON_RABBIT_LOGIN_VERSION:v1}
@@ -137,31 +157,31 @@ oauth2:
     - app: GITHUB
       clientId: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_CLIENT_ID:github.client.id}
       clientSecret: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_CLIENT_SECRET:github.client.secret}
-      callbackUri: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_CALLBACK_URI:http://localhost:18080/oauth2/callback}
+      callbackUri: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_CALLBACK_URI:http://localhost:18080/oauth2/login/github/callback?portal=http%3A%2F%2Flocalhost%3A5172}
       authUrl: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_AUTH_URL:https://github.com/login/oauth/authorize}
       tokenUrl: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_TOKEN_URL:https://github.com/login/oauth/access_token}
       scopes:
         - user:email
-      loginUrl: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_LOGIN_URL:https://github.com/login/oauth/authorize}
+      loginUrl: ${MOON_RABBIT_OAUTH2_GITHUB_CONFIGS_LOGIN_URL:http://localhost:18080/oauth2/login/github}
     - app: GITEE
       clientId: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_CLIENT_ID:gitee.client.id}
       clientSecret: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_CLIENT_SECRET:gitee.client.secret}
-      callbackUri: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_CALLBACK_URI:http://localhost:18080/oauth2/callback}
+      callbackUri: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_CALLBACK_URI:http://localhost:18080/oauth2/login/gitee/callback?portal=http%3A%2F%2Flocalhost%3A5172}
       authUrl: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_AUTH_URL:https://gitee.com/oauth/authorize}
       tokenUrl: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_TOKEN_URL:https://gitee.com/oauth/access_token}
       scopes:
         - user_info
         - emails
-      loginUrl: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_LOGIN_URL:https://gitee.com/oauth/authorize}
+      loginUrl: ${MOON_RABBIT_OAUTH2_GITEE_CONFIGS_LOGIN_URL:http://localhost:18080/oauth2/login/gitee}
     - app: FEISHU
       clientId: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_CLIENT_ID:feishu.client.id}
       clientSecret: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_CLIENT_SECRET:feishu.client.secret}
-      callbackUri: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_CALLBACK_URI:http://localhost:18080/oauth2/callback}
+      callbackUri: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_CALLBACK_URI:http://localhost:18080/oauth2/login/feishu/callback?portal=http%3A%2F%2Flocalhost%3A5172}
       authUrl: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_AUTH_URL:https://open.feishu.cn/open-apis/authen/v1/authorize}
       tokenUrl: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_TOKEN_URL:https://open.feishu.cn/open-apis/authen/v1/access_token}
       scopes:
         - user:email
-      loginUrl: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_LOGIN_URL:https://open.feishu.cn/open-apis/authen/v1/authorize}
+      loginUrl: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_LOGIN_URL:http://localhost:18080/oauth2/login/feishu}
 
 # database:
 #   dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:SQLITE}

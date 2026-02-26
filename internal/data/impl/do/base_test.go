@@ -3,13 +3,8 @@ package do_test
 import (
 	"testing"
 
-	authmodel "github.com/aide-family/magicbox/domain/auth/v1/gormimpl/model"
-	namespacemodel "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl/model"
-	"github.com/glebarez/sqlite"
 	klog "github.com/go-kratos/kratos/v2/log"
-	"gorm.io/driver/mysql"
 	"gorm.io/gen"
-	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/data/impl/do"
 )
@@ -40,45 +35,6 @@ func generate() {
 	klog.Debugw("msg", "generate code success")
 }
 
-func migrateMysql() {
-	dsn := "root:123456@tcp(localhost:3306)/rabbit?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		DisableForeignKeyConstraintWhenMigrating: true,
-	})
-	if err != nil {
-		panic("failed to connect database")
-	}
-	db.AutoMigrate(do.Models()...)
-}
-
-func migrateSQLite() error {
-	dsn := "file:../../../../rabbit.db?cache=shared"
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
-		DisableForeignKeyConstraintWhenMigrating: true,
-	})
-	if err != nil {
-		panic("failed to connect database")
-	}
-	db = db.Debug()
-
-	models := append(do.Models(), authmodel.Models()...)
-	models = append(models, namespacemodel.Models()...)
-	if err := db.AutoMigrate(models...); err != nil {
-		return err
-	}
-	return nil
-}
-
 func TestGenerate(t *testing.T) {
 	generate()
-}
-
-func TestMigrateMysql(t *testing.T) {
-	// migrateMysql()
-}
-
-func TestMigrateSQLite(t *testing.T) {
-	if err := migrateSQLite(); err != nil {
-		t.Fatalf("migrate sqlite failed: %v", err)
-	}
 }
