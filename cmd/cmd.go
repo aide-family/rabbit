@@ -25,9 +25,10 @@ const (
 	ServiceCommands  = "Service Commands"
 	CodeCommands     = "Code Commands"
 	DatabaseCommands = "Database Commands"
+	ConfigCommands   = "Config Commands"
 )
 
-const cmdLong = `rabbit (太阴星君) is the service governance platform for the Moon platform, providing unified service governance capabilities.
+const cmdLong = `rabbit (玉兔) is the service governance platform for the moon platform, providing unified service governance capabilities.
 
 Use "rabbit [command] --help" to view detailed information about a specific command.`
 
@@ -108,7 +109,7 @@ func Commands(cmd *cobra.Command) string {
 	}
 
 	// Define group order
-	groupOrder := []string{BasicCommands, MessageCommands, ServiceCommands, CodeCommands, DatabaseCommands}
+	groupOrder := []string{BasicCommands, MessageCommands, ServiceCommands, CodeCommands, DatabaseCommands, ConfigCommands}
 
 	var result strings.Builder
 	for _, groupName := range groupOrder {

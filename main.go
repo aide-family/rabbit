@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
+	"github.com/aide-family/rabbit/cmd/config"
 	"github.com/aide-family/rabbit/cmd/run"
 	"github.com/aide-family/rabbit/cmd/run/all"
 	"github.com/aide-family/rabbit/cmd/run/grpc"
@@ -68,6 +69,7 @@ func main() {
 		version.NewCmd(),
 		schema.NewCmd(),
 		runCmd,
+		config.NewCmd(defaultServerConfig),
 	}
 	cmd.Execute(cmd.NewCmd(), children...)
 }
