@@ -51,7 +51,7 @@ CREATE INDEX `idx__oauth2_user__email` ON `user_oauth2s`(`email`);
 CREATE INDEX `idx__oauth2_user__user_id` ON `user_oauth2s`(`user_id`);
 
 -- Table: users
-CREATE TABLE `users` (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`deleted_at` datetime,`name` varchar(100) NOT NULL DEFAULT "",`nickname` varchar(100) NOT NULL DEFAULT "",`email` varchar(100) NOT NULL,`avatar` varchar(100) NOT NULL DEFAULT "",`remark` varchar(100) NOT NULL DEFAULT "",`status` integer NOT NULL DEFAULT 0);
+CREATE TABLE `users` (`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,`created_at` datetime NOT NULL,`updated_at` datetime NOT NULL,`deleted_at` datetime,`name` varchar(100) NOT NULL DEFAULT "",`nickname` varchar(100) NOT NULL DEFAULT "",`email` varchar(100) NOT NULL,`avatar` varchar(100) NOT NULL DEFAULT "",`remark` varchar(100) NOT NULL DEFAULT "",`status` integer NOT NULL DEFAULT 1);
 CREATE UNIQUE INDEX `idx__user__email__deleted_at` ON `users`(`deleted_at`,`email`);
 
 -- Table: webhooks

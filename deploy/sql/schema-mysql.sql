@@ -54,7 +54,8 @@ CREATE TABLE `message_retry_logs` (
 
 -- Table: namespaces
 CREATE TABLE `namespaces` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `uid` bigint NOT NULL,
   `created_at` datetime(3) NOT NULL,
   `updated_at` datetime(3) NOT NULL,
   `creator` bigint NOT NULL,
@@ -64,6 +65,7 @@ CREATE TABLE `namespaces` (
   `status` int NOT NULL DEFAULT '0',
   `remark` varchar(1000) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_namespaces_uid` (`uid`),
   UNIQUE KEY `idx__namespace__name__deleted_at` (`deleted_at`,`name`),
   KEY `idx_namespaces_creator` (`creator`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -157,12 +159,14 @@ CREATE TABLE `user_oauth2s` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx__oauth2_user__app__open_id` (`open_id`,`app`),
   KEY `idx__oauth2_user__email` (`email`),
+  KEY `idx__oauth2_user__user_uid` (`user_id`),
   KEY `idx__oauth2_user__user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Table: users
 CREATE TABLE `users` (
-  `id` bigint NOT NULL AUTO_INCREMENT,
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `uid` bigint NOT NULL,
   `created_at` datetime(3) NOT NULL,
   `updated_at` datetime(3) NOT NULL,
   `deleted_at` datetime(3) DEFAULT NULL,
@@ -171,8 +175,9 @@ CREATE TABLE `users` (
   `email` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
   `avatar` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
   `remark` varchar(100) COLLATE utf8mb4_general_ci NOT NULL DEFAULT '',
-  `status` tinyint unsigned NOT NULL DEFAULT '0',
+  `status` int NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_users_uid` (`uid`),
   UNIQUE KEY `idx__user__email__deleted_at` (`deleted_at`,`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

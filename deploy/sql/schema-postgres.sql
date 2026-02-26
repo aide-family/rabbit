@@ -171,7 +171,7 @@ CREATE TABLE "users" (
   "email" character varying NOT NULL,
   "avatar" character varying DEFAULT ''::character varying NOT NULL,
   "remark" character varying DEFAULT ''::character varying NOT NULL,
-  "status" smallint DEFAULT 0 NOT NULL,
+  "status" integer DEFAULT 1 NOT NULL,
   PRIMARY KEY ("id")
 );
 CREATE UNIQUE INDEX idx__user__email__deleted_at ON public.users USING btree (deleted_at, email);
