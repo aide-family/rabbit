@@ -16,7 +16,7 @@ import (
 )
 
 type SendEmailBo struct {
-	UID         snowflake.ID `json:"uid"`
+	UID         snowflake.ID `json:"-"`
 	Subject     string       `json:"subject"`
 	Body        string       `json:"body"`
 	To          []string     `json:"to"`

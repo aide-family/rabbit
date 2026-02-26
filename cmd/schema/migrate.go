@@ -12,8 +12,9 @@ import (
 	"github.com/aide-family/rabbit/cmd"
 )
 
+var dsn string
+
 func newMigrateCmd() *cobra.Command {
-	var dsn string
 	migrateCmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Migrate the database",
@@ -29,11 +30,11 @@ Example:
 - mysql: root:123456@tcp(localhost:3306)/rabbit?charset=utf8mb4&parseTime=True&loc=Local
 - postgres: host=localhost user=root password=123456 port=5432 dbname=rabbit sslmode=disable
 	`)
-	migrateCmd.AddCommand(newSQLiteMigrateCmd(dsn), newMySQLMigrateCmd(dsn), newPostgresMigrateCmd(dsn))
+	migrateCmd.AddCommand(newSQLiteMigrateCmd(), newMySQLMigrateCmd(), newPostgresMigrateCmd())
 	return migrateCmd
 }
 
-func newSQLiteMigrateCmd(dsn string) *cobra.Command {
+func newSQLiteMigrateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sqlite",
 		Short: "Migrate the database to the latest version",
@@ -61,7 +62,7 @@ func newSQLiteMigrateCmd(dsn string) *cobra.Command {
 	return cmd
 }
 
-func newMySQLMigrateCmd(dsn string) *cobra.Command {
+func newMySQLMigrateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "mysql",
 		Short: "Migrate the database to the latest version using MySQL",
@@ -89,7 +90,7 @@ func newMySQLMigrateCmd(dsn string) *cobra.Command {
 	return cmd
 }
 
-func newPostgresMigrateCmd(dsn string) *cobra.Command {
+func newPostgresMigrateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "postgres",
 		Short: "Migrate the database to the latest version using Postgres",

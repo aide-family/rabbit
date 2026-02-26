@@ -31,17 +31,17 @@ jwt:
   expire: '${MOON_RABBIT_JWT_EXPIRE:600s}'
   issuer: '${MOON_RABBIT_JWT_ISSUER:rabbit}'
 
-# namespaceConfig:
-#   driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
-#   version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
-#   options:
-#     '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}"
-#     dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:SQLITE}
-#     debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
-#     useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
-#     options:
-#       '@type': "${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
-#       dsn: "${MOON_RABBIT_NAMESPACE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+namespaceConfig:
+  driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
+  version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
+  options:
+    '@type': '${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
+    dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:SQLITE}
+    debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
+    useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
+    options:
+      '@type': '${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}'
+      dsn: '${MOON_RABBIT_NAMESPACE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}'
 
 # namespaceConfig:
 #   driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
@@ -62,77 +62,89 @@ jwt:
 #         sslmode: disable
 #         TimeZone: Asia/Shanghai
 
-namespaceConfig:
-  driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
-  version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
-  options:
-    '@type': '${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
-    dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:MYSQL}
-    debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
-    useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
-    options:
-      '@type': '${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
-      username: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_USERNAME:root}
-      password: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_PASSWORD:123456}
-      host: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_HOST:localhost}
-      port: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_PORT:3306}
-      database: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_DATABASE:rabbit}
-      parameters:
-        charset: utf8mb4
-        parseTime: 'true'
-        loc: 'Local'
+# namespaceConfig:
+#   driver: ${MOON_RABBIT_NAMESPACE_DRIVER:GORM}
+#   version: ${MOON_RABBIT_NAMESPACE_VERSION:v1}
+#   options:
+#     '@type': '${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
+#     dialector: ${MOON_RABBIT_NAMESPACE_DIALECTOR:MYSQL}
+#     debug: ${MOON_RABBIT_NAMESPACE_DEBUG:true}
+#     useSystemLogger: ${MOON_RABBIT_NAMESPACE_USE_SYSTEM_LOGGER:false}
+#     options:
+#       '@type': '${MOON_RABBIT_NAMESPACE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
+#       username: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_USERNAME:root}
+#       password: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_PASSWORD:123456}
+#       host: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_HOST:localhost}
+#       port: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_PORT:3306}
+#       database: ${MOON_RABBIT_NAMESPACE_MYSQL_OPTIONS_DATABASE:rabbit}
+#       parameters:
+#         charset: utf8mb4
+#         parseTime: 'true'
+#         loc: 'Local'
 
 memberConfig:
   driver: ${MOON_RABBIT_MEMBER_DRIVER:GORM}
   version: ${MOON_RABBIT_MEMBER_VERSION:v1}
   options:
     '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
-    dialector: ${MOON_RABBIT_MEMBER_DIALECTOR:MYSQL}
+    dialector: ${MOON_RABBIT_MEMBER_DIALECTOR:SQLITE}
     debug: ${MOON_RABBIT_MEMBER_DEBUG:true}
     useSystemLogger: ${MOON_RABBIT_MEMBER_USE_SYSTEM_LOGGER:false}
     options:
-      '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
-      username: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_USERNAME:root}
-      password: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_PASSWORD:123456}
-      host: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_HOST:localhost}
-      port: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_PORT:3306}
-      database: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_DATABASE:rabbit}
-      parameters:
-        charset: utf8mb4
-        parseTime: 'true'
-        loc: Local
+      '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}'
+      dsn: '${MOON_RABBIT_MEMBER_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}'
 
-# loginConfig:
-#   driver: ${MOON_RABBIT_LOGIN_DRIVER:GORM}
-#   version: ${MOON_RABBIT_LOGIN_VERSION:v1}
+# memberConfig:
+#   driver: ${MOON_RABBIT_MEMBER_DRIVER:GORM}
+#   version: ${MOON_RABBIT_MEMBER_VERSION:v1}
 #   options:
-#     '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
-#     dialector: ${MOON_RABBIT_LOGIN_DIALECTOR:SQLITE}
-#     debug: ${MOON_RABBIT_LOGIN_DEBUG:true}
-#     useSystemLogger: ${MOON_RABBIT_LOGIN_USE_SYSTEM_LOGGER:false}
+#     '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
+#     dialector: ${MOON_RABBIT_MEMBER_DIALECTOR:MYSQL}
+#     debug: ${MOON_RABBIT_MEMBER_DEBUG:true}
+#     useSystemLogger: ${MOON_RABBIT_MEMBER_USE_SYSTEM_LOGGER:false}
 #     options:
-#       '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}'
-#       dsn: '${MOON_RABBIT_LOGIN_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}'
+#       '@type': '${MOON_RABBIT_MEMBER_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
+#       username: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_USERNAME:root}
+#       password: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_PASSWORD:123456}
+#       host: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_HOST:localhost}
+#       port: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_PORT:3306}
+#       database: ${MOON_RABBIT_MEMBER_MYSQL_OPTIONS_DATABASE:rabbit}
+#       parameters:
+#         charset: utf8mb4
+#         parseTime: 'true'
+#         loc: Local
 
 loginConfig:
   driver: ${MOON_RABBIT_LOGIN_DRIVER:GORM}
   version: ${MOON_RABBIT_LOGIN_VERSION:v1}
   options:
     '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
-    dialector: ${MOON_RABBIT_LOGIN_DIALECTOR:MYSQL}
+    dialector: ${MOON_RABBIT_LOGIN_DIALECTOR:SQLITE}
     debug: ${MOON_RABBIT_LOGIN_DEBUG:true}
     useSystemLogger: ${MOON_RABBIT_LOGIN_USE_SYSTEM_LOGGER:false}
     options:
-      '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
-      username: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_USERNAME:root}
-      password: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_PASSWORD:123456}
-      host: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_HOST:localhost}
-      port: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_PORT:3306}
-      database: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_DATABASE:rabbit}
-      parameters:
-        charset: utf8mb4
-        parseTime: 'true'
-        loc: Local
+      '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}'
+      dsn: '${MOON_RABBIT_LOGIN_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}'
+
+# loginConfig:
+#   driver: ${MOON_RABBIT_LOGIN_DRIVER:GORM}
+#   version: ${MOON_RABBIT_LOGIN_VERSION:v1}
+#   options:
+#     '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.ORMConfig}'
+#     dialector: ${MOON_RABBIT_LOGIN_DIALECTOR:MYSQL}
+#     debug: ${MOON_RABBIT_LOGIN_DEBUG:true}
+#     useSystemLogger: ${MOON_RABBIT_LOGIN_USE_SYSTEM_LOGGER:false}
+#     options:
+#       '@type': '${MOON_RABBIT_LOGIN_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
+#       username: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_USERNAME:root}
+#       password: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_PASSWORD:123456}
+#       host: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_HOST:localhost}
+#       port: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_PORT:3306}
+#       database: ${MOON_RABBIT_LOGIN_MYSQL_OPTIONS_DATABASE:rabbit}
+#       parameters:
+#         charset: utf8mb4
+#         parseTime: 'true'
+#         loc: Local
 
 swaggerBasicAuth:
   enabled: ${MOON_RABBIT_SWAGGER_BASIC_AUTH_ENABLED:false}
@@ -183,13 +195,13 @@ oauth2:
         - user:email
       loginUrl: ${MOON_RABBIT_OAUTH2_FEISHU_CONFIGS_LOGIN_URL:http://localhost:18080/oauth2/login/feishu}
 
-# database:
-#   dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:SQLITE}
-#   debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
-#   useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
-#   options:
-#     '@type': "${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}"
-#     dsn: "${MOON_RABBIT_DATABASE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}"
+database:
+  dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:SQLITE}
+  debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
+  useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
+  options:
+    '@type': '${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.SQLiteOptions}'
+    dsn: '${MOON_RABBIT_DATABASE_SQLITE_OPTIONS_DSN:file:./rabbit.db?cache=shared}'
 
 # database:
 #   dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:POSTGRES}
@@ -206,21 +218,21 @@ oauth2:
 #       sslmode: disable
 #       TimeZone: Asia/Shanghai
 
-database:
-  dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:MYSQL}
-  debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
-  useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
-  options:
-    '@type': '${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
-    username: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_USERNAME:root}
-    password: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_PASSWORD:123456}
-    host: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_HOST:localhost}
-    port: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_PORT:3306}
-    database: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_DATABASE:rabbit}
-    parameters:
-      charset: utf8mb4
-      parseTime: 'true'
-      loc: Local
+# database:
+#   dialector: ${MOON_RABBIT_DATABASE_DIALECTOR:MYSQL}
+#   debug: ${MOON_RABBIT_DATABASE_DEBUG:true}
+#   useSystemLogger: ${MOON_RABBIT_DATABASE_USE_SYSTEM_LOGGER:false}
+#   options:
+#     '@type': '${MOON_RABBIT_DATABASE_OPTIONS_TYPE:type.googleapis.com/magicbox.config.MySQLOptions}'
+#     username: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_USERNAME:root}
+#     password: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_PASSWORD:123456}
+#     host: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_HOST:localhost}
+#     port: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_PORT:3306}
+#     database: ${MOON_RABBIT_DATABASE_MYSQL_OPTIONS_DATABASE:rabbit}
+#     parameters:
+#       charset: utf8mb4
+#       parseTime: 'true'
+#       loc: Local
 
 jobCluster:
   name: ${MOON_RABBIT_JOB_CLUSTER_NAME:rabbit}
