@@ -8,6 +8,7 @@ import (
 	"github.com/aide-family/magicbox/log/stdio"
 	"github.com/aide-family/magicbox/merr"
 	klog "github.com/go-kratos/kratos/v2/log"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
 	"github.com/aide-family/rabbit/cmd"
@@ -38,6 +39,10 @@ var Description string
 var defaultServerConfig []byte
 
 func init() {
+	if err := godotenv.Load(); err != nil {
+		panic(merr.ErrorInternalServer("load env failed with error: %v", err).WithCause(err))
+	}
+
 	cmd.SetGlobalFlags(
 		cmd.WithGlobalFlagsName(Name),
 		cmd.WithGlobalFlagsHostname(hostname),
