@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	schematool "github.com/aide-family/magicbox/connect/schema"
 	authmodel "github.com/aide-family/magicbox/domain/auth/v1/gormimpl/model"
 	membermodel "github.com/aide-family/magicbox/domain/member/v1/gormimpl/model"
 	namespacemodel "github.com/aide-family/magicbox/domain/namespace/v1/gormimpl/model"
@@ -18,7 +19,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/aide-family/rabbit/internal/data/impl/do"
-	schematool "github.com/aide-family/rabbit/internal/tool/schema"
 )
 
 var (
