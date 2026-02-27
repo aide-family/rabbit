@@ -57,5 +57,6 @@ func ToWebhookConfigItemSelectBo(webhookConfigDO *do.WebhookConfig) *bo.WebhookI
 		Status:   webhookConfigDO.Status,
 		Disabled: webhookConfigDO.Status == enum.GlobalStatus_DISABLED || webhookConfigDO.DeletedAt.Valid,
 		Tooltip:  webhookConfigDO.Name,
+		App:      webhookConfigDO.App,
 	}
 }

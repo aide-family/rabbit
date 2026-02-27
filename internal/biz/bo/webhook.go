@@ -155,6 +155,7 @@ type WebhookItemSelectBo struct {
 	Status   enum.GlobalStatus
 	Disabled bool
 	Tooltip  string
+	App      enum.WebhookAPP
 }
 
 // ToAPIV1WebhookItemSelect 转换为 API 响应
@@ -164,6 +165,7 @@ func (b *WebhookItemSelectBo) ToAPIV1WebhookItemSelect() *apiv1.WebhookItemSelec
 		Label:    b.Name,
 		Disabled: b.Disabled,
 		Tooltip:  b.Tooltip,
+		App:      b.App,
 	}
 }
 
